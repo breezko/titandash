@@ -107,7 +107,8 @@ def diff(old, new):
             return strfdelta(delta)
 
         # Gracefully exit and return None, treated as null in JSON.
-        except Exception:
+        except Exception as exc:
+            logger.warning("Error occurred while getting diff between {old}, {new} - {exc}".format(old=old, new=new, exc=exc))
             return "ERROR DIFFING"
     return None
 
