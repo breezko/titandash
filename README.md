@@ -172,7 +172,7 @@ The configuration values all have some comments that describe the option slightl
 | UPGRADE_OWNED_TIER | Specify a specific artifact tier that will be upgraded instead of all artifacts owned. This may also be a comma separated list to combine tiers. | S | S, A, B, C, "S,A" |
 | SHUFFLE_OWNED_ARTIFACTS | Turn this on to shuffle the list of specified artifacts before upgrading any. This is useful if you start/stop the bot often and don't want the same artifacts being upgraded all the time. | off | off, on |
 | IGNORE_SPECIFIC_ARTIFACTS | Specify a single artifact, or multiple artifacts (comma separated) that will be ignored completely when an upgrade takes place. (off to disable). | off | off, book_of_shadows, "book_of_shadows,heroic_shield" |
-| UPGRADE_SPECIFIC_ARTIFACTS | Define a list of artifacts that will be included as artifacts to be upgraded. This allows you to include different artifacts with specific tiers while upgrading. | off | off, evergrowing_stack, "charging_card,evergrowing_stack" |
+| UPGRADE_SPECIFIC_ARTIFACTS | Define a list of artifacts that will be included as artifacts to be upgraded. This allows you to include different artifacts with specific tiers while upgrading. | off | off, evergrowing_stack, "charged_card,evergrowing_stack" |
 
 ### Stats Options
 | config | Description | Default | Examples |
