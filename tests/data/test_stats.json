@@ -22,7 +22,7 @@
         "updates": "20"
     },
     "artifact_statistics": {
-        "discovered": "90/90",
+        "discovered": "95/95",
         "artifacts": {
             "S": {
                 "book_of_shadows": true,
@@ -34,9 +34,11 @@
                 "boots_of_hermes": true
             },
             "A": {
+                "charged_card": true,
                 "book_of_prophecy": true,
                 "khrysos_bowl": true,
                 "the_bronzed_compass": true,
+                "evergrowing_stack": true,
                 "heavenly_sword": true,
                 "divine_retribution": true,
                 "drunken_hammer": true,
@@ -74,6 +76,9 @@
                 "unbound_gauntlet": true,
                 "lucky_foot_of_al-mi-raj": true,
                 "morgelai_sword": true,
+                "ringing_stone": true,
+                "quill_of_scrolls": true,
+                "old_king's_stamp": true,
                 "the_magnifier": true,
                 "the_treasure_of_fergus": true,
                 "the_white_dwarf": true

@@ -20,12 +20,12 @@ class TestBotArtifactRetrieval(unittest.TestCase):
         self.expected_s = ['book_of_shadows', 'stone_of_the_valrunes', 'flute_of_the_soloist', 'heart_of_storms',
                            'ring_of_calisto', 'invaders_gjalarhorn']
         # Tier A Expected Artifacts.
-        self.expected_a = ['book_of_prophecy', 'khrysos_bowl', 'the_bronzed_compass', 'heavenly_sword', 'divine_retribution',
-                           'drunken_hammer', 'samosek_sword', 'the_retaliator', "stryfe's_peace", "hero's_blade",
-                           'the_sword_of_storms', 'furies_bow', 'charm_of_the_ancient', 'tiny_titan_tree', 'helm_of_hermes',
-                           "o'ryans_charm", 'apollo_orb', 'earrings_of_portara', 'helheim_skull', "oath's_burden",
-                           'crown_of_the_constellation', "titania's_sceptre", "fagin's_grip", 'blade_of_damocles',
-                           'helmet_of_madness', 'titanium_plating', 'moonlight_bracelet', 'amethyst_staff',
+        self.expected_a = ['charged_card', 'book_of_prophecy', 'khrysos_bowl', 'the_bronzed_compass', 'evergrowing_stack',
+                           'heavenly_sword', 'divine_retribution', 'drunken_hammer', 'samosek_sword', 'the_retaliator',
+                           "stryfe's_peace", "hero's_blade", 'the_sword_of_storms', 'furies_bow', 'charm_of_the_ancient',
+                           'tiny_titan_tree', 'helm_of_hermes', "o'ryans_charm", 'apollo_orb', 'earrings_of_portara',
+                           'helheim_skull', "oath's_burden", 'crown_of_the_constellation', "titania's_sceptre", "fagin's_grip",
+                           'blade_of_damocles', 'helmet_of_madness', 'titanium_plating', 'moonlight_bracelet', 'amethyst_staff',
                            "spearit's_vigil", 'sword_of_the_royals', 'the_cobalt_plate', 'sigils_of_judgement',
                            'foilage_of_the_keeper', 'royal_toxin', "laborer's_pendant", 'bringer_of_ragnarok',
                            'parchment_of_foresight']
@@ -39,22 +39,22 @@ class TestBotArtifactRetrieval(unittest.TestCase):
     def test_tier_s(self):
         """Test that the tier S artifacts are correct."""
         self.bot.config.UPGRADE_OWNED_TIER = "S"
-        self.assertEqual(self.expected_s, self.bot.get_owned_artifacts())
+        self.assertEqual(self.expected_s, self.bot.get_upgrade_artifacts())
 
     def test_tier_a(self):
         """Test that the tier A artifacts are correct."""
         self.bot.config.UPGRADE_OWNED_TIER = "A"
-        self.assertEqual(self.expected_a, self.bot.get_owned_artifacts())
+        self.assertEqual(self.expected_a, self.bot.get_upgrade_artifacts())
 
     def test_tier_b(self):
         """Test that the tier B artifacts are correct."""
         self.bot.config.UPGRADE_OWNED_TIER = "B"
-        self.assertEqual(self.expected_b, self.bot.get_owned_artifacts())
+        self.assertEqual(self.expected_b, self.bot.get_upgrade_artifacts())
 
     def test_tier_c(self):
         """Test that the tier C artifacts are correct."""
         self.bot.config.UPGRADE_OWNED_TIER = "C"
-        self.assertEqual(self.expected_c, self.bot.get_owned_artifacts())
+        self.assertEqual(self.expected_c, self.bot.get_upgrade_artifacts())
 
     def test_all_tiers(self):
         """Test that the tiers S, A, B, C artifacts are correct."""
@@ -63,14 +63,14 @@ class TestBotArtifactRetrieval(unittest.TestCase):
 
         # Since the artifact lists are combined, loop through each one and make sure it
         # present in the bots calculated artifacts.
-        artifacts = self.bot.get_owned_artifacts()
+        artifacts = self.bot.get_upgrade_artifacts()
         for i in range(len(expected)):
             self.assertTrue(expected[i] in artifacts)
 
     def test_next_artifact_update(self):
         """Test that the next upgrade iteration works as intended."""
         self.bot.config.UPGRADE_OWNED_TIER = "S"
-        self.bot.owned_artifacts = self.bot.get_owned_artifacts()
+        self.bot.owned_artifacts = self.bot.get_upgrade_artifacts()
         self.bot.next_artifact_index = 0
         self.bot.next_artifact_upgrade = self.bot.owned_artifacts[self.bot.next_artifact_index]
         num_prestiges = 20
@@ -85,4 +85,17 @@ class TestBotArtifactRetrieval(unittest.TestCase):
         self.bot.config.IGNORE_SPECIFIC_ARTIFACTS = "book_of_shadows,flute_of_the_soloist"
 
         expected = ['stone_of_the_valrunes', 'heart_of_storms', 'ring_of_calisto', 'invaders_gjalarhorn']
-        self.assertEqual(expected, self.bot.get_owned_artifacts())
+        self.assertEqual(expected, self.bot.get_upgrade_artifacts())
+
+    def test_specific_artifacts(self):
+        self.bot.config.UPGRADE_OWNED_TIER = "S"
+        self.bot.config.UPGRADE_SPECIFIC_ARTIFACTS = "charged_card,evergrowing_stack"
+
+        expected = self.expected_s + ["charged_card", "evergrowing_stack"]
+        self.assertEqual(expected, self.bot.get_upgrade_artifacts())
+
+        self.bot.config.UPGRADE_OWNED_TIER = "S,A"
+        self.bot.config.UPGRADE_SPECIFIC_ARTIFACTS = "corrupted_rune_heart"
+
+        expected = self.expected_s + self.expected_a + ["corrupted_rune_heart"]
+        self.assertEqual(expected, self.bot.get_upgrade_artifacts())
