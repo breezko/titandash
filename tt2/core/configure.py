@@ -102,6 +102,7 @@ class Config:
         self.UPGRADE_OWNED_TIER = None
         self.SHUFFLE_OWNED_ARTIFACTS = None
         self.IGNORE_SPECIFIC_ARTIFACTS = None
+        self.UPGRADE_SPECIFIC_ARTIFACTS = None
 
         # STATS.
         self.ENABLE_STATS = None
