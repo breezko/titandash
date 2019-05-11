@@ -749,7 +749,6 @@ class Bot:
 
                 # Open the achievements tab in game.
                 click_on_point(MASTER_LOCS["achievements"], pause=2)
-                click_on_point(MASTER_LOCS["daily_achievements"], pause=1)
 
                 # Are there any completed daily achievements?
                 while self.grabber.search(self.images.daily_collect, bool_only=True):
