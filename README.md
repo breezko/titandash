@@ -10,6 +10,7 @@ TitanBot is a bot written in python that enables the mobile tap game Tap Titans 
 - [Current Features](#current-features)
   - [Tools](#tools)
     - [Artifact Parsing](#artifact-parsing)
+    - [Clan Parsing](#clan-statistics-parsing)
 - [Requirements](#requirements)
 - [Setting Up / Running Bot](#setting-up--running-bot)
   - [Exiting/Terminating Bot](#exitingterminating-bot)
@@ -52,6 +53,20 @@ Some tools are provided with the bot, these give some added external functionali
 
 ### Artifact Parsing
 Parse all of your artifacts in game, categorizing artifacts in their particular tier (S, A, B, C), and whether or not you currently own an artifact, a count of discovered artifacts is also available.
+
+#### Usage
+`python run.py -parse_artifacts`
+
+### Clan Statistics Parsing
+Allows you to manually parse clan statistics as well as each user in the clan one by one in an efficient manner.
+Note: This command is not completely automated, you will need to open each member once and fixup any parsing mistakes that come up.
+
+#### Usage
+`python run.py -parse_clan`
+
+##### Access
+After successfully parsing clan statistics, you will be able to find all of the data in your `stats.json` file
+under the clans key and the newest timestamp present.
 
 # Requirements
 - Windows Operating System
