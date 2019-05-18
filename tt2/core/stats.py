@@ -5,11 +5,12 @@ The stats module will encapsulate all functionality related to the stats
 panel located inside of the heroes panel in game.
 """
 from settings import __VERSION__
-from tt2.core.maps import STATS_COORDS, STAGE_COORDS, CLAN_COORDS, ARTIFACT_TIER_MAP
+from tt2.core.maps import STATS_COORDS, STAGE_COORDS, CLAN_COORDS, ARTIFACT_TIER_MAP, IMAGES, GAME_LOCS
 from tt2.core.constants import (
     STATS_JSON_TEMPLATE, STATS_GAME_STAT_KEYS, STATS_BOT_STAT_KEYS, LOGGER_FILE_NAME, STATS_DATE_FMT,
+    CLAN_PLAYER_MAP
 )
-from tt2.core.utilities import convert, diff
+from tt2.core.utilities import convert, diff, click_on_point, match
 
 from PIL import Image
 
@@ -28,6 +29,11 @@ _KEY_MAP = {
 }
 
 
+class OCRParseError(Exception):
+    pass
+
+
+# noinspection PyBroadException
 class Stats:
     """Stats class contains all possible stat values and can be updated dynamically."""
     def __init__(self, grabber, config, stats_file, logger):
@@ -51,6 +57,9 @@ class Stats:
             self.artifact_statistics["artifacts"][k] = {}
             for k1 in v:
                 self.artifact_statistics["artifacts"][k][k1] = False
+
+        # Clan statistics initializing as empty.
+        self.clan_statistics = {}
 
         # Session statistics.
         self.started = datetime.datetime.now()
@@ -102,8 +111,10 @@ class Stats:
         self.actions = None
         self.updates = None
 
-    def _process(self, scale=3, iterations=1, image=None):
+    def _process(self, scale=3, iterations=1, image=None, current=False, region=None):
         """Process the grabbers current image before OCR extraction attempt."""
+        if current:
+            self.grabber.snapshot(region=region)
         if image:
             image = image
         else:
@@ -215,6 +226,7 @@ class Stats:
             "game_statistics": {key: getattr(self, key, "None") for key in STATS_GAME_STAT_KEYS},
             "bot_statistics": {key: getattr(self, key, "None") for key in STATS_BOT_STAT_KEYS},
             "artifact_statistics": self.artifact_statistics,
+            "clan_statistics": self.clan_statistics,
             "sessions": sessions
         }
         return stats
@@ -286,6 +298,179 @@ class Stats:
 
         self.artifact_statistics["discovered"] = "{discovered}/95".format(discovered=discovered)
 
+    def _try_to_convert(self, options, scale=4, tries=10):
+        """
+        Attempt to convert the grabbers current image and coerce the returned value into the specified type.
+
+        If we want an image to be coerced into an integer but the OCR keeps on returning "c" instead of 3 for example,
+        we can continue to blow up the image until we get the correctly coerced values.
+        """
+        config = "--psm 7 nobatch digits" if options[1] == int else "--psm 7"
+        max_tries = tries
+        tries = 0
+        while tries != max_tries:
+            try:
+                parsed = pytesseract.image_to_string(self._process(scale=scale), config=config)
+                parsed = options[1](parsed)
+                if options[1] == str:
+                    if parsed == "":
+                        raise OCRParseError("Parsed an empty string.")
+                return parsed
+            except ValueError:
+                tries += 1
+                scale += 1
+
+        raise OCRParseError("Unable to parse value from image.")
+
+    def clan_manual(self, timestamp):
+        """
+        Begin a manual parse of a specific clan.
+
+        If a value parse fails, allowing the user to manually enter the value.
+        """
+        data = {key: None for key in CLAN_COORDS["info"]}
+        data["users"] = {}
+
+        # Begin attempting to grab clan information using the configured coordinates and options
+        # for each data point. The location of these elements don't ever change so we can safely
+        # parse these using static coordinate locations.
+        for key, options in CLAN_COORDS["info"].items():
+            try:
+                self.grabber.snapshot(region=options[0])
+                data[key] = self._try_to_convert(options=options)
+            except OCRParseError:
+                self.logger.info("")
+                data[key] = options[1](input("{key} COULDN'T BE PARSED. ENTER MANUALLY: ".format(key=key.upper())))
+
+            self.logger.info(" -> {key}: {value}".format(key=key, value=data[key]))
+
+        # All data should be set for the clan now. Set an additional key used to
+        # differentiate the clan from other clans.
+        data["key"] = "{name} - {code}".format(name=data["name"], code=data["code"])
+        self.logger.info(" -> key: {key}".format(key=data["key"]))
+
+        # Set our stats data in the current clan statistics for this clan.
+        self.clan_statistics.setdefault(data["key"], {})[timestamp] = data
+        return data
+
+    def player_manual(self, clan_key, timestamp):
+        """
+        Begin a manual parse of a specific clan member.
+
+        If any None values are present after the user is parsed, they may be manually
+        fixed up by the user.
+        """
+        player = self._get_player_ocr()
+        raid = self._get_raid_ocr()
+
+        data = "{player}\n{raid}".format(player=player, raid=raid)
+        data = [ln.lower() for ln in data.split("\n") if ln not in ["\n", "", " ", "  "]]
+        stats = {k: None for k in CLAN_PLAYER_MAP.keys()}
+
+        for line in data:
+            for key, options in CLAN_PLAYER_MAP.items():
+                if stats[key] is not None:
+                    continue
+
+                try:
+                    # Begin by trying to generate the expected key from the list of options
+                    # for this data point.
+                    # (ie: max_prestige_stage -> `"Max Prestige Stage" in "Max Prestige Stage 51503"`).
+                    parse = line.split(" ")
+                    find = key.replace("_", " ")
+                    if key == "id":
+                        find = find + ":"
+
+                    if find in line:
+                        # Replacing a specific character in the expected value.
+                        # This happens when parsing a value like the highest tournament rank.
+                        # (ie: #1 -> 1).
+                        if len(options) > 2:
+                            stats[key] = options[1](parse[options[0]].replace(options[2], ""))
+                            break
+
+                        # Default behaviour will coerce the value into the type defined in options.
+                        if type(options[0]) != int and len(options[0]) > 1:
+                            stats[key] = ' '.join(parse[options[0][0]:options[0][1]])
+                        else:
+                            stats[key] = options[1](parse[options[0]])
+
+                # If an exception occurs, it's okay to skip this key, it's set to None and we can check for None
+                # values after finishing our parsing and let the user manually fix them up.
+                except Exception:
+                    pass
+
+        stats["rank"] = self._determine_clan_rank()
+        stats["username"] = self._get_player_username()
+        # Check to see if any data points are missing or weren't parsed properly.
+        # (ie: str value == '', value == None).
+        for key in {key: value for key, value in stats.items() if value is None or value == ''}:
+            stats[key] = input("'{key}' COULDN'T BE PARSED. ENTER MANUALLY: ".format(key=key))
+
+        # Are there any explicit value checks we can do in case of wrong values being parsed?
+        if not match(string=stats["id"]):
+            stats["id"] = input("'id' WAS PARSED INCORRECTLY. ENTER MANUALLY: ")
+
+        for key, value in stats.items():
+            self.logger.info(" -> {key}: {value}".format(key=key, value=value))
+
+        self.logger.info("PLEASE REVIEW PARSED VALUES. TYPE 'Y' TO CONTINUE. OR ENTER AN AVAILABLE KEY TO MODIFY THE VALUE.")
+        val = None
+        while val is None:
+            val = input()
+            if val.lower() == "y":
+                break
+
+            if val in stats:
+                stats[val] = CLAN_PLAYER_MAP.get(val, [None, str])[1](input("Modify '{val}' [{orig}]: ".format(val=val, orig=stats[val])))
+            else:
+                print("'{val}' is not available to modify".format(val=val))
+
+            val = None
+
+        # Set our stats data in the current clan statistics for this player.
+        stats["key"] = "{username} - {id}".format(username=stats["username"], id=stats["id"])
+        self.clan_statistics[clan_key][timestamp]["users"][stats["key"]] = stats
+
+        # Additionally, let's exit the current players profile panel before exiting.
+        while not self.grabber.search(IMAGES["CLAN_MEMBER"]["leave_clan"], bool_only=True):
+            click_on_point(GAME_LOCS["CLAN"]["member_close"], pause=0.5)
+
+        return stats
+
+    def _get_player_username(self):
+        """
+        Attempt to retrieve the players username by determining where it should
+        be located based on different information present on the panel.
+        """
+        coord = CLAN_COORDS["member"]["username"]
+        if self._manage_buttons_present():
+            coord = (coord[0], coord[1] - 28, coord[2], coord[3] - 28)
+
+        return pytesseract.image_to_string(self._process(current=True, region=coord), config="--psm 7 nobatch usernames")
+
+    def _get_player_ocr(self):
+        click_on_point(GAME_LOCS["CLAN"]["member_player_stats"], pause=1)
+        return pytesseract.image_to_string(self._process(scale=3, current=True, region=CLAN_COORDS["member"]["panel"]))
+
+    def _get_raid_ocr(self):
+        click_on_point(GAME_LOCS["CLAN"]["member_raid_stats"], pause=1)
+        return pytesseract.image_to_string(self._process(scale=3, current=True, region=CLAN_COORDS["member"]["panel"]))
+
+    def _determine_clan_rank(self):
+        """Determine which rank a user is. This method assumes that a profile panel is open for a specific user."""
+        for key, path in IMAGES["CLAN_MEMBER"]["ranks"].items():
+            if self.grabber.search(path, bool_only=True):
+                return key.capitalize()
+
+        # No rank could be parsed?
+        return None
+
+    def _manage_buttons_present(self):
+        return self.grabber.search(IMAGES["CLAN_MEMBER"]["kick"], bool_only=True) \
+               or self.grabber.search(IMAGES["CLAN_MEMBER"]["demote"], bool_only=True) \
+               or self.grabber.search(IMAGES["CLAN_MEMBER"]["promote"], bool_only=True)
+
     def update_from_content(self):
         """Update self based on the JSON content taken from stats file."""
         game_stats = self.content.get("game_statistics")
@@ -307,6 +492,11 @@ class Stats:
                     self.artifact_statistics["artifacts"][tier][artifact] = value
             self.artifact_statistics["discovered"] = artifact_stats["discovered"]
             self.logger.debug("Artifacts: {artifact_stats}".format(artifact_stats=artifact_stats))
+
+        clan_stats = self.content.get("clan_statistics")
+        if clan_stats:
+            self.clan_statistics = clan_stats
+            self.logger.debug("Clan Statistics: {clan_stats}".format(clan_stats=clan_stats))
 
         sessions = self.content.get("sessions")
         if sessions:
