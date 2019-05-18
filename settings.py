@@ -51,6 +51,6 @@ if not os.path.exists(TOOL_LOG_DIR):
 
 # In game specific settings should be stored here. As the game is updated, these will change
 # and reflect the new constants that may be used by the bot.
-GAME_VERSION = "3.1.0"
+GAME_VERSION = "3.1.1"
 STAGE_CAP = 70000
 
