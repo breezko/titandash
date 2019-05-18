@@ -167,7 +167,6 @@ The configuration values all have some comments that describe the option slightl
 | config | Description | Default | Examples |
 |--------------------------|----------------------------------------------------------------------------------------------------------------------------------------|-----------------|-----------------------------------------------------------|
 | ENABLE_ARTIFACT_PURCHASE | Enable artifact purchases. | on | on, off |
-| UPGRADE_ARTIFACT | Specify the name of the artifact that will be upgraded (Take the name of the artifact, replace spaces with underscored, all lowercase. | book_of_shadows | stryfes_peace, ward_of_the_darkness, flute_of_the_soloist |
 | UPGRADE_OWNED_ARTIFACTS | Enable ability to iterate through all owned artifacts and upgrade a different one each prestige. | on | on, off |
 | UPGRADE_OWNED_TIER | Specify a specific artifact tier that will be upgraded instead of all artifacts owned. This may also be a comma separated list to combine tiers. | S | S, A, B, C, "S,A" |
 | SHUFFLE_OWNED_ARTIFACTS | Turn this on to shuffle the list of specified artifacts before upgrading any. This is useful if you start/stop the bot often and don't want the same artifacts being upgraded all the time. | off | off, on |
