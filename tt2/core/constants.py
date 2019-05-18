@@ -59,6 +59,32 @@ STATS_DURATION_RE = re.compile(
 STATS_TIMEDELTA_STR = "{D}d {H}:{M}:{S}"
 # Stats date format for session keys.
 STATS_DATE_FMT = "%Y-%m-%d"
+
+# Stats constants and variables used when parsing clan information to determine and coerce values.
+# {key: INDEX_TO_GRAB, COERCE_TYPE, CHAR_TO_REMOVE}
+CLAN_PLAYER_MAP = {
+    "id": [1, str],
+    "max_prestige_stage": [3, int],
+    "artifacts_collected": [2, int],
+    "crafting_power": [2, int],
+    "total_pet_levels": [3, int],
+    "skill_points_owned": [3, int],
+    "hero_weapon_upgrades": [3, int],
+    "hero_scroll_upgrades": [3, int],
+    "tournaments_joined": [2, int],
+    "highest_tournament_rank": [3, int, "#"],
+    "tournament_points": [2, int],
+    "clan_crates_shared": [3, int],
+    "last_played": [[2, -1], str],
+    "raid_level": [2, int],
+    "raid_damage": [2, int],
+    "total_raid_experience": [3, int],
+    "total_raid_attacks": [3, int],
+    "total_raid_card_levels": [4, int],
+    "raid_cards_owned": [3, int],
+    "lifetime_raid_tickets": [3, int],
+}
+
 # Logger name used when grabbing logger.
 LOGGER_NAME = "tt2_py"
 # Logging format string.

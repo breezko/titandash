@@ -17,6 +17,7 @@ import datetime
 import logging
 import time
 import math
+import re
 
 logger = logging.getLogger(LOGGER_NAME)
 
@@ -215,3 +216,8 @@ def make_logger(log_level="INFO", log_format=LOGGER_FORMAT, log_name=LOGGER_NAME
     _logger.setLevel(log_level)
 
     return _logger
+
+
+def match(string, search=re.compile(r'[^a-zA-Z0-9]').search):
+    """Check a string to determine that it only contains the compiled pattern."""
+    return not bool(search(string))
