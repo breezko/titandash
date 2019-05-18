@@ -91,6 +91,7 @@ From here, the bot should begin running. Your command prompt will log informatio
 
 4. Maybe you want to run one of the included tools instead of running the bot directly. You can do that easily as well by running the following commands:
  - Artifact Parsing: `python run.py -parse_artifacts`
+ - Clan Parsing: `python run.py -parse_clan`
 
 ## Exiting/Terminating Bot
 To terminate the bot, you will need to drag your mouse up to the top-left most portion (0, 0) of you desktop. When that point is successfully reached, you will be presented with the following log message:
