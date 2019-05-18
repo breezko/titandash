@@ -548,6 +548,59 @@ class Bot:
                 self.calculate_next_stats_update()
                 click_on_point(MASTER_LOCS["screen_top"], clicks=3)
 
+    def manual_parse_clan_data(self):
+        """
+        Begin the process of manually grabbing and processing clan member data.
+
+        The execution will begin by grabbing all clan data and providing the chance to fix any incorrect values.
+
+        After that has been completed. The program will wait for a Player Profile to be opened. Once was is opened,
+        the players statistics and raid statistics will be parsed, any values that can not be parsed will be shown
+        and can be fixed up manually by the user.
+
+        The user can end the command by holding the CTRL+C which will write the current statistics parsed
+        to their stats.json file.
+
+        Note: This is not an automated process but a good way to currently ensure that parsed values are correct
+        for the user.
+        """
+        now = datetime.datetime.now()
+        timestamp = str(now)
+        self.logger.info("========================================")
+        self.logger.info("Beginning Manual Clan Parsing...")
+        self.logger.info("Open Your Clan Panel To Begin.")
+
+        while not self.grabber.search(IMAGES["CLAN_MEMBER"]["leave_clan"], bool_only=True):
+            continue
+
+        self.logger.info("Clan Panel Is Open... Beginning Clan Statistics Parse")
+        self.logger.info("TIMESTAMP: {timestamp}".format(timestamp=timestamp))
+        clan_data = self.stats.clan_manual(timestamp=timestamp)
+
+        self.logger.info("========================================")
+        self.logger.info("Beginning Individual User Parsing...")
+        self.logger.info("Click A Member To Begin.")
+
+        while True:
+            while not self.grabber.search(IMAGES["CLAN_MEMBER"]["profile"], bool_only=True):
+                if keyboard.is_pressed("ctrl+x"):
+                    self.logger.info("========================================")
+                    self.logger.info("CLAN PARSING IS NOW FINISHED...")
+                    self.logger.info("SAVING STATISTICS...")
+                    self.stats.write()
+                    return
+                # Loop until a profile has been opened, or the user has decided
+                # to stop parsing and wishes to exit.
+                continue
+
+            # Reaching here ONLY if a profile has been opened.
+            self.logger.info("========================================")
+            self.logger.info("Parsing Player Profile Now...")
+            player = self.stats.player_manual(clan_key=clan_data["key"], timestamp=timestamp)
+            self.logger.info("========================================")
+            self.logger.info("PLAYER: {player} WAS PARSED SUCCESSFULLY...".format(player=player["key"]))
+            self.logger.info("You may press ctrl+x to finish parsing and save clan statistics OR click on another player to keep parsing.")
+
     @not_in_transition
     def prestige(self):
         """Perform a prestige in game."""
