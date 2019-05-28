@@ -33,7 +33,18 @@ class OCRParseError(Exception):
     pass
 
 
-# noinspection PyBroadException
+class ClanNotFoundError(Exception):
+    pass
+
+
+class ClanTimestampNotFoundError(Exception):
+    pass
+
+
+class UserNotFoundError(Exception):
+    pass
+
+
 class Stats:
     """Stats class contains all possible stat values and can be updated dynamically."""
     def __init__(self, grabber, config, stats_file, logger):
@@ -298,6 +309,112 @@ class Stats:
 
         self.artifact_statistics["discovered"] = "{discovered}/95".format(discovered=discovered)
 
+    def _get_clan(self, code):
+        for key in self.clan_statistics:
+            if code in key:
+                return key, self.clan_statistics[key]
+
+        raise ClanNotFoundError()
+
+    @staticmethod
+    def _get_clan_stats(clan, key):
+        for timestamp in clan:
+            if timestamp == key:
+                return key, clan[key]
+
+        raise ClanTimestampNotFoundError("Timestamp: {timestamp} isn't present in clan statistics".format(timestamp=key))
+
+    @staticmethod
+    def _get_user_from_stats(stats, key):
+        """
+        Attempt to grab a user from a clan statistics instance. In case of a username change. we can grab based on
+        the id of the user.
+        """
+        data = None
+        try:
+            data = stats["users"][key]
+        except KeyError:
+            key = key.split("-")
+            key[1] = key[1].replace(" ", "")
+            for user_key in stats["users"]:
+                for piece in key:
+                    if piece in user_key:
+                        data = stats["users"][user_key]
+
+        if data:
+            return data
+        else:
+            raise UserNotFoundError()
+
+    def compare_clan_stats(self, code, keys):
+        """
+        Attempt to compare the two given parse keys for the specified clan. Determining some interesting data points to
+        see how much of a difference between the oldest->newest key.
+        """
+        try:
+            clan_key, clan = self._get_clan(code=code)
+            stats_key_old, stats_old = self._get_clan_stats(clan, keys[0])
+            stats_key_new, stats_new = self._get_clan_stats(clan, keys[1])
+        except ClanNotFoundError:
+            self.logger.error("Clan with code: {code} couldn't be found.".format(code=code))
+            return
+        except ClanTimestampNotFoundError as exc:
+            self.logger.error(exc)
+            return
+
+        self.logger.info("========================================")
+        self.logger.info("COMPARING {clan} STATISTICS FROM {timestamp_old} -> {timestamp_new}".format(
+            clan=clan_key, timestamp_old=stats_key_old, timestamp_new=stats_key_new))
+
+        compared = {"users": {}}
+        # Begin comparing the clan statistics from both parsings.
+        for key, options in CLAN_COORDS["info"].items():
+            if options[1] == int:
+                old = int(stats_old[key])
+                new = int(stats_new[key])
+                difference = stats_new[key] - stats_old[key]
+                compared[key] = {"old": old, "new": new, "difference": difference}
+                self.logger.info(" -> {key}: {difference}".format(key=key, difference=difference))
+
+        # Let's loop through each user.. Determining the difference of values and including
+        # in the compared dictionary.
+        self.logger.info("========================================")
+        self.logger.info("BEGINNING COMPARISON'S OF USERS IN CLAN")
+        for user_key in stats_new["users"].keys():
+            self.logger.info("ATTEMPTING TO COMPARE {user}".format(user=user_key))
+            compared["users"][user_key] = {}
+
+            try:
+                user_old = self._get_user_from_stats(stats=stats_old, key=user_key)
+                user_new = self._get_user_from_stats(stats=stats_new, key=user_key)
+            except UserNotFoundError:
+                self.logger.error("COULD NOT GET USER: {user}... SKIPPING".format(user=user_key))
+                continue
+
+            for key, options in CLAN_PLAYER_MAP.items():
+                if options[1] == int:
+                    old = int(user_old[key])
+                    new = int(user_new[key])
+                    difference = new - old
+                    compared["users"][user_key][key] = {"old": old, "new": new, "difference": difference}
+                    self.logger.info(" -> {key}: {difference}".format(key=key, difference=difference))
+
+            # Has the user's username changed? Any additional attributes
+            # that should be parsed separately can be done here.
+            old_username = user_old["username"]
+            new_username = user_new["username"]
+            if new_username != old_username:
+                compared["users"][user_key]["username"] = {"old": old_username, "new": new_username}
+
+            self.logger.info("========================================")
+
+        # Clan comparison has finished, update clan statistics before writing.
+        compared_key = "{old_timestamp} to {new_timestamp}".format(old_timestamp=stats_key_old, new_timestamp=stats_key_new)
+        self.clan_statistics[clan_key].setdefault("comparisons", {})[compared_key] = compared
+
+        self.logger.info("CLAN COMPARISON HAS FINISHED...")
+        self.write()
+
     def _try_to_convert(self, options, scale=4, tries=10):
         """
         Attempt to convert the grabbers current image and coerce the returned value into the specified type.
@@ -344,16 +461,11 @@ class Stats:
 
             self.logger.info(" -> {key}: {value}".format(key=key, value=data[key]))
 
-        # All data should be set for the clan now. Set an additional key used to
-        # differentiate the clan from other clans.
-        data["key"] = "{name} - {code}".format(name=data["name"], code=data["code"])
-        self.logger.info(" -> key: {key}".format(key=data["key"]))
-
         # Set our stats data in the current clan statistics for this clan.
-        self.clan_statistics.setdefault(data["key"], {})[timestamp] = data
+        self.clan_statistics.setdefault(data["code"], {})[timestamp] = data
         return data
 
-    def player_manual(self, clan_key, timestamp):
+    def player_manual(self, clan_key, timestamp, cache):
         """
         Begin a manual parse of a specific clan member.
 
@@ -368,6 +480,7 @@ class Stats:
         stats = {k: None for k in CLAN_PLAYER_MAP.keys()}
 
         for line in data:
+            parse = []
             for key, options in CLAN_PLAYER_MAP.items():
                 if stats[key] is not None:
                     continue
@@ -395,21 +508,53 @@ class Stats:
                         else:
                             stats[key] = options[1](parse[options[0]])
 
+                        # If the current parsed value has already been cached and fixed... We can use the fixed value
+                        # instead of the one that would need to be manually fixed up.
+                        try:
+                            if parse[options[0]] in cache.get(key, {}).keys():
+                                stats[key] = cache[key][parse[options[0]]]
+                        except IndexError:
+                            pass
+                        except TypeError:
+                            pass
+
                 # If an exception occurs, it's okay to skip this key, it's set to None and we can check for None
                 # values after finishing our parsing and let the user manually fix them up.
-                except Exception:
+                except Exception as exc:
+                    self.logger.error(exc)
+                    # Is the value present in the cache of incorrect -> correct values.
+                    try:
+                        if parse[options[0]] in cache.get(key, {}).keys():
+                            stats[key] = cache[key][parse[options[0]]]
+                        else:
+                            # Setting the stats key to whatever the incorrect parsed value is.
+                            # And it can be dealt with and fixed during parse fixup process.
+                            stats[key] = [key, parse[options[0]], options[1]]
+                    except IndexError:
+                        pass
+                    except TypeError:
+                        pass
                     pass
 
         stats["rank"] = self._determine_clan_rank()
         stats["username"] = self._get_player_username()
         # Check to see if any data points are missing or weren't parsed properly.
         # (ie: str value == '', value == None).
-        for key in {key: value for key, value in stats.items() if value is None or value == ''}:
-            stats[key] = input("'{key}' COULDN'T BE PARSED. ENTER MANUALLY: ".format(key=key))
+        for key, value in {key: value for key, value in stats.items() if type(value) == list or value is None}.items():
+            if value is None:
+                value = []
+            fix = input("'{key}' COULDN'T BE PARSED. ENTER MANUALLY: ".format(key=key))
+            cache.setdefault(value[0], {})[value[1]] = value[2](fix)
+            stats[key] = value[2](fix)
 
         # Are there any explicit value checks we can do in case of wrong values being parsed?
         if not match(string=stats["id"]):
-            stats["id"] = input("'id' WAS PARSED INCORRECTLY. ENTER MANUALLY: ")
+            fix = input("'id' WAS PARSED INCORRECTLY. ENTER MANUALLY: ")
+            cache.setdefault("id", {})[stats["id"]] = fix
+            stats["id"] = fix
+
+        if stats["username"] in cache.get("username", {}).keys():
+            stats["username"] = cache["username"][stats["username"]]
 
         for key, value in stats.items():
             self.logger.info(" -> {key}: {value}".format(key=key, value=value))
@@ -422,21 +567,23 @@ class Stats:
                 break
 
             if val in stats:
-                stats[val] = CLAN_PLAYER_MAP.get(val, [None, str])[1](input("Modify '{val}' [{orig}]: ".format(val=val, orig=stats[val])))
+                fix = CLAN_PLAYER_MAP.get(val, [None, str])[1](input("Modify '{val}' [{orig}]: ".format(val=val, orig=stats[val])))
+                cache.setdefault(val, {})[stats[val]] = fix
+                stats[val] = fix
             else:
                 print("'{val}' is not available to modify".format(val=val))
 
+            # Set value back to None when finished to loop until exit code ('y') is entered.
             val = None
 
-        # Set our stats data in the current clan statistics for this player.
-        stats["key"] = "{username} - {id}".format(username=stats["username"], id=stats["id"])
-        self.clan_statistics[clan_key][timestamp]["users"][stats["key"]] = stats
+        self.clan_statistics[clan_key][timestamp]["users"][stats["id"]] = stats
+        self.clan_statistics["cache"] = cache
 
         # Additionally, let's exit the current players profile panel before exiting.
         while not self.grabber.search(IMAGES["CLAN_MEMBER"]["leave_clan"], bool_only=True):
             click_on_point(GAME_LOCS["CLAN"]["member_close"], pause=0.5)
 
-        return stats
+        return stats, cache
 
     def _get_player_username(self):
         """
@@ -451,17 +598,17 @@ class Stats:
 
     def _get_player_ocr(self):
         click_on_point(GAME_LOCS["CLAN"]["member_player_stats"], pause=1)
-        return pytesseract.image_to_string(self._process(scale=3, current=True, region=CLAN_COORDS["member"]["panel"]))
+        return pytesseract.image_to_string(self._process(scale=3, current=True, region=CLAN_COORDS["member"]["panel"]), config="--psm 6 -l eng ")
 
     def _get_raid_ocr(self):
         click_on_point(GAME_LOCS["CLAN"]["member_raid_stats"], pause=1)
-        return pytesseract.image_to_string(self._process(scale=3, current=True, region=CLAN_COORDS["member"]["panel"]))
+        return pytesseract.image_to_string(self._process(scale=3, current=True, region=CLAN_COORDS["member"]["panel"]), config="--psm 6 -l eng")
 
     def _determine_clan_rank(self):
         """Determine which rank a user is. This method assumes that a profile panel is open for a specific user."""
         for key, path in IMAGES["CLAN_MEMBER"]["ranks"].items():
             if self.grabber.search(path, bool_only=True):
-                return key.capitalize()
+                return key.replace("_", " ").title()
 
         # No rank could be parsed?
         return None

@@ -15,6 +15,8 @@ if __name__ == '__main__':
     parser.add_argument("-start", action="store_true", default=False, help="Initialize a new bot instance and begin automation. (Ensure that the bot screen is open and at the top-left most portion of the screen).")
     parser.add_argument("-parse_artifacts", action="store_true", default=False, help="Parse artifacts in game. May take up to two minutes. Check your stats file afterwards to view the results.")
     parser.add_argument("-parse_clan", action="store_true", default=False, help="Parse clan statistics in game.")
+    parser.add_argument("-compare_clan_stats", nargs=1, help="Compare a clans statistics, the name of the clan should be included here.")
+    parser.add_argument("--keys", nargs="+")
 
     arguments = parser.parse_args()
     if arguments.start:
@@ -26,5 +28,8 @@ if __name__ == '__main__':
     elif arguments.parse_clan:
         from tt2.tools.parse_clan import parse_clan
         parse_clan()
+    elif arguments.compare_clan_stats:
+        from tt2.tools.compare_clan_stats import compare_clan_stats
+        compare_clan_stats(arguments.compare_clan_stats[0], arguments.keys)
     else:
         parser.print_help()

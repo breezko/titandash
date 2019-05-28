@@ -9,7 +9,7 @@ from settings import (
 )
 
 from tt2.core.maps import *
-from tt2.core.constants import STAGE_PARSE_THRESHOLD, FUNCTION_LOOP_TIMEOUT
+from tt2.core.constants import STAGE_PARSE_THRESHOLD, FUNCTION_LOOP_TIMEOUT, STATS_DATETIME_FMT
 from tt2.core.grabber import Grabber
 from tt2.core.configure import Config
 from tt2.core.stats import Stats
@@ -564,8 +564,7 @@ class Bot:
         Note: This is not an automated process but a good way to currently ensure that parsed values are correct
         for the user.
         """
-        now = datetime.datetime.now()
-        timestamp = str(now)
+        timestamp = datetime.datetime.now().strftime(STATS_DATETIME_FMT)
         self.logger.info("========================================")
         self.logger.info("Beginning Manual Clan Parsing...")
         self.logger.info("Open Your Clan Panel To Begin.")
@@ -576,6 +575,7 @@ class Bot:
         self.logger.info("Clan Panel Is Open... Beginning Clan Statistics Parse")
         self.logger.info("TIMESTAMP: {timestamp}".format(timestamp=timestamp))
         clan_data = self.stats.clan_manual(timestamp=timestamp)
+        cache = self.stats.clan_statistics.setdefault("cache", {})
 
         self.logger.info("========================================")
         self.logger.info("Beginning Individual User Parsing...")
@@ -596,9 +596,9 @@ class Bot:
             # Reaching here ONLY if a profile has been opened.
             self.logger.info("========================================")
             self.logger.info("Parsing Player Profile Now...")
-            player = self.stats.player_manual(clan_key=clan_data["key"], timestamp=timestamp)
+            player, cache = self.stats.player_manual(clan_key=clan_data["code"], timestamp=timestamp, cache=cache)
             self.logger.info("========================================")
-            self.logger.info("PLAYER: {player} WAS PARSED SUCCESSFULLY...".format(player=player["key"]))
+            self.logger.info("PLAYER: {player} WAS PARSED SUCCESSFULLY...".format(player=player["id"]))
             self.logger.info("You may press ctrl+x to finish parsing and save clan statistics OR click on another player to keep parsing.")
 
     @not_in_transition

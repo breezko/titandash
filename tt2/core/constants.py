@@ -59,6 +59,8 @@ STATS_DURATION_RE = re.compile(
 STATS_TIMEDELTA_STR = "{D}d {H}:{M}:{S}"
 # Stats date format for session keys.
 STATS_DATE_FMT = "%Y-%m-%d"
+# Stats datetime format used for storing keys with a date and times included.
+STATS_DATETIME_FMT = "%Y-%m-%dT%H:%M:%S"
 
 # Stats constants and variables used when parsing clan information to determine and coerce values.
 # {key: INDEX_TO_GRAB, COERCE_TYPE, CHAR_TO_REMOVE}

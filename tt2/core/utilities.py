@@ -220,4 +220,7 @@ def make_logger(log_level="INFO", log_format=LOGGER_FORMAT, log_name=LOGGER_NAME
 
 def match(string, search=re.compile(r'[^a-zA-Z0-9]').search):
     """Check a string to determine that it only contains the compiled pattern."""
-    return not bool(search(string))
+    try:
+        return not bool(search(string))
+    except TypeError:
+        return False
