@@ -5,12 +5,12 @@ The stats module will encapsulate all functionality related to the stats
 panel located inside of the heroes panel in game.
 """
 from settings import __VERSION__
-from tt2.core.maps import STATS_COORDS, STAGE_COORDS, CLAN_COORDS, ARTIFACT_TIER_MAP, IMAGES, GAME_LOCS, PRESTIGE_COORDS
-from tt2.core.constants import (
+from titanbot.tt2.core.maps import STATS_COORDS, STAGE_COORDS, CLAN_COORDS, ARTIFACT_TIER_MAP, IMAGES, GAME_LOCS, PRESTIGE_COORDS
+from titanbot.tt2.core.constants import (
     STATS_JSON_TEMPLATE, STATS_GAME_STAT_KEYS, STATS_BOT_STAT_KEYS, LOGGER_FILE_NAME, STATS_DATE_FMT,
     CLAN_PLAYER_MAP, STATS_DATETIME_FMT
 )
-from tt2.core.utilities import convert, diff, click_on_point, match
+from titanbot.tt2.core.utilities import convert, diff, click_on_point, match
 
 from PIL import Image
 

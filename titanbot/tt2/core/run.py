@@ -20,16 +20,16 @@ if __name__ == '__main__':
 
     arguments = parser.parse_args()
     if arguments.start:
-        from tt2.core.bot import Bot
+        from titanbot.tt2.core.bot import Bot
         Bot().run()
     elif arguments.parse_artifacts:
-        from tt2.tools.parse_artifacts import parse_artifacts
+        from titanbot.tt2.tools.parse_artifacts import parse_artifacts
         parse_artifacts()
     elif arguments.parse_clan:
-        from tt2.tools.parse_clan import parse_clan
+        from titanbot.tt2.tools.parse_clan import parse_clan
         parse_clan()
     elif arguments.compare_clan_stats:
-        from tt2.tools.compare_clan_stats import compare_clan_stats
+        from titanbot.tt2.tools.compare_clan_stats import compare_clan_stats
         compare_clan_stats(arguments.compare_clan_stats[0], arguments.keys)
     else:
         parser.print_help()

@@ -10,21 +10,23 @@ __VERSION__ = "0.6.0"
 # Store the root directory of the project. May be used and appended to files in other directories without
 # the need for relative urls being generated to travel to the file.
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+# Django project directory (titanbot).
+PROJECT_DIR = os.path.join(ROOT_DIR, "titanbot")
 # Bot directory (tt2).
-BOT_DIR = os.path.join(ROOT_DIR, "tt2")
+BOT_DIR = os.path.join(PROJECT_DIR, "tt2")
 # Core bot file directory.
 CORE_DIR = os.path.join(BOT_DIR, "core")
 # External library file directory.
 EXT_DIR = os.path.join(BOT_DIR, "external")
 # Log files should be placed here.
-LOG_DIR = os.path.join(ROOT_DIR, "logs")
+LOG_DIR = os.path.join(BOT_DIR, "logs")
 # Any data files used directly by the bot should be placed in here.
-DATA_DIR = os.path.join(ROOT_DIR, "data")
+DATA_DIR = os.path.join(BOT_DIR, "data")
 # Additional data directories.
 IMAGE_DIR = os.path.join(DATA_DIR, "images")
 
 # Testing directory.
-TEST_DIR = os.path.join(ROOT_DIR, "tests")
+TEST_DIR = os.path.join(BOT_DIR, "tests")
 TEST_DATA_DIR = os.path.join(TEST_DIR, "data")
 TEST_IMAGE_DIR = os.path.join(TEST_DIR, "images")
 
