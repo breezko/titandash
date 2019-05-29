@@ -607,7 +607,11 @@ class Bot:
         if self.config.ENABLE_AUTO_PRESTIGE:
             if self.should_prestige():
                 self.logger.info("Beginning prestige process in game now.")
-                self.check_tournament()
+                tournament = self.check_tournament()
+
+                # If tournament==True, then a tournament was available to join (which means we prestiged, exit early).
+                if tournament:
+                    return False
                 if not self.goto_master(collapsed=False, top=False):
                     return False
 
@@ -616,6 +620,7 @@ class Bot:
                 click_on_point(MASTER_LOCS["prestige"], pause=3)
                 prestige_found, prestige_position = self.grabber.search(self.images.confirm_prestige)
                 if prestige_found:
+                    self.stats.update_prestige()
                     click_on_point(MASTER_LOCS["prestige_confirm"], pause=1)
 
                     # Waiting for a while after prestiging, this reduces the chance
@@ -736,7 +741,9 @@ class Bot:
                 if found:
                     self.logger.info("Joining new tournament now.")
                     click_on_point(self.locs.join, pause=2)
-                    click_on_point(self.locs.tournament_prestige, pause=10)
+                    self.stats.update_prestige()
+                    click_on_point(self.locs.tournament_prestige, pause=35)
+                    return True
 
                 # Otherwise, maybe the tournament is over? Or still running.
                 else:
@@ -745,6 +752,7 @@ class Bot:
                         self.logger.info("Tournament is over, attempting to collect reward now.")
                         click_on_point(self.locs.collect_prize, pause=2)
                         click_on_point(self.locs.game_middle, clicks=10, interval=0.5)
+                        return False
 
     @not_in_transition
     def daily_rewards(self):

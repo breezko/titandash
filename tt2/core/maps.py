@@ -315,6 +315,10 @@ STAGE_COORDS = {
     "region": (214, 71, 268, 84),
 }
 
+PRESTIGE_COORDS = {
+    "time_since": (300, 614, 360, 628),
+}
+
 # REGION, COERCE, _process/_stage_process.
 # _stage_process will only work with images with WHITE text.
 CLAN_COORDS = {
