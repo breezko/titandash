@@ -5,10 +5,10 @@ The stats module will encapsulate all functionality related to the stats
 panel located inside of the heroes panel in game.
 """
 from settings import __VERSION__
-from tt2.core.maps import STATS_COORDS, STAGE_COORDS, CLAN_COORDS, ARTIFACT_TIER_MAP, IMAGES, GAME_LOCS
+from tt2.core.maps import STATS_COORDS, STAGE_COORDS, CLAN_COORDS, ARTIFACT_TIER_MAP, IMAGES, GAME_LOCS, PRESTIGE_COORDS
 from tt2.core.constants import (
     STATS_JSON_TEMPLATE, STATS_GAME_STAT_KEYS, STATS_BOT_STAT_KEYS, LOGGER_FILE_NAME, STATS_DATE_FMT,
-    CLAN_PLAYER_MAP
+    CLAN_PLAYER_MAP, STATS_DATETIME_FMT
 )
 from tt2.core.utilities import convert, diff, click_on_point, match
 
@@ -58,6 +58,12 @@ class Stats:
         # Bot statistics.
         for key in STATS_BOT_STAT_KEYS:
             setattr(self, key, 0)
+
+        # Prestige statistics initializing as empty.
+        self.prestige_statistics = {
+            "prestiges": [],
+            "statistics": {}
+        }
 
         # Artifacts objects initializing as empty.
         self.artifact_statistics = {
@@ -236,6 +242,7 @@ class Stats:
         stats = {
             "game_statistics": {key: getattr(self, key, "None") for key in STATS_GAME_STAT_KEYS},
             "bot_statistics": {key: getattr(self, key, "None") for key in STATS_BOT_STAT_KEYS},
+            "prestige_statistics": self.prestige_statistics,
             "artifact_statistics": self.artifact_statistics,
             "clan_statistics": self.clan_statistics,
             "sessions": sessions
@@ -632,6 +639,11 @@ class Stats:
                 setattr(self, key, value)
                 self.logger.debug("Stats.{attr}: {value}".format(attr=key, value=value))
 
+        prestige_stats = self.content.get("prestige_statistics")
+        if prestige_stats:
+            self.prestige_statistics = prestige_stats
+            self.logger.debug("Prestige Statistics: {prestige_stats}".format(prestige_stats=prestige_stats))
+
         artifact_stats = self.content.get("artifact_statistics")
         if artifact_stats:
             for tier, d in artifact_stats["artifacts"].items():
@@ -738,6 +750,57 @@ class Stats:
         # Do some light parse work here to make sure only digit like characters are present
         # in the returned 'text' variable retrieved through tesseract.
         return ''.join(filter(lambda x: x.isdigit(), text))
+
+    def update_prestige(self, test_image=None):
+        """
+        Right before a prestige takes place, we can generate and parse out some information from the screen
+        present right before a prestige happens. This panel displays the time since the last prestige, we can store
+        this, along with a timestamp for the prestige.
+
+        A final stat can be modified as this is called to determine some overall statistics
+        (# of prestige's, average time for prestige, etc)...
+
+        This method expects the current in game panel to be the one right before a prestige takes place.
+        """
+        self.logger.debug("Attempting to parse out the time since last prestige")
+        region = PRESTIGE_COORDS["time_since"]
+
+        if test_image:
+            image = self._process(scale=3, image=test_image)
+        else:
+            image = self._process(scale=3, current=True, region=region)
+
+        text = pytesseract.image_to_string(image, config='--psm 7')
+        self.logger.debug("Parsed value: {text}".format(text=text))
+
+        # We now have the amount of time that this prestige took place, appending it to the list of prestiges
+        # present in the statistics instance.
+        hours, minutes, seconds = [int(t) for t in text.split(":")]
+        self.prestige_statistics["prestiges"].append({
+            "timestamp": datetime.datetime.now().strftime(STATS_DATETIME_FMT),
+            "time": {
+                "full": text,
+                "total_seconds": datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds).total_seconds()
+            }
+        })
+
+        # Count, Total, Average...
+        # Calculating the average time for each prestige in game for tracked prestiges.
+        cnt = len(self.prestige_statistics["prestiges"])
+        tot = 0
+
+        for tracked in self.prestige_statistics["prestiges"]:
+            tot += tracked["time"]["total_seconds"]
+
+        avg = tot // cnt
+        avg = str(datetime.timedelta(seconds=avg))
+
+        self.prestige_statistics["statistics"] = {
+            "prestige_count": len(self.prestige_statistics["prestiges"]),
+            "average_prestige_time": avg
+        }
+
+        self.write()
 
     def retrieve(self):
         """Attempt to retrieve the stats JSON file with all current data."""
