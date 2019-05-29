@@ -11,6 +11,7 @@ TitanBot is a bot written in python that enables the mobile tap game Tap Titans 
   - [Tools](#tools)
     - [Artifact Parsing](#artifact-parsing)
     - [Clan Parsing](#clan-statistics-parsing)
+    - [Clan Comparison](#clan-statistics-comparison)
 - [Requirements](#requirements)
 - [Setting Up / Running Bot](#setting-up--running-bot)
   - [Exiting/Terminating Bot](#exitingterminating-bot)
@@ -45,6 +46,7 @@ TitanBot is a bot written in python that enables the mobile tap game Tap Titans 
 - Automatically collect daily achievements every X amount of hours.
 - Collect clan crates in game.
 - Store all game/bot/session statistics in a single location to provide some insight into progress made.
+- Store all prestige statistics in a single location to show how many are tracked as well as the time for each.
 - Console/file logging capabilities to provide debugging and bug tracking.
 - Recovery system in place to restart the emulator and game if unrecoverable errors occur.
 
@@ -67,6 +69,16 @@ Note: This command is not completely automated, you will need to open each membe
 ##### Access
 After successfully parsing clan statistics, you will be able to find all of the data in your `stats.json` file
 under the clans key and the newest timestamp present.
+
+### Clan Statistics Comparison
+Allows you to compare two different clan statistics to see how much has changed.
+
+#### Usage
+`python run.py -compare_clan_statistics --keys {key1} {key2}`
+
+##### Access
+After comparing two clan statistics, you'll be able to find all of the data in your `stats.json` file
+under the clans comparisons key and the two timestamps chosen key.
 
 # Requirements
 - Windows Operating System
