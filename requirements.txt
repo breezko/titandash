@@ -9,3 +9,4 @@ pytesseract
 coverage
 keyboard==0.11.0
 GitPython
+Django

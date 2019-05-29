@@ -5,8 +5,8 @@ Make use of this file to manually start a check to parse out all current
 statistics from your current clan.
 """
 from settings import TOOL_LOG_DIR, CONFIG_FILE
-from tt2.core.bot import Bot
-from tt2.core.utilities import make_logger
+from titanbot.tt2.core.bot import Bot
+from titanbot.tt2.core.utilities import make_logger
 
 import datetime
 
