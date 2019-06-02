@@ -52,6 +52,7 @@ TitanBot is a bot written in python that enables the mobile tap game Tap Titans 
 
 ## Tools
 Some tools are provided with the bot, these give some added external functionality that isn't included or initiated at any point during a main bot game loop, either because they take too long, or make more sense as a callable tool rather than part of the bot.
+To access any of these tools, there's a file called `run.py` present in the main repo directory `tt2_py/`. You can call commands directly from here following the instructions below.
 
 ### Artifact Parsing
 Parse all of your artifacts in game, categorizing artifacts in their particular tier (S, A, B, C), and whether or not you currently own an artifact, a count of discovered artifacts is also available.

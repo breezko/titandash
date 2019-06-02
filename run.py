@@ -7,7 +7,16 @@ manually added to the system path so all modules are able to be imported.
 import argparse
 
 from os import sys, getcwd
-sys.path.append("\\".join(getcwd().split("\\")[:-2]))
+
+# tbd: TitanBot Directory.
+# tbbd: TitanBot Bot Directory.
+cwd = getcwd().split("\\")
+tbd = cwd + ["titanbot"]
+tbbd = tbd + ["tt2"]
+
+sys.path.append("\\".join(cwd))
+sys.path.append("\\".join(tbd))
+sys.path.append("\\".join(tbbd))
 
 if __name__ == '__main__':
     # Begin argument setup/build.
