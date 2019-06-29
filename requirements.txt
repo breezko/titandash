@@ -14,4 +14,3 @@ channels
 asgiref
 channels_redis
 pytz
-requests
