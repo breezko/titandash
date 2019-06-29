@@ -9,7 +9,6 @@ def bot(request):
         "BOT": {
             "STAGE_CAP": bot_settings.STAGE_CAP,
             "GAME_VERSION": bot_settings.GAME_VERSION,
-            "TITANDASH_VERSION": titandash_settings.VERSION,
             "TITANBOT_VERSION": bot_settings.BOT_VERSION
         },
     }

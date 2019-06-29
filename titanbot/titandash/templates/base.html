@@ -10,7 +10,7 @@
     <meta name="description" content="TitanDash Dashboard for TapTitans2 Bot.">
     <meta name="author" content="Brett Currie">
 
-    <title>TitanDash {{ BOT.TITANDASH_VERSION }}</title>
+    <title>titandash</title>
 
     <!-- Bootstrap core CSS -->
     <link href="{% static "bootstrap/dist/css/bootstrap.min.css"  %}" rel="stylesheet">
@@ -41,7 +41,7 @@
 
         <!-- Sidebar -->
         <div class="bg-light border-right" id="sidebar-wrapper">
-            <div class="sidebar-heading text-uppercase"><img width="20" height="20" src="{% static "favicon.ico" %}" alt="logo"><small><strong>TitanDash</strong> <code class="text-primary">{{ BOT.TITANDASH_VERSION }}</code></small></div>
+            <div class="sidebar-heading text-uppercase"><img width="20" height="20" src="{% static "favicon.ico" %}" alt="logo"><small><strong>TitanDash</strong></small></div>
             <div class="list-group list-group-flush">
                 <a href="{% url "dashboard" %}" class="list-group-item list-group-item-action bg-light">Dashboard</a>
                 <a href="{% url "sessions" %}" class="list-group-item list-group-item-action bg-light">Sessions</a>
@@ -75,7 +75,10 @@
 
     <footer id="sticky-footer" class="py-4 bg-light border-top">
     <div class="container text-center">
-        <a href="https://titanda.sh"><small class="text-dark">titanda.sh</small></a>
+        <a class="text-dark align-items-center justify-content-center" style="text-decoration: none;" href="https://github.com/becurrie/titandash/commit/{{ BOT.GIT_COMMIT }}">
+            <span class="fab fa-github"></span>
+            <code class="text-dark"><small>{{ BOT.GIT_COMMIT }} ({{ BOT.TITANBOT_VERSION }})</small></code>
+        </a>
     </div>
     </footer>
 
