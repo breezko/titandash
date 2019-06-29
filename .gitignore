@@ -1,10 +1,10 @@
 .idea/
 logs/
-static/
+/titanbot/static/
 config.ini
 stats.json
 __pycache__
-db.sqlite3
+titan.sqlite3
 package.json
 node_modules/
 package-lock.json

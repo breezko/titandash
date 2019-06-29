@@ -83,7 +83,7 @@ ASGI_APPLICATION = 'titanbot.routing.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(DATABASE_DIR, 'titan.sqlite3'),
+        'NAME': os.path.join(BASE_DIR, 'titan.sqlite3'),
     }
 }
 
