@@ -1,6 +1,10 @@
 .idea/
 logs/
+static/
 config.ini
 stats.json
 __pycache__
 db.sqlite3
+package.json
+node_modules/
+package-lock.json

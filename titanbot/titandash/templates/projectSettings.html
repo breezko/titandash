@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block content %}
+    <div id="accordion">
+        <div class="card">
+            <div class="card-header" id="projectSettings">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne">
+                        Bot Settings
+                    </button>
+                    <button id="exportSettingsJson" type="button" class="float-right btn btn-primary">Export JSON<span style="margin-left: 8px;" class="fa fa-file-export"></span></button>
+                </h5>
+            </div>
+
+            <div id="collapseOne" class="collapse show" data-parent="#accordion">
+                <div class="card-body">
+                    <table class="table table-sm table-borderless table-hover">
+                        <tbody>
+                            {% for key, value in BOT.items %}
+                                <tr>
+                                    <td><small>{{ key }}</small></td>
+                                    <td><code class="text-dark"><small>{{ value }}</small></code></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="jsonData" data-json="{{ SETTINGS_JSON }}" style="display: none;"></div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static "js/botSettings.js" %}"></script>
+{% endblock %}
