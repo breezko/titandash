@@ -1335,10 +1335,10 @@ class Bot:
         """
         try:
             self.goto_master()
-            if self.configuration.run_actions_on_start:
-                self.actions(force=True)
             if self.configuration.activate_skills_on_start:
                 self.activate_skills(force=True)
+            if self.configuration.run_actions_on_start:
+                self.actions(force=True)
             if self.configuration.update_stats_on_start:
                 self.update_stats(force=True)
             if self.configuration.daily_achievements_check_on_start:
