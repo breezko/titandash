@@ -36,27 +36,6 @@
 </head>
 
 <body>
-     <!-- Token Modal -->
-    <div class="modal fade" id="tokenModal" tabindex="-1" role="dialog" aria-labelledby="tokenModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="tokenModalLabel">Authentication Token</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <input id="tokenValue" value="{{ TOKEN }}" class="form-control form-control-lg" placeholder="Token...">
-                    <div style="margin: 5px 0 0;" id="tokenModalAlerts"></div>
-                </div>
-                <div class="modal-footer">
-                    <button id="tokenSaveButton" type="button" class="btn btn-primary">Save</button>
-                    <button id="tokenCloseButton" type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
     <div id="alert-container" class="sticky-top dash-sticky-top" style="width: 100%;"></div>
     <div class="d-flex" id="wrapper">
 
@@ -67,7 +46,6 @@
                 <a href="{% url "dashboard" %}" class="list-group-item list-group-item-action bg-light">Dashboard</a>
                 <a href="{% url "sessions" %}" class="list-group-item list-group-item-action bg-light">Sessions</a>
                 <a href="/admin/titandash/configuration/" class="list-group-item list-group-item-action bg-light">Configurations</a>
-                <a href="javascript:void(0);" data-toggle="modal" data-target="#tokenModal" class="list-group-item list-group-item-action bg-light">Token</a>
                 <a href="{% url "statistics" %}" class="list-group-item list-group-item-action bg-light">Statistics</a>
                 <a href="{% url "artifacts" %}" class="list-group-item list-group-item-action bg-light">Artifacts</a>
                 <a href="{% url "all_prestiges" %}" class="list-group-item list-group-item-action bg-light">Prestiges</a>
@@ -116,7 +94,6 @@
 
      <!-- TitanDash Utilities -->
     <script src="{% static "js/utils.js" %}"></script>
-    <script src="{% static "js/token.js" %}"></script>
 
     <!-- Extra JS -->
     {% block extra_js %}{% endblock %}
@@ -126,10 +103,6 @@
         $("#menu-toggle").click(function(e) {
           e.preventDefault();
           $("#wrapper").toggleClass("toggled");
-        });
-
-        $(document).ready(function() {
-            new TokenHandler();
         });
     </script>
 

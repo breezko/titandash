@@ -11,27 +11,17 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 
-from settings import ROOT_DIR, IMAGE_DIR, DATABASE_DIR
+from settings import ROOT_DIR, IMAGE_DIR
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-# Specify django project current version.
-VERSION = "0.0.1"
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = ')jb-aaz&b(=54gft4h(w0wd-9@j-d0n$(0i@87im1f88@j^*=-'
-
-# SECRET BOT KEY. Must match the key present within TitanAuth.
-SECRET_BOT_KEY = "BotSecret"
-SECRET_BOT_VALUE = 'zA!Vnw2r!DAK%4k'
-# TOKEN KEY. Must Match the key present within TitanAuth.
-TOKEN_KEY = "Token"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

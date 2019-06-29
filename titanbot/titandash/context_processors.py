@@ -5,7 +5,6 @@ import json
 
 
 def bot(request):
-    from titandash.models.token import Token
     context = {
         "BOT": {
             "STAGE_CAP": bot_settings.STAGE_CAP,
@@ -13,7 +12,6 @@ def bot(request):
             "TITANDASH_VERSION": titandash_settings.VERSION,
             "TITANBOT_VERSION": bot_settings.BOT_VERSION
         },
-        "TOKEN": Token.objects.grab().token
     }
 
     # Grab all values from the bot's settings file and generate a key: value for each one.

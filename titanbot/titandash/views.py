@@ -3,7 +3,6 @@ from django.http.response import JsonResponse
 
 from titandash.utils import start, pause, stop, resume, title
 from titandash.constants import RUNNING, PAUSED, STOPPED
-from titandash.models.token import Token
 from titandash.models.bot import BotInstance
 from titandash.models.statistics import Session, Statistics, Log, ArtifactStatistics
 from titandash.models.artifact import Artifact
@@ -11,7 +10,6 @@ from titandash.models.configuration import Configuration
 from titandash.models.prestige import Prestige
 from titandash.models.queue import Queue
 from titandash.bot.core.bot import QUEUEABLE_FUNCTIONS, QUEUEABLE_TOOLTIPS
-from titandash.bot.core.authentication.auth import Authenticator
 
 from io import BytesIO
 
@@ -179,10 +177,10 @@ def prestiges(request):
     # GET.
     typ = request.GET.get("type")
     if typ == "PRESTIGES":
-        session = request.GET.get("session")
+        _session = request.GET.get("session")
 
         if session:
-            p = Prestige.objects.filter(session__uuid=session)
+            p = Prestige.objects.filter(session__uuid=_session)
         else:
             p = Prestige.objects.all()
 
@@ -263,37 +261,3 @@ def generate_queued(request):
     Queue.objects.create(function=func)
 
     return JsonResponse(data={"status": "success", "function": title(func)})
-
-
-def update_token(request):
-    """Attempt to update the existing TokenInstance."""
-    try:
-        token = Token.objects.grab()
-        token.token = request.GET.get("token")
-        token.save()
-
-        return JsonResponse(data={"status": "success", "message": "Token has been updated successfully..."})
-    except Exception as exc:
-        return JsonResponse(data={"status": "danger", "message": "An error occurred while saving token: {exc}".format(exc=exc)})
-
-
-def flush_token(request):
-    """Attempt to flush the current token."""
-    token = Token.objects.grab()
-    if token.token is None or token.token == "":
-        return JsonResponse(data={"status": "warning", "message": "No valid token is present to flush."})
-
-    # Retrieve an authentication instance used for tooling.
-    try:
-        response = Authenticator(token=token.token, tooled=True).terminate()
-        if "status" not in response:
-            return JsonResponse(data={"status": "warning", "message": str(response["detail"])})
-
-        # If a successful token termination takes place... We also stop the current BotInstance.
-        # this prevents users from starting the Bot, terminating their instance which would allow someone
-        # else to use it.
-        stop()
-
-        return JsonResponse(data={"status": "success", "message": "Flush: {status}".format(status=response["status"])})
-    except Exception as exc:
-        return JsonResponse(data={"status": "danger", "message": str(exc)})

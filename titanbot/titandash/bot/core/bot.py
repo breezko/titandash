@@ -8,7 +8,6 @@ from settings import STAGE_CAP, GAME_VERSION, BOT_VERSION, GIT_COMMIT
 
 from django.utils import timezone
 
-from titandash.models.token import Token
 from titandash.models.bot import BotInstance
 from titandash.models.queue import Queue
 
@@ -19,8 +18,6 @@ from .stats import Stats
 from .wrap import Images, Locs, Colors
 from .utilities import click_on_point, click_on_image, drag_mouse, make_logger, strfdelta, sleep
 from .decorators import not_in_transition, wait_afterwards
-
-from .authentication.auth import Authenticator
 
 from pyautogui import easeOutQuad, FailSafeException
 
@@ -128,33 +125,6 @@ class Bot:
         else:
             self.logger = make_logger(self.configuration.logging_level, log_file=None)
 
-        # Bootstrap to handle Token Authentication before moving forward.
-        # Bootstrapping also takes care of any exception that need to be raised...
-        # Will return None if failures occur...
-        self.auth = self._bootstrap()
-        if self.auth is None:
-            return
-
-        self.logger.info("=======================================================")
-        self.logger.info("Authentication was successful...")
-        self.logger.info("Auth Token: {auth_token}".format(auth_token=self.auth.token))
-        self.logger.info("Auth Type: {auth_type}".format(auth_type=self.auth.instance["type"]))
-        self.logger.info("Auth Email: {auth_email}".format(auth_email=self.auth.instance["email"]))
-        self.logger.info("Auth Expires: {auth_expires}".format(
-            auth_expires=self.auth.instance["expires"] if self.auth.instance["expires"] else "NEVER"))
-        self.logger.info("=======================================================")
-
-        # Update BotInstance with authentication values.
-        self.instance.auth_type = self.auth.instance["type"]
-        self.instance.auth_token = self.auth.instance["token"]
-        self.instance.auth_email = self.auth.instance["email"]
-        self.instance.auth_expires = self.auth.instance["expires"] if self.auth.instance["expires"] else "NEVER"
-        self.instance.save()
-
-        # Bootstrapping was successful... Every hour, we will check to see if the
-        # authentication has expired... If it has, terminate the bot instance.
-        self.next_auth_check = None
-
         if not self.configuration.enable_logging:
             self.logger.disabled = True
 
@@ -206,7 +176,6 @@ class Bot:
 
         # Setup the datetime objects used initially to determine when the bot
         # will perform specific actions in game.
-        self.calculate_next_auth_check()
         self.calculate_skill_execution()
         self.calculate_next_prestige()
         self.calculate_next_stats_update()
@@ -216,21 +185,6 @@ class Bot:
 
         if start:
             self.run()
-
-    def _bootstrap(self):
-        """Bootstrap BotInstance/Authentication."""
-        try:
-            self.logger.info("Attempting to bootstrap authentication now...")
-            token = Token.objects.grab()
-            if token.token is None:
-                raise NoTokenException("No token instance currently exists.")
-
-            return Authenticator(token=token.token)
-
-        # Catch possible exceptions...
-        except Exception as exc:
-            self.logger.error("Bootstrap Error: {exc}: {message}...".format(exc=type(exc).__name__, message=exc.with_traceback(exc.__traceback__)))
-            self.logger.error("Terminating...")
 
     # Setup Instance/Attr Setters.
     @property
@@ -362,17 +316,6 @@ class Bot:
         self._next_shadow_clone = value
         self.instance.next_shadow_clone = value
         self.instance.save()
-
-    def auth_check(self):
-        """Determine whether or not the authentication instance has expired."""
-        now = timezone.now()
-        if now > self.next_auth_check:
-            self.logger.info("Checking to see if authentication has expired...")
-            if self.auth.expired():
-                self.logger.error("Token: <{token}> has expired...".format(token=self.auth.token))
-                raise TerminationEncountered()
-
-            self.calculate_next_auth_check()
 
     def get_upgrade_artifacts(self, testing=False):
         """
@@ -562,13 +505,6 @@ class Bot:
             self.logger.info("{key} is not currently max level.".format(key=key))
 
         return not_maxed
-
-    def calculate_next_auth_check(self):
-        """Calculate when the next authentication check will take place."""
-        now = timezone.now()
-        dt = now + datetime.timedelta(hours=2)
-        self.next_auth_check = dt
-        self.logger.info("The next authentication check will take place in {time}".format(time=strfdelta(dt - now)))
 
     def calculate_skill_execution(self):
         """Calculate the datetimes that are attached to each skill in game and when they should be activated."""
@@ -1419,7 +1355,7 @@ class Bot:
             # Setup main game loop variables.
             loop_funcs = [
                 "goto_master", "fight_boss", "clan_crate", "tap", "collect_ad", "parse_current_stage", "prestige",
-                "daily_achievement_check", "actions", "activate_skills", "update_stats", "recover", "auth_check"
+                "daily_achievement_check", "actions", "activate_skills", "update_stats", "recover",
             ]
 
             # Generating an initial datetime that will be checked when the bot has been paused.
@@ -1487,9 +1423,6 @@ class Bot:
             self.stats.session.save()
             self.instance.stop()
             Queue.flush()
-
-            # Clean up authentication.
-            self.auth.terminate()
 
             self.logger.info("=================================================================")
             self.logger.info("Session: {session} ended...".format(session=self.stats.session))
