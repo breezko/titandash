@@ -1,8 +1,6 @@
 .idea/
 logs/
 /titanbot/static/
-config.ini
-stats.json
 __pycache__
 titan.sqlite3
 package.json
