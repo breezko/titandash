@@ -14,34 +14,29 @@ from .models.statistics import (
 )
 
 
-# @register(Token)
-# class TokenAdmin(admin.ModelAdmin):
-#     list_display = ["__str__"]
-#
-#
-# @register(BotInstance)
-# class BotInstanceAdmin(admin.ModelAdmin):
-#     list_display = ["__str__", "state", "started", "session"]
-#
-#
-# @register(Prestige)
-# class PrestigeAdmin(admin.ModelAdmin):
-#     list_display = ["__str__", "timestamp", "stage", "time"]
-#
-#
-# @register(Queue)
-# class QueueAdmin(admin.ModelAdmin):
-#     list_display = ["__str__", "created"]
-#
-#
-# @register(Tier)
-# class TierAdmin(admin.ModelAdmin):
-#     pass
-#
-#
-# @register(Artifact)
-# class ArtifactAdmin(admin.ModelAdmin):
-#     list_display = ["__str__", "name", "tier", "key", "image"]
+@register(BotInstance)
+class BotInstanceAdmin(admin.ModelAdmin):
+    list_display = ["__str__", "state", "started", "session"]
+
+
+@register(Prestige)
+class PrestigeAdmin(admin.ModelAdmin):
+    list_display = ["__str__", "timestamp", "stage", "time"]
+
+
+@register(Queue)
+class QueueAdmin(admin.ModelAdmin):
+    list_display = ["__str__", "created"]
+
+
+@register(Tier)
+class TierAdmin(admin.ModelAdmin):
+    pass
+
+
+@register(Artifact)
+class ArtifactAdmin(admin.ModelAdmin):
+    list_display = ["__str__", "name", "tier", "key", "image"]
 
 
 @register(Configuration)
@@ -116,42 +111,38 @@ class ConfigurationAdmin(admin.ModelAdmin):
     )
 
 
-admin.site.unregister(User)
-admin.site.unregister(Group)
+@register(Statistics)
+class StatisticsAdmin(admin.ModelAdmin):
+    filter_horizontal = ["sessions"]
 
 
-# @register(Statistics)
-# class StatisticsAdmin(admin.ModelAdmin):
-#     filter_horizontal = ["sessions"]
-#
-#
-# @register(GameStatistics)
-# class GameStatisticsAdmin(admin.ModelAdmin):
-#     pass
-#
-#
-# @register(BotStatistics)
-# class BotStatisticsAdmin(admin.ModelAdmin):
-#     pass
-#
-#
-# @register(ArtifactStatistics)
-# class ArtifactStatisticsAdmin(admin.ModelAdmin):
-#     filter_horizontal = ["artifacts"]
-#     pass
-#
-#
-# @register(ArtifactOwned)
-# class ArtifactOwnedAdmin(admin.ModelAdmin):
-#     list_display = ["__str__", "owned"]
-#
-#
-# @register(PrestigeStatistics)
-# class PrestigeStatisticsAdmin(admin.ModelAdmin):
-#     pass
-#
-#
-# @register(Session)
-# class SessionAdmin(admin.ModelAdmin):
-#     list_display = ["__str__", "uuid", "version", "start"]
-#     pass
+@register(GameStatistics)
+class GameStatisticsAdmin(admin.ModelAdmin):
+    pass
+
+
+@register(BotStatistics)
+class BotStatisticsAdmin(admin.ModelAdmin):
+    pass
+
+
+@register(ArtifactStatistics)
+class ArtifactStatisticsAdmin(admin.ModelAdmin):
+    filter_horizontal = ["artifacts"]
+    pass
+
+
+@register(ArtifactOwned)
+class ArtifactOwnedAdmin(admin.ModelAdmin):
+    list_display = ["__str__", "owned"]
+
+
+@register(PrestigeStatistics)
+class PrestigeStatisticsAdmin(admin.ModelAdmin):
+    pass
+
+
+@register(Session)
+class SessionAdmin(admin.ModelAdmin):
+    list_display = ["__str__", "uuid", "version", "start"]
+    pass

@@ -60,12 +60,6 @@ class BotInstance(models.Model):
     started = models.DateTimeField(verbose_name="Started", blank=True, null=True, help_text=BOT_HELP_TEXT["started"])
     current_function = models.CharField(verbose_name="Current Function", max_length=255, blank=True, null=True, help_text=BOT_HELP_TEXT["current_function"])
 
-    # Auth Variables...
-    auth_type = models.CharField(verbose_name="Auth Type", max_length=255, blank=True, null=True)
-    auth_token = models.CharField(verbose_name="Auth Token", max_length=255, blank=True, null=True)
-    auth_email = models.CharField(verbose_name="Auth Email", max_length=255, blank=True, null=True)
-    auth_expires = models.CharField(verbose_name="Auth Expires", max_length=255, blank=True, null=True)
-
     # Bot Variables...
     configuration = models.ForeignKey(verbose_name="Current Configuration", to="Configuration", blank=True, null=True, on_delete=models.CASCADE)
     log = models.ForeignKey(verbose_name="Current Log", to=Log, on_delete=models.CASCADE, blank=True, null=True)
@@ -137,10 +131,6 @@ class BotInstance(models.Model):
                 "formatted": self.started.astimezone().strftime(DATETIME_FMT) if self.started else None
             },
             "current_function": self.current_function,
-            "auth_type": self.auth_type.upper() if self.auth_type else None,
-            "auth_token": self.auth_token,
-            "auth_email": self.auth_email,
-            "auth_expires": self.auth_expires,
             "log_file": reverse('log', kwargs={'pk': self.log.pk}) if self.log else "N/A",
             "current_stage": {
                 "stage": self.current_stage,

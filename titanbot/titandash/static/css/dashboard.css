@@ -1,0 +1,61 @@
+body {
+    background-color: white;
+}
+
+.bottom-commit {
+    position: absolute;
+    bottom: 0;
+    margin-left: 13px;
+}
+
+kbd {
+    background-color: #495057;
+}
+
+.card {
+    margin: 15px 5px;
+}
+
+.card-accordion {
+    margin-bottom: 0 !important;
+}
+
+.list-group-settings {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.dt-head-center {
+    text-align: center;
+}
+
+#collapseBotVars, #collapseBotAuth {
+    margin-top: 10px;
+}
+
+.fa-instance {
+    font-size: 11px;
+    margin-right: -4px;
+}
+
+.dashboard-alert {
+    display: none;
+    z-index: 10000;
+    margin: 10px 35px 4px;
+}
+
+.dash-sticky-top {
+    position: fixed !important;
+}
+
+.dash-table tr td:first-child {
+    width: 35%;
+}
+
+.dash-session-table tr td:first-child {
+    width: 35%;
+}
+
+.dash-prestige-table tr td {
+    width: 25%;
+}

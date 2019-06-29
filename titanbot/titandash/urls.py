@@ -21,10 +21,8 @@ urlpatterns = [
     path('logs/<pk>/', views.log, name='log'),
 
     # AJAX URLS.
-    path('ajax/update_token', views.update_token, name='update_token'),
     path('ajax/bot_instance/get', views.instance, name='bot_instance'),
     path('ajax/bot_instance/kill', views.kill_instance, name='kill_instance'),
-    path('ajax/token/flush', views.flush_token, name='flush_token'),
     path('ajax/signal', views.signal, name='signal'),
     path('ajax/prestige', views.prestiges, name='prestiges'),
     path('ajax/game_screen', views.screen, name='game_screen'),
