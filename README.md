@@ -4,6 +4,8 @@
 
 **Automate TapTitans2 using a web application built in Django.**
 
+![dashboard](https://github.com/becurrie/titandash/blob/master/img/dashboard.png)
+
 ## Features
 ### Dashboard
 - Main dashboard screen providing real-time updates and the ability to start, pause or stop the bot and view information about the current session.
