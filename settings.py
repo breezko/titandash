@@ -6,7 +6,7 @@ Store all project specific settings here.
 import os
 import git
 
-BOT_VERSION = "1.0.1"
+BOT_VERSION = "1.1.0"
 
 # Store the root directory of the project. May be used and appended to files in other directories without
 # the need for relative urls being generated to travel to the file.
