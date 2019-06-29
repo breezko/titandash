@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block content %}
+    <div id="accordion">
+        <div class="card">
+            <div class="card-header" id="logFile">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne">{{ log.filename }}</button>
+                </h5>
+            </div>
+
+            <div id="collapseOne" class="collapse show" data-parent="#accordion">
+                <div class="card-body">
+                   <div id="allPrestigeContent" style="width: 100%; overflow: auto; max-height: 800px;">
+                       {% for log in log.data %}
+                           <code class="text-dark text-uppercase">
+                               <small data-line-number="{{ log.num }}">
+                                   {{ log.line }}
+                               </small>
+                           </code>
+                           <br/>
+                       {% endfor %}
+                   </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static "js/log.js" %}"></script>
+{% endblock %}

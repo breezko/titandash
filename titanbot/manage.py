@@ -2,6 +2,15 @@
 import os
 import sys
 
+cwd = os.getcwd().split("\\")
+
+if cwd not in sys.path:
+    sys.path.append("\\".join(cwd))
+if cwd[:-1] not in sys.path:
+    sys.path.append("\\".join(cwd[:-1]))
+
+sys.path.append("\\".join(cwd + ["titandash"]))
+
 if __name__ == '__main__':
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'titanbot.settings')
     try:
