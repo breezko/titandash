@@ -44,10 +44,12 @@ on the dashboard to provide information about what is currently happening while 
 If you haven't already, make sure you have Python 3.7 installed on your system. Once complete, we're going to setup a virtual environment that we can use to install the project dependencies into (This part isn't required, but it's worth keeping your system python separate from the project. If you don't care about this, you can skip this part).
 
 Install the following on your machine with a PowerShell window.
-`pip install virtualenv`
-`mkvirtualenv titandash`
-`<path_to_env>/Scripts/activate.ps1` 
-`pip install -r <path_to_project>/requirements.txt`
+```
+pip install virtualenv
+mkvirtualenv titandash
+<path_to_env>/Scripts/activate.ps1`
+pip install -r <path_to_project>/requirements.txt
+```
 
 This will install the required modules and packages that titandash uses when running.
 
@@ -85,6 +87,7 @@ Redis is used by titandash to allow for WebSocket integration within the web app
 Installing Redis on Windows 10 is very easy now that WSL (Windows Subsystem Linux) is available for simple to setup. Take a look at [this](https://redislabs.com/blog/redis-on-windows-10/) article for an in depth guide if the commands below do not work.
 
 Start by enabling the WSL within Windows, in a PowerShell terminal, type the following command:
+
 `Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux`
 
 You may need to reboot your computer after doing this (You only need to do this one time).
@@ -92,11 +95,14 @@ You may need to reboot your computer after doing this (You only need to do this 
 Afterwards, install Ubuntu within your Windows instance, you can find Ubuntu in the Microsoft Store [here](https://www.microsoft.com/en-us/p/ubuntu-1804/9n9tngvndl3q).
 
 Once Ubuntu is successfully installed, you can open up a Ubuntu instance and type the following commands:
-`sudo apt-get update`
-`sudo apt-get upgrade`
-`sudo apt-get install redis-server`
+```
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install redis-server
+```
 
 Run the following command to make sure the server is running.
+
 `sudo service redis-server restart`
 
 ---
