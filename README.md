@@ -1,6 +1,5 @@
 # TitanDash [![star this repo](http://githubbadges.com/star.svg?user=becurrie&repo=titandash&style=flat)](https://github.com/becurrie/titandash) [![fork this repo](http://githubbadges.com/fork.svg?user=becurrie&repo=titandash&style=flat)](https://github.com/becurrie/titandash/fork)
 
----
 Titandash is a django web application that allows users to control and automate the mobile game TapTitans2. Data is updated in realtime
 on the dashboard to provide information about what is currently happening while the Bot is running.
 
@@ -16,8 +15,6 @@ on the dashboard to provide information about what is currently happening while 
 - View all prestiges and review additional information (average stage, average duration).
 - View all artifact statistics and whether or not you currently own each one.
 
----
-
 ### Bot
 - Activate chosen in game skills on a specified cooldown, with the option to wait for a specific skill before activating others.
 - Automatically level up the sword master, skills and heroes in game with a specific intensity (clicks).
@@ -27,8 +24,6 @@ on the dashboard to provide information about what is currently happening while 
 - Hatch and collect any eggs when they become available.
 - Collect daily achievements when they are completed.
 - Collect daily rewards when they are available.
-
----
 
 ## Requirements
 - Windows 10
@@ -50,15 +45,11 @@ mkvirtualenv titandash
 <path_to_env>/Scripts/activate.ps1`
 ```
 
----
-
 ### PIP Requirements
 After you've activated your virtual environment (or not), you can enter the following command to make sure all the required packages
 are installed.
 
 `pip install -r <path_to_project>/requirements.txt`
-
----
 
 ### NPM
 NPM (Node Package Manager) is used to control which packages are available and collected by Django when running the `collectstatic` command.
@@ -68,23 +59,17 @@ Once you have installed Node, you can open up a PowerShell terminal from your pr
 
 This will create a `node_modules` directory with all the files needed and included when titandash collects static files.
 
----
-
 ### Nox Android Emulator
 The Nox android emulator is currently the only supported emulator, you may be able to get away with using different ones, you just need to make sure that your resolution is set to **480x800**. Some padding is configured within the Bot
 currently and the emulator should be placed at the top-left portion (0, 0) of your screen.
 
 If you're having trouble installing TapTitans2 on your emulator within Nox, see [this](https://i.redd.it/3gv7n15r43t21.jpg) image for some instructions on setting it up.
 
----
-
 ### Tesseract-OCR
 The Tesseract OCR (Optical Character Recognition) software is used by titandash to read image data from the game, into parsable and readable data used by the Bot. You can download the Tesseract installer [here](https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-v5.0.0-alpha.20190623.exe)
 
 The installation for this is pretty straight-forward, follow the prompts and no configuration is required after installing the software.
 You can test that tesseract is installed and working by running the command `tesseract` in your terminal. You should see some help docs printed out.
-
----
 
 ### Redis
 Redis is used by titandash to allow for WebSocket integration within the web application, this lets the Bot update the dashboard in real time.
@@ -110,8 +95,6 @@ Run the following command to make sure the server is running.
 
 `sudo service redis-server restart`
 
----
-
 ### Migrations
 You can run the migrations by running the following command in a terminal targeting the projects `titanbot` directory. This directory contains the `manage.py` file which is used to perform all of the django management commands.
 
@@ -120,14 +103,10 @@ You can run the migrations by running the following command in a terminal target
 #### Upgrading
 When any new updates are released, you can pull down the latest master branch and run this command to ensure your database is up to date. Make sure you backup your database before updating your repository in case something irrversible happens, you'll be able to overwrite the database with your data if this happens.
 
----
-
 ### Static Files
 Static files are needed to ensure the styling and javascript files are available and can be served by the webapp. Following the same instructions as the migrations, run the following command.
 
 `./manage.py collectstatic`
-
----
 
 ## On The Go
 You can optionally install a program like NGrok to allow access to the local dashboard from anywhere!
