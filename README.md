@@ -43,21 +43,26 @@ on the dashboard to provide information about what is currently happening while 
 ### The Environment
 If you haven't already, make sure you have Python 3.7 installed on your system. Once complete, we're going to setup a virtual environment that we can use to install the project dependencies into (This part isn't required, but it's worth keeping your system python separate from the project. If you don't care about this, you can skip this part).
 
-Install the following on your machine with a PowerShell window.
+Install and activate the virtual environment by entering the following on your machine with a PowerShell window.
 ```
 pip install virtualenv
 mkvirtualenv titandash
 <path_to_env>/Scripts/activate.ps1`
-pip install -r <path_to_project>/requirements.txt
 ```
 
-This will install the required modules and packages that titandash uses when running.
+---
+
+### PIP Requirements
+After you've activated your virtual environment (or not), you can enter the following command to make sure all the required packages
+are installed.
+
+`pip install -r <path_to_project>/requirements.txt`
 
 ---
 
 ### NPM
-NPM (Node Package Manager) is used to control which packages are available and collected by Django when running the `collectstatis` command.
-Once you have installed Node, you can open up a PowerShell terminal from your project directory and running the following command.
+NPM (Node Package Manager) is used to control which packages are available and collected by Django when running the `collectstatic` command.
+Once you have installed Node, you can open up a PowerShell terminal from your project directory and run the following command.
 
 `npm install`
 
@@ -84,7 +89,7 @@ You can test that tesseract is installed and working by running the command `tes
 ### Redis
 Redis is used by titandash to allow for WebSocket integration within the web application, this lets the Bot update the dashboard in real time.
 
-Installing Redis on Windows 10 is very easy now that WSL (Windows Subsystem Linux) is available for simple to setup. Take a look at [this](https://redislabs.com/blog/redis-on-windows-10/) article for an in depth guide if the commands below do not work.
+Installing Redis on Windows 10 is very easy now that WSL (Windows Subsystem for Linux) is available and simple to setup. Take a look at [this](https://redislabs.com/blog/redis-on-windows-10/) article for an in depth guide if the commands below do not work.
 
 Start by enabling the WSL within Windows, in a PowerShell terminal, type the following command:
 
