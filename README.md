@@ -1,7 +1,8 @@
 # TitanDash [![star this repo](http://githubbadges.com/star.svg?user=becurrie&repo=titandash&style=flat)](https://github.com/becurrie/titandash) [![fork this repo](http://githubbadges.com/fork.svg?user=becurrie&repo=titandash&style=flat)](https://github.com/becurrie/titandash/fork)
 
-Titandash is a django web application that allows users to control and automate the mobile game TapTitans2. Data is updated in realtime
-on the dashboard to provide information about what is currently happening while the Bot is running.
+![BOS](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/book_of_shadows.png) ![SOTV](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/stone_of_the_valrunes.png) ![FOTS](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/flute_of_the_soloist.png) ![HOS](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/heart_of_storms.png) ![ROC](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/ring_of_calisto.png) ![IG](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/invaders_gjalarhorn.png) ![BOH](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/boots_of_hermes.png)
+
+**Automate TapTitans2 using a web application built in Django.**
 
 ## Features
 ### Dashboard
@@ -33,87 +34,8 @@ on the dashboard to provide information about what is currently happening while 
 - [Redis Server](https://redislabs.com/)
 - [Nox Android Emulator](https://www.bignox.com/)
 
-
 ## Setup
-### The Environment
-If you haven't already, make sure you have Python 3.7 installed on your system. Once complete, we're going to setup a virtual environment that we can use to install the project dependencies into (This part isn't required, but it's worth keeping your system python separate from the project. If you don't care about this, you can skip this part).
-
-Install and activate the virtual environment by entering the following on your machine with a PowerShell window.
-```
-pip install virtualenv
-mkvirtualenv titandash
-<path_to_env>/Scripts/activate.ps1`
-```
-
-### PIP Requirements
-After you've activated your virtual environment (or not), you can enter the following command to make sure all the required packages
-are installed.
-
-`pip install -r <path_to_project>/requirements.txt`
-
-### NPM
-NPM (Node Package Manager) is used to control which packages are available and collected by Django when running the `collectstatic` command.
-Once you have installed Node, you can open up a PowerShell terminal from your project directory and run the following command.
-
-`npm install`
-
-This will create a `node_modules` directory with all the files needed and included when titandash collects static files.
-
-### Nox Android Emulator
-The Nox android emulator is currently the only supported emulator, you may be able to get away with using different ones, you just need to make sure that your resolution is set to **480x800**. Some padding is configured within the Bot
-currently and the emulator should be placed at the top-left portion (0, 0) of your screen.
-
-If you're having trouble installing TapTitans2 on your emulator within Nox, see [this](https://i.redd.it/3gv7n15r43t21.jpg) image for some instructions on setting it up.
-
-### Tesseract-OCR
-The Tesseract OCR (Optical Character Recognition) software is used by titandash to read image data from the game, into parsable and readable data used by the Bot. You can download the Tesseract installer [here](https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-v5.0.0-alpha.20190623.exe)
-
-The installation for this is pretty straight-forward, follow the prompts and no configuration is required after installing the software.
-You can test that tesseract is installed and working by running the command `tesseract` in your terminal. You should see some help docs printed out.
-
-### Redis
-Redis is used by titandash to allow for WebSocket integration within the web application, this lets the Bot update the dashboard in real time.
-
-Installing Redis on Windows 10 is very easy now that WSL (Windows Subsystem for Linux) is available and simple to setup. Take a look at [this](https://redislabs.com/blog/redis-on-windows-10/) article for an in depth guide if the commands below do not work.
-
-Start by enabling the WSL within Windows, in a PowerShell terminal, type the following command:
-
-`Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux`
-
-You may need to reboot your computer after doing this (You only need to do this one time).
-
-Afterwards, install Ubuntu within your Windows instance, you can find Ubuntu in the Microsoft Store [here](https://www.microsoft.com/en-us/p/ubuntu-1804/9n9tngvndl3q).
-
-Once Ubuntu is successfully installed, you can open up a Ubuntu instance and type the following commands:
-```
-sudo apt-get update
-sudo apt-get upgrade
-sudo apt-get install redis-server
-```
-
-Run the following command to make sure the server is running.
-
-`sudo service redis-server restart`
-
-### Migrations
-You can run the migrations by running the following command in a terminal targeting the projects `titanbot` directory. This directory contains the `manage.py` file which is used to perform all of the django management commands.
-
-`./manage.py migrate`
-
-#### Upgrading
-When any new updates are released, you can pull down the latest master branch and run this command to ensure your database is up to date. Make sure you backup your database before updating your repository in case something irrversible happens, you'll be able to overwrite the database with your data if this happens.
-
-### Static Files
-Static files are needed to ensure the styling and javascript files are available and can be served by the webapp. Following the same instructions as the migrations, run the following command.
-
-`./manage.py collectstatic`
-
-## On The Go
-You can optionally install a program like NGrok to allow access to the local dashboard from anywhere!
-
-`ngrok http 8000`
-
-You will now be able to access your dashboard from anywhere!
+Take a look at the [wiki](https://github.com/becurrie/titandash/wiki) for information about setting up and configurating the dependencies and requirements needed to start the dashboard and initiate a new bot instance.
 
 ## Development
 Thanks for taking the time to check out this project. If you have any suggestions, 
