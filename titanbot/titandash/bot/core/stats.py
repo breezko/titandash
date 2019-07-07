@@ -24,8 +24,6 @@ import numpy as np
 import uuid
 import logging
 
-pytesseract.pytesseract.tesseract_cmd = "C:\\Program Files (x86)\\Tesseract-OCR\\tesseract.exe"
-
 
 class Stats:
     """Stats class contains all possible stat values and can be updated dynamically."""
