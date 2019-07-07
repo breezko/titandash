@@ -270,21 +270,6 @@ IMAGES = {
     "CLAN_CRATE": {
         "okay": IMAGE_DIR + "/clan_crate/okay.png",
     },
-    "CLAN_MEMBER": {
-        "clan_chat": IMAGE_DIR + "/clan_member/clan_chat.png",
-        "profile": IMAGE_DIR + "/clan_member/profile.png",
-        "kick": IMAGE_DIR + "/clan_member/kick.png",
-        "demote": IMAGE_DIR + "/clan_member/demote.png",
-        "promote": IMAGE_DIR + "/clan_member/promote.png",
-        "leave_clan": IMAGE_DIR + "/clan_member/leave_clan.png",
-        "ranks": {
-            "recruit": IMAGE_DIR + "/clan_member/recruit.png",
-            "knight": IMAGE_DIR + "/clan_member/knight.png",
-            "captain": IMAGE_DIR + "/clan_member/captain.png",
-            "master": IMAGE_DIR + "/clan_member/master.png",
-            "grand_master": IMAGE_DIR + "/clan_member/grand_master.png"
-        }
-    },
     "EMULATOR": {
         "tap_titans_2": IMAGE_DIR + "/emulator/tap_titans_2.png",
         "restart": IMAGE_DIR + "/emulator/restart.png"
@@ -316,23 +301,6 @@ STAGE_COORDS = {
 PRESTIGE_COORDS = {
     "time_since": (300, 614, 360, 628),
     "advance_start": (145, 557, 202, 577),
-}
-
-# REGION, COERCE, _process/_stage_process.
-# _stage_process will only work with images with WHITE text.
-CLAN_COORDS = {
-    "info": {
-        "name": [(103, 68, 395, 107), str, True],
-        "raid_xp": [(127, 169, 245, 184), int, False],
-        "members": [(352, 171, 373, 184), int, False],
-        "code": [(125, 728, 175, 744), str, True],
-        "required_stage": [(162, 748, 220, 762), int, True],
-        "clan_tickets": [(167, 765, 229, 781), int, True],
-    },
-    "member": {
-        "panel": (30, 90, 450, 775),
-        "username": (80, 341, 333, 378),
-    },
 }
 
 # The regions for each skill present on the master screen if the panel

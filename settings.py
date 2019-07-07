@@ -33,18 +33,9 @@ TEST_DIR = os.path.join(TITANDASH_DIR, "tests")
 TEST_BOT_DIR = os.path.join(TEST_DIR, "bot")
 TEST_IMAGE_DIR = os.path.join(TEST_BOT_DIR, "images")
 
-# Tool directory.
-TOOL_DIR = os.path.join(BOT_DIR, "tools")
-# Tool log directory.
-TOOL_LOG_DIR = os.path.join(TOOL_DIR, "logs")
-
 # Make sure a "logs" directory actually exists.
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
-
-# Make sure a "logs" directory exists for bot tools.
-if not os.path.exists(TOOL_LOG_DIR):
-    os.makedirs(TOOL_LOG_DIR)
 
 # Create a variable that represents the current git commit (sha) of project.
 GIT_COMMIT = git.Repo(ROOT_DIR).head.commit.hexsha
