@@ -322,14 +322,17 @@ class Stats:
         # present in the statistics instance.
         self.logger.info("Attempting to parse hours, minutes and seconds from parsed text.")
         try:
-            hours, minutes, seconds = [int(t) for t in text.split(":")]
+            try:
+                hours, minutes, seconds = [int(t) for t in text.split(":")]
+            except ValueError:
+                hours, minutes, seconds = None, None, None
 
             self.logger.info("Generating new Prestige instance")
 
             artifact = Artifact.objects.get(name=artifact)
             prestige = Prestige.objects.create(
                 timestamp=timezone.now(),
-                time=datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds),
+                time=datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds) if hours else None,
                 stage=current_stage,
                 artifact=artifact,
                 session=self.session)

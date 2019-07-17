@@ -26,7 +26,7 @@ class Prestige(models.Model):
         verbose_name_plural = "Prestiges"
 
     timestamp = models.DateTimeField(verbose_name="Timestamp", auto_now_add=True, help_text=HELP_TEXT["timestamp"])
-    time = models.DurationField(verbose_name="Duration", help_text=HELP_TEXT["time"])
+    time = models.DurationField(verbose_name="Duration", blank=True, null=True, help_text=HELP_TEXT["time"])
     stage = models.PositiveIntegerField(verbose_name="Stage", blank=True, null=True, help_text=HELP_TEXT["stage"])
     artifact = models.ForeignKey(verbose_name="Artifact Upgraded", to="Artifact", on_delete=models.CASCADE, help_text=HELP_TEXT["artifact"])
     session = models.ForeignKey(verbose_name="Session", to="Session", on_delete=models.CASCADE, help_text=HELP_TEXT["session"])
@@ -43,8 +43,8 @@ class Prestige(models.Model):
                 "epoch": int(self.timestamp.timestamp())
             },
             "duration": {
-                "formatted": str(self.time),
-                "seconds": self.time.total_seconds()
+                "formatted": str(self.time) if self.time else "N/A",
+                "seconds": self.time.total_seconds() if self.time else "N/A"
             },
             "artifact": self.artifact.json(),
             "stage": self.stage if self.stage else "N/A",

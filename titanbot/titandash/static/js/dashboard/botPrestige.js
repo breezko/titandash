@@ -16,6 +16,7 @@ let BotPrestigeConsumer = function() {
      * Add a single row to the list of the most recent prestiges.
      */
     this.addTableRow = function(data) {
+        debugger;
         let row = $(`
             <tr data-duration="${data["duration"]["seconds"]}" data-stage="${data["stage"]}" style="display: none;">
                 <td>${data["timestamp"]["formatted"]}</td>
@@ -43,15 +44,19 @@ let BotPrestigeConsumer = function() {
         // Grab average values through an ajax request.
         let totalSeconds = 0;
         let totalStages = 0;
-        let validPrestiges = 0;
         let totalPrestiges = 0;
+        let validStages = 0;
+        let validSeconds = 0;
 
         elements.prestigeTableBody.find("tr").each(function() {
             totalPrestiges += 1;
             if ($(this).data("stage") !== "N/A") {
-                totalSeconds += parseInt($(this).data("duration"));
                 totalStages += parseInt($(this).data("stage"));
-                validPrestiges += 1;
+                validStages += 1;
+            }
+            if ($(this).data("duration") !== "N/A") {
+                totalSeconds += parseInt($(this).data("duration"));
+                validSeconds += 1;
             }
         });
 
@@ -62,7 +67,8 @@ let BotPrestigeConsumer = function() {
                 type: "AVG",
                 totalSeconds: totalSeconds,
                 totalStages: totalStages,
-                totalPrestiges: validPrestiges
+                validSeconds: validSeconds,
+                validStages: validStages
             },
             success: function(data) {
                 elements.prestigeAvgDuration.fadeOut(150, function() {
