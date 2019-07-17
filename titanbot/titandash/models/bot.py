@@ -155,7 +155,7 @@ class BotInstance(models.Model):
             },
             "next_recovery_reset": {
                 "datetime": str(self.next_recovery_reset) if self.next_recovery_reset else None,
-                "formatted": self.next_stats_update.astimezone().strftime(DATETIME_FMT) if self.next_recovery_reset else None
+                "formatted": self.next_recovery_reset.astimezone().strftime(DATETIME_FMT) if self.next_recovery_reset else None
             },
             "next_daily_achievement_check": {
                 "datetime": str(self.next_daily_achievement_check) if self.next_daily_achievement_check else None,
