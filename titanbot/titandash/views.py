@@ -110,17 +110,31 @@ def all_prestiges(request):
     ctx = {"prestiges": [], "avgPrestigeDuration": None, "avgPrestigeStage": None, "totalPrestiges": None}
     p = Prestige.objects.all().order_by("-timestamp")
 
+    p_valid_time = p.filter(time__isnull=False)
+    p_valid_time_cnt = len(p_valid_time)
+
+    p_valid_stage = p.filter(stage__isnull=False)
+    p_valid_stage_cnt = len(p_valid_stage)
+
+    if len(p_valid_time) == 0:
+        p_valid_time_cnt = 1
+    if len(p_valid_stage) == 0:
+        p_valid_stage_cnt = 1
+
     for prestige in p:
-        total_seconds += prestige.time.total_seconds()
-        total_stages += prestige.stage if prestige.stage else 0
         ctx["prestiges"].append(prestige.json())
+
+    for prestige in p_valid_time:
+        total_seconds += prestige.time.total_seconds()
+    for prestige in p_valid_stage:
+        total_stages += prestige.stage
 
     if len(p) == 0:
         ctx["avgPrestigeDuration"] = "00:00:00"
         ctx["avgPrestigeStage"] = 0
     else:
-        ctx["avgPrestigeDuration"] = str(datetime.timedelta(seconds=int(total_seconds / len(p))))
-        ctx["avgPrestigeStage"] = int(total_stages / len(p))
+        ctx["avgPrestigeDuration"] = str(datetime.timedelta(seconds=int(total_seconds / p_valid_time_cnt)))
+        ctx["avgPrestigeStage"] = int(total_stages / p_valid_stage_cnt)
 
     ctx["totalPrestiges"] = p.count()
     ctx["PRESTIGES_JSON"] = json.dumps(ctx)
@@ -201,7 +215,7 @@ def prestiges(request):
             total_times = 0
             total_stages = 0
             for prestige in p.order_by("-timestamp"):
-                total_times += prestige.time.total_seconds()
+                total_times += prestige.time.total_seconds() if prestige.time else 0
                 total_stages += prestige.stage if prestige.stage else 0
                 lst.append(prestige.json())
 
@@ -215,15 +229,18 @@ def prestiges(request):
 
     if typ == "AVG":
         seconds = int(request.GET.get("totalSeconds"))
+        valid_seconds = int(request.GET.get("validSeconds"))
         stages = int(request.GET.get("totalStages"))
-        count = int(request.GET.get("totalPrestiges"))
+        valid_stages = int(request.GET.get("validStages"))
 
-        if count == 0:
-            count = 1
+        if valid_seconds == 0:
+            valid_seconds = 1
+        if valid_stages == 0:
+            valid_stages = 1
 
         return JsonResponse(data={
-            "avgPrestigeTime": str(datetime.timedelta(seconds=int(seconds / count))),
-            "avgPrestigeStage": int(stages / count)
+            "avgPrestigeTime": str(datetime.timedelta(seconds=int(seconds / valid_seconds))),
+            "avgPrestigeStage": int(stages / valid_stages)
         })
 
 
