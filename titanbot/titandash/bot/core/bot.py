@@ -12,65 +12,22 @@ from titandash.models.bot import BotInstance
 from titandash.models.queue import Queue
 
 from .maps import *
-from .constants import STAGE_PARSE_THRESHOLD, FUNCTION_LOOP_TIMEOUT, BOSS_LOOP_TIMEOUT
+from .constants import (
+    STAGE_PARSE_THRESHOLD, FUNCTION_LOOP_TIMEOUT, BOSS_LOOP_TIMEOUT,
+    QUEUEABLE_FUNCTIONS, FORCEABLE_FUNCTIONS
+)
 from .grabber import Grabber
 from .stats import Stats
 from .wrap import Images, Locs, Colors
 from .utilities import click_on_point, click_on_image, drag_mouse, make_logger, strfdelta, sleep
 from .decorators import not_in_transition, wait_afterwards
+from .shortcuts import ShortcutListener
 
 from pyautogui import easeOutQuad, FailSafeException
 
 import datetime
 import random
-
-# Specify any functions that may be forced.
-FORCEABLE_FUNCTIONS = ["recover", "actions", "update_stats", "prestige", "daily_achievement_check", "activate_skills"]
-
-# Specify any functions that be queued. These will be grabbed by the TitanDashboard to provide a user
-# with the ability to manually add functions that will be executed by the Bot.
-QUEUEABLE_FUNCTIONS = FORCEABLE_FUNCTIONS + [
-    "calculate_next_action_run", "calculate_next_stats_update", "calculate_next_daily_achievement_check",
-    "calculate_next_skill_execution", "calculate_next_prestige", "calculate_next_recovery_reset", "update_next_artifact_upgrade",
-    "parse_current_stage", "level_heroes", "level_master", "level_skills", "artifacts", "parse_artifacts", "check_tournament",
-    "daily_rewards", "hatch_eggs", "clan_crate", "collect_ad", "fight_boss", "leave_boss", "tap",
-    "pause", "resume", "terminate", "soft_terminate"
-]
-
-# Also generating a dictionary of tooltips or help texts associated with each queueable function.
-QUEUEABLE_TOOLTIPS = {
-    "calculate_next_action_run": "Calculate the next time that an action run will take place.",
-    "calculate_next_stats_update": "Calculate the next time a statistics update will take place.",
-    "calculate_next_daily_achievement_check": "Calculate the next time a daily achievement check will take place",
-    "calculate_next_skill_execution": "Calculate the next time a skill execution will take place.",
-    "calculate_next_prestige": "Calculate the next time a prestige will take place.",
-    "calculate_next_recovery_reset": "Calculate the next time a recovery reset will tak place.",
-    "update_next_artifact_upgrade": "Update the next artifact that will be upgraded.",
-    "parse_current_stage": "Parse the current stage in game.",
-    "level_heroes": "Level heroes in game.",
-    "level_master": "Level sword master in game.",
-    "level_skills": "Level skills in game.",
-    "artifacts": "Upgrade the specified next artifact upgrade in game.",
-    "parse_artifacts": "Begin a parse of all owned artifacts in game.",
-    "check_tournament": "Check for a tournament and join/prestige if one is available.",
-    "daily_rewards": "Check for daily rewards in game and collect if available.",
-    "hatch_eggs": "Check for eggs in game and hatch them if available.",
-    "clan_crate": "Check for a clan crate in game and collect if available.",
-    "collect_ad": "Collect an ad in game if one is available.",
-    "fight_boss": "Attempt to begin the boss fight in game.",
-    "leave_boss": "Attempt to leave the boss fight in game.",
-    "tap": "Begin tapping process in game.",
-    "pause": "Pause all bot functionality.",
-    "resume": "Resume all bot functionality.",
-    "terminate": "Terminate all bot functionality.",
-    "soft_terminate": "Perform a soft termination of all bot functionality.",
-    "recover": "Force a recovery in game.",
-    "actions": "Force all actions to be executed in game.",
-    "update_stats": "Force a statistics update in game.",
-    "prestige": "Force a prestige in game.",
-    "daily_achievement_check": "Force a daily achievement check in game.",
-    "activate_skills": "Force a skill activation in game."
-}
+import keyboard
 
 
 class NoTokenException(Exception):
@@ -1327,6 +1284,15 @@ class Bot:
         self.soft_shutdown()
         self.TERMINATE = True
 
+    def setup_shortcuts(self):
+        """Setup the keypress shortcut listener."""
+        self.logger.info("Initiating Keyboard (Shortcut) Listener...")
+        # Attach the ShortcutListener callback function that is called whenever a key is pressed.
+        listener = ShortcutListener(logger=self.logger, cooldown=2)
+
+        keyboard.on_press(callback=listener.on_press)
+        keyboard.on_release(callback=listener.on_release)
+
     def run(self):
         """
         A run encapsulates the entire bot runtime process into a single function that conditionally
@@ -1334,6 +1300,7 @@ class Bot:
         automated action within the emulator.
         """
         try:
+            self.setup_shortcuts()
             self.goto_master()
             if self.configuration.activate_skills_on_start:
                 self.activate_skills(force=True)

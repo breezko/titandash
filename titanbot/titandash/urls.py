@@ -12,6 +12,7 @@ urlpatterns = [
     path('all_prestiges', views.all_prestiges, name='all_prestiges'),
     path('artifacts', views.artifacts, name='artifacts'),
     path('statistics', views.statistics, name='statistics'),
+    path('shortcuts', views.shortcuts, name='shortcuts'),
 
     # SESSIONS.
     path('sessions/', views.sessions, name='sessions'),

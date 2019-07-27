@@ -9,7 +9,7 @@ from titandash.models.artifact import Artifact
 from titandash.models.configuration import Configuration
 from titandash.models.prestige import Prestige
 from titandash.models.queue import Queue
-from titandash.bot.core.bot import QUEUEABLE_FUNCTIONS, QUEUEABLE_TOOLTIPS
+from titandash.bot.core.constants import QUEUEABLE_FUNCTIONS, QUEUEABLE_TOOLTIPS, SHORTCUT_FUNCTIONS
 
 from io import BytesIO
 
@@ -87,6 +87,12 @@ def statistics(request):
 def project_settings(request):
     """Main project settings view."""
     return render(request, "projectSettings.html")
+
+
+def shortcuts(request):
+    """View all shortcuts available for use with the bot."""
+    ctx = {"shortcuts": {title(k): v.split("+") for k, v in SHORTCUT_FUNCTIONS.items()}}
+    return render(request, "shortcuts.html", context=ctx)
 
 
 def artifacts(request):
