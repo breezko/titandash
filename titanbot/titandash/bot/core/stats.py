@@ -327,12 +327,16 @@ class Stats:
             except ValueError:
                 hours, minutes, seconds = None, None, None
 
+            delta = None
+            if hours or minutes or seconds:
+                delta = datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
+
             self.logger.info("Generating new Prestige instance")
 
             artifact = Artifact.objects.get(name=artifact)
             prestige = Prestige.objects.create(
                 timestamp=timezone.now(),
-                time=datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds) if hours else None,
+                time=delta,
                 stage=current_stage,
                 artifact=artifact,
                 session=self.session)
