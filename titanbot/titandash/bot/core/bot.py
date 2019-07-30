@@ -740,12 +740,15 @@ class Bot:
             if force or now > self.next_stats_update:
                 self.logger.info("{force_or_initiate} in game statistics update now.".format(force_or_initiate="Forcing" if force else "Beginning"))
 
-                if not self.goto_heroes():
-                    return False
-
                 # Leaving boss fight here so that a stage transition does not take place
                 # in the middle of a stats update.
                 if not self.leave_boss():
+                    return False
+
+                # Sleeping slightly before attempting to goto top of heroes panel so that new hero
+                # levels doesn't cause the 'top' of the panel to disappear after travelling.
+                sleep(3)
+                if not self.goto_heroes():
                     return False
 
                 # Opening the stats panel within the heroes panel in game.
@@ -1337,7 +1340,7 @@ class Bot:
                     # The Queue handles the validation to ensure only available functions can be created...
                     for qfunc in Queue.objects.all().order_by("-created"):
                         if qfunc.function not in QUEUEABLE_FUNCTIONS:
-                            self.logger.info("QueuedFunction: {func} encountered but this function does not exist on the Bot...")
+                            self.logger.info("QueuedFunction: {func} encountered but this function does not exist on the Bot...".format(func=qfunc.function))
                             self.logger.info("Skipping queued function.")
                             qfunc.finish()
                             continue
