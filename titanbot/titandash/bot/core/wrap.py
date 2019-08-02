@@ -37,6 +37,10 @@ class Images:
         self.deal_110_next_attack = None
         self.fight = None
 
+        # CLAN.
+        self.clan = None
+        self.clan_info = None
+
         # DAILY_REWARD.
         self.collect_reward = None
 
@@ -178,11 +182,10 @@ class Locs:
 
         # CLAN_BATTLE.
         self.clan = None
-        self.clan_quest = None
-        self.clan_fight = None
-        self.diamond_okay = None
-        self.clan_leave_screen = None
-        self.clan_quest_exit = None
+        self.clan_info = None
+        self.clan_info_close = None
+        self.clan_results = None
+        self.clan_results_copy = None
 
         # AD.
         self.collect_ad = None

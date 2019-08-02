@@ -12,7 +12,10 @@ from titandash.models.statistics import Statistics, PrestigeStatistics, Artifact
 from titandash.models.artifact import Artifact
 from titandash.models.prestige import Prestige
 
-from .maps import STATS_COORDS, STAGE_COORDS, IMAGES, GAME_LOCS, PRESTIGE_COORDS, ARTIFACT_TIER_MAP, ARTIFACT_MAP
+from .maps import (
+    STATS_COORDS, STAGE_COORDS, IMAGES, GAME_LOCS, PRESTIGE_COORDS,
+    ARTIFACT_TIER_MAP, ARTIFACT_MAP, CLAN_COORDS
+)
 from .utilities import convert
 
 from PIL import Image
@@ -351,3 +354,25 @@ class Stats:
         except Exception as exc:
             self.logger.error("Error occurred while creating a Prestige instance.")
             self.logger.error(str(exc))
+
+    def clan_name_and_code(self, test_images=None):
+        """
+        Parse out the current name and code for the users current clan.
+
+        Assuming that the information panel of their clan is currently open.
+        """
+        self.logger.info("Attempting to parse out current clan name.")
+        region_name = CLAN_COORDS["info_name"]
+        region_code = CLAN_COORDS["info_code"]
+
+        if test_images:
+            image_name = self._process(test_images[0])
+            image_code = self._process(test_images[1])
+        else:
+            image_name = self._process(current=True, region=region_name)
+            image_code = self._process(current=True, region=region_code)
+
+        name = pytesseract.image_to_string(image=image_name, config="--psm 7")
+        code = pytesseract.image_to_string(image=image_code, config="--psm 7")
+
+        return name, code

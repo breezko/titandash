@@ -69,6 +69,7 @@ class BotInstance(models.Model):
     next_stats_update = models.DateTimeField(verbose_name="Next Stats Update", blank=True, null=True)
     next_recovery_reset = models.DateTimeField(verbose_name="Next Recovery Reset", blank=True, null=True)
     next_daily_achievement_check = models.DateTimeField(verbose_name="Next Daily Achievement Check", blank=True, null=True)
+    next_clan_results_parse = models.DateTimeField(verbose_name="Next Clan Results Parse", blank=True, null=True)
     next_heavenly_strike = models.DateTimeField(verbose_name="Next Heavenly Strike", blank=True, null=True)
     next_deadly_strike = models.DateTimeField(verbose_name="Next Deadly Strike", blank=True, null=True)
     next_hand_of_midas = models.DateTimeField(verbose_name="Next Hand Of Midas", blank=True, null=True)
@@ -161,6 +162,10 @@ class BotInstance(models.Model):
                 "datetime": str(self.next_daily_achievement_check) if self.next_daily_achievement_check else None,
                 "formatted": self.next_daily_achievement_check.astimezone().strftime(DATETIME_FMT) if self.next_daily_achievement_check else None
             },
+            "next_clan_results_parse": {
+                "datetime": str(self.next_clan_results_parse) if self.next_clan_results_parse else None,
+                "formatted": self.next_clan_results_parse.astimezone().strftime(DATETIME_FMT) if self.next_clan_results_parse else None
+            },
             "next_heavenly_strike": {
                 "datetime": str(self.next_heavenly_strike) if self.next_heavenly_strike else None,
                 "formatted": self.next_heavenly_strike.astimezone().strftime(DATETIME_FMT) if self.next_heavenly_strike else None
@@ -210,6 +215,7 @@ class BotInstance(models.Model):
         self.next_stats_update = None
         self.next_recovery_reset = None
         self.next_daily_achievement_check = None
+        self.next_clan_results_parse = None
         self.next_deadly_strike = None
         self.next_hand_of_midas = None
         self.next_fire_sword = None

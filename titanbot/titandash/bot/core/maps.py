@@ -41,12 +41,10 @@ GAME_LOCS = {
     },
     "CLAN": {
         "clan": (82, 59),
-        "info": (392, 158),
-        "member_scroll_start": (237, 685),
-        "member_scroll_end": (237, 205),
-        "member_player_stats": (135, 180),
-        "member_raid_stats": (343, 180),
-        "member_close": (424, 121),
+        "clan_info": (392, 158),
+        "clan_info_close": (408, 97),
+        "clan_results": (267, 153),
+        "clan_results_copy": (80, 262),
     },
     "SKILL_BAR": {
         "heavenly_strike": (43, 744),
@@ -274,6 +272,10 @@ IMAGES = {
         "tap_titans_2": IMAGE_DIR + "/emulator/tap_titans_2.png",
         "restart": IMAGE_DIR + "/emulator/restart.png"
     },
+    "CLAN": {
+        "clan": IMAGE_DIR + "/clan/clan.png",
+        "clan_info": IMAGE_DIR + "/clan/clan_info.png",
+    }
 }
 
 # All coordinates mapped to their respective resolutions for grabbing
@@ -314,6 +316,11 @@ MASTER_COORDS = {
         "war_cry": (0, 536, 480, 607),
         "shadow_clone": (0, 612, 480, 682),
     },
+}
+
+CLAN_COORDS = {
+    "info_name": (133, 70, 362, 103),
+    "info_code": (123, 730, 172, 745),
 }
 
 # Set of skills in game.
