@@ -1539,6 +1539,9 @@ class Bot:
             self.instance.stop()
             Queue.flush()
 
+            # Cleanup the keyboard listener to no longer use callbacks.
+            keyboard.unhook_all()
+
             self.logger.info("=================================================================")
             self.logger.info("Session: {session} ended...".format(session=self.stats.session))
             self.logger.info("=================================================================")
