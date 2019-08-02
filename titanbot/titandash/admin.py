@@ -12,6 +12,7 @@ from .models.statistics import (
     Statistics, GameStatistics, BotStatistics, ArtifactOwned, ArtifactStatistics,
     PrestigeStatistics, Session
 )
+from .models.clan import Clan, Member, RaidResult, RaidResultDamage
 
 
 @register(BotInstance)
@@ -63,6 +64,10 @@ class ConfigurationAdmin(admin.ModelAdmin):
         ("Daily Achievement Settings", {
             "classes": ("expanded",),
             "fields": ("enable_daily_achievements", "daily_achievements_check_on_start", "daily_achievements_check_every_x_hours",),
+        }),
+        ("Clan Results Parsing Settings", {
+            "classes": ("expanded",),
+            "fields": ("enable_clan_results_parse", "parse_clan_results_on_start", "parse_clan_results_every_x_minutes",),
         }),
         ("General Action Settings", {
             "classes": ("expanded",),
@@ -146,3 +151,24 @@ class PrestigeStatisticsAdmin(admin.ModelAdmin):
 class SessionAdmin(admin.ModelAdmin):
     list_display = ["__str__", "uuid", "version", "start"]
     pass
+
+
+@register(Clan)
+class ClanAdmin(admin.ModelAdmin):
+    list_display = ["__str__", "name", "code"]
+
+
+@register(Member)
+class MemberAdmin(admin.ModelAdmin):
+    list_display = ["__str__", "name", "code"]
+
+
+@register(RaidResultDamage)
+class RaidResultDamageAdmin(admin.ModelAdmin):
+    list_display = ["__str__", "member", "attacks", "damage"]
+
+
+@register(RaidResult)
+class RaidResultAdmin(admin.ModelAdmin):
+    filter_horizontal = ["attacks"]
+    list_display = ["__str__", "digest", "parsed", "clan"]
