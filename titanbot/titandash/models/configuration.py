@@ -50,6 +50,9 @@ HELP_TEXT = {
     "enable_stats": "Enable the ability to update statistics during game sessions.",
     "update_stats_on_start": "Should stats be updated when a session is started.",
     "update_stats_every_x_minutes": "Determine how many minutes between each stats update in game.",
+    "enable_clan_results_parse": "Enable the ability to have the bot attempt to parse out clan raid results.",
+    "parse_clan_results_on_start": "Should clan results be parsed when a session is started.",
+    "parse_clan_results_every_x_minutes": "Determine how many minutes between each clan results parse attempt.",
     "bottom_artifact": "Specify which artifact is currently at the bottom of the artifact list. This is used to determine when to full stop during artifact parsing.",
     "recovery_check_interval_minutes": "Determine how many minutes between each check that determines if the game has crashed/broke.",
     "recovery_allowed_failures": "How many failures are allowed before the recovery process is started.",
@@ -138,6 +141,11 @@ class Configuration(models.Model):
     enable_stats = models.BooleanField(verbose_name="Enable Stats", default=True, help_text=HELP_TEXT["enable_stats"])
     update_stats_on_start = models.BooleanField(verbose_name="Update Stats On Session Start", default=False, help_text=HELP_TEXT["update_stats_on_start"])
     update_stats_every_x_minutes = models.PositiveIntegerField(verbose_name="Update Stats Every X Minutes", default=60, help_text=HELP_TEXT["update_stats_every_x_minutes"])
+
+    # RAID PARSING Settings.
+    enable_clan_results_parse = models.BooleanField(verbose_name="Enable Clan Results Parsing", default=True, help_text=HELP_TEXT["enable_clan_results_parse"])
+    parse_clan_results_on_start = models.BooleanField(verbose_name="Parse Clan Results On Session Start", default=False, help_text=HELP_TEXT["parse_clan_results_on_start"])
+    parse_clan_results_every_x_minutes = models.PositiveIntegerField(verbose_name="Attempt To Parse Clan Results Every X Minutes", default=300, help_text=HELP_TEXT["parse_clan_results_every_x_minutes"])
 
     # ARTIFACT PARSING Settings.
     bottom_artifact = models.ForeignKey(verbose_name="Bottom Artifact", to="Artifact", related_name='bottom_artifact', on_delete=models.CASCADE, help_text=HELP_TEXT["bottom_artifact"])

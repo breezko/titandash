@@ -18,6 +18,10 @@ urlpatterns = [
     path('sessions/', views.sessions, name='sessions'),
     path('sessions/<uuid>/', views.session, name='session'),
 
+    # RAIDS.
+    path('raids/', views.raids, name='raids'),
+    path('raid/<digest>/', views.raid, name='raid'),
+
     # LOGS.
     path('logs/<pk>/', views.log, name='log'),
 

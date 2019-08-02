@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from titandash.models.bot import BotInstance
 from titandash.models.queue import Queue
+from titandash.models.clan import Clan, RaidResult
 
 from .maps import *
 from .constants import (
@@ -28,6 +29,7 @@ from pyautogui import easeOutQuad, FailSafeException
 import datetime
 import random
 import keyboard
+import win32clipboard
 
 
 class NoTokenException(Exception):
@@ -70,6 +72,7 @@ class Bot:
         self.next_stats_update = None
         self.next_recovery_reset = None
         self.next_daily_achievement_check = None
+        self.next_clan_results_parse = None
         self.next_heavenly_strike = None
         self.next_deadly_strike = None
         self.next_hand_of_midas = None
@@ -106,6 +109,7 @@ class Bot:
         self._next_stats_update = None
         self._next_recovery_reset = None
         self._next_daily_achievement_check = None
+        self._next_clan_results_parse = None
 
         self._next_heavenly_strike = None
         self._next_deadly_strike = None
@@ -139,6 +143,7 @@ class Bot:
         self.calculate_next_action_run()
         self.calculate_next_recovery_reset()
         self.calculate_next_daily_achievement_check()
+        self.calculate_next_clan_result_parse()
 
         if start:
             self.run()
@@ -212,6 +217,16 @@ class Bot:
     def next_daily_achievement_check(self, value):
         self._next_daily_achievement_check = value
         self.instance.next_daily_achievement_check = value
+        self.instance.save()
+
+    @property
+    def next_clan_results_parse(self):
+        return self._next_clan_results_parse
+
+    @next_clan_results_parse.setter
+    def next_clan_results_parse(self, value):
+        self._next_clan_results_parse = value
+        self.instance.next_clan_results_parse = value
         self.instance.save()
 
     @property
@@ -627,6 +642,17 @@ class Bot:
         self.next_daily_achievement_check = dt
         self.logger.info("Daily achievement check in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
+    def calculate_next_clan_result_parse(self):
+        """Calculate when the next clan result parse should take place."""
+        if self.configuration.enable_clan_results_parse:
+            now = timezone.now()
+            dt = now + datetime.timedelta(minutes=self.configuration.parse_clan_results_every_x_minutes)
+            self.next_clan_results_parse = dt
+            self.logger.info("Clan results parse will be initiated in {time}".format(time=strfdelta(dt - now)))
+        else:
+            # If result parsing is disabled, No datetime is configured and will be ignored.
+            self.next_clan_results_parse = None
+
     @not_in_transition
     def level_heroes(self):
         """Perform all actions related to the levelling of all heroes in game."""
@@ -1026,6 +1052,106 @@ class Bot:
                 click_on_point(MASTER_LOCS["screen_top"], clicks=3)
 
     @not_in_transition
+    def clan_results_parse(self, force=False):
+        """
+        If the time threshold has been reached and clan result parsing is enabled, initiate the process
+        in game to grab and parse out the information from the most recent results data taken from the current
+        in game guild.
+
+        A clan results parse will take the following steps:
+
+            - Determine the name and id of the users current clan, if no clan is available or the name and id
+              can not be successfully parsed, the function will exit early.
+
+            - Grab the most recent "results" CSV data and parse it into some readable data points.
+
+            - If the results grabbed are a duplicate (This will happen if the interval between checks takes place
+              multiple times before a different raid is completed).
+
+            - A digested version of the CSV data is used as the primary key for our clan results.
+        """
+        if self.configuration.enable_clan_results_parse:
+            if force or timezone.now() > self.next_clan_results_parse:
+                self.logger.info("{force_or_initiate} clan results parsing now.".format(
+                    force_or_initiate="Forcing" if force else "Beginning"))
+
+                # The clan results parse should take place.
+                if not self.no_panel():
+                    return False
+                if not self.leave_boss():
+                    return False
+
+                # Travel to the clan page and attempt to parse out some generic
+                # information about the current users clan.
+                if not self._open_clan():
+                    return False
+
+                # Is the user in a clan or not? If no clan is present,
+                # exiting early and not attempting to parse.
+                if not self.grabber.search(self.images.clan_info, bool_only=True):
+                    self.logger.warning("It looks like no clan is available to parse, giving up...")
+
+                # A clan is available, begin by opening the information panel
+                # to retrieve some generic information about the clan.
+                click_on_point(self.locs.clan_info, pause=2)
+
+                self.logger.info("Attempting to parse out generic clan information now...")
+
+                # The clan info panel is open and we can attempt to grab the name and code
+                # of the users current clan.
+                name, code = self.stats.clan_name_and_code()
+
+                if not name:
+                    self.logger.warning("Unable to parse clan name, giving up...")
+                    return False
+                if not code:
+                    self.logger.warning("Unable to parse clan code, giving up...")
+
+                # Getting or creating the initial clan objects. Updating the clan name
+                # if it's changed since the last results parse, the code may not change.
+                try:
+                    clan = Clan.objects.get(code=code)
+                except Clan.DoesNotExist:
+                    clan = Clan.objects.create(code=code, name=name)
+
+                if clan.name != name:
+                    self.logger.info("Clan name: {orig_name} has changed to {new_name}".format(orig_name=clan.name, new_name=name))
+                    clan.name = name
+                    clan.save()
+
+                self.logger.info("{clan} was parsed successfully.".format(clan=clan))
+
+                # At this point, the clan has been grabbed, safe to leave the information
+                # panel and begin the retrieval of the current raid results.
+                click_on_point(self.locs.clan_info_close, pause=1)
+
+                self.logger.info("attempting to parse out most recent raid results from clan...")
+
+                click_on_point(self.locs.clan_results, pause=2)
+                click_on_point(self.locs.clan_results_copy, pause=1)
+
+                win32clipboard.OpenClipboard()
+                results = win32clipboard.GetClipboardData()
+                win32clipboard.CloseClipboard()
+
+                if not results:
+                    self.logger.warning("no clipboard data was retrieved, giving up...")
+                    return False
+
+                # Attempting to generate the raid result for logging purposes,
+                # if the raid found already exists, we'll simply return a False
+                # boolean to determine this and log some info.
+                raid = RaidResult.objects.generate(clipboard=results, clan=clan)
+
+                if not raid:
+                    self.logger.warning("The parsed raid results already exist and likely haven't changed since the last parse.")
+                else:
+                    self.logger.info("Successfully parsed and created a new raid result instance.")
+                    self.logger.info("RaidResult: {raid}".format(raid=raid))
+
+                self.calculate_next_clan_result_parse()
+
+    @not_in_transition
     def collect_ad(self):
         """
         Collect ad if one is available on the screen.
@@ -1261,6 +1387,23 @@ class Bot:
 
         return True
 
+    @not_in_transition
+    def _open_clan(self):
+        """Open the clan panel in game."""
+        self.logger.info("attempting to open the clan panel in game.")
+
+        loops = 0
+        while not self.grabber.search(self.images.clan, bool_only=True):
+            if loops == FUNCTION_LOOP_TIMEOUT:
+                self.logger.info("Unable to open clan panel, giving up.")
+                return False
+
+            loops += 1
+            click_on_point(self.locs.clan)
+            sleep(3)
+
+        return True
+
     def soft_shutdown(self):
         """Perform a soft shutdown of the bot, taking care of any cleanup or related tasks."""
         self.logger.info("Beginning soft shutdown now.")
@@ -1313,6 +1456,8 @@ class Bot:
                 self.update_stats(force=True)
             if self.configuration.daily_achievements_check_on_start:
                 self.daily_achievement_check(force=True)
+            if self.configuration.parse_clan_results_on_start:
+                self.clan_results_parse(force=True)
 
             # Update the initial bots artifacts information that is used when upgrading
             # artifacts in game. This is handled after stats have been updated.
@@ -1325,7 +1470,7 @@ class Bot:
             # Setup main game loop variables.
             loop_funcs = [
                 "goto_master", "fight_boss", "clan_crate", "tap", "collect_ad", "parse_current_stage", "prestige",
-                "daily_achievement_check", "actions", "activate_skills", "update_stats", "recover",
+                "daily_achievement_check", "clan_results_parse", "actions", "activate_skills", "update_stats", "recover",
             ]
 
             # Generating an initial datetime that will be checked when the bot has been paused.
