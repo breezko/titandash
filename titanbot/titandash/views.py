@@ -5,6 +5,7 @@ from titandash.utils import start, pause, stop, resume, title
 from titandash.constants import RUNNING, PAUSED, STOPPED
 from titandash.models.bot import BotInstance
 from titandash.models.statistics import Session, Statistics, Log, ArtifactStatistics
+from titandash.models.clan import RaidResult
 from titandash.models.artifact import Artifact
 from titandash.models.configuration import Configuration
 from titandash.models.prestige import Prestige
@@ -284,3 +285,23 @@ def generate_queued(request):
     Queue.objects.create(function=func)
 
     return JsonResponse(data={"status": "success", "function": title(func)})
+
+
+def raids(request):
+    ctx = {"raids": []}
+    for raid_result in RaidResult.objects.all().order_by("parsed"):
+        ctx["raids"].append(raid_result.json())
+
+    ctx["RAIDS_JSON"] = json.dumps(ctx)
+
+    return render(request, "raids/raids.html", context=ctx)
+
+
+def raid(request, digest):
+    ctx = {
+        "raid": RaidResult.objects.get(digest=digest).json()
+    }
+
+    ctx["RAID_JSON"] = json.dumps(ctx)
+
+    return render(request, "raids/raid.html", context=ctx)
