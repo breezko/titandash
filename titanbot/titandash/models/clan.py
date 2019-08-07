@@ -4,6 +4,10 @@ from django.db.models import Sum
 from titandash.constants import DATETIME_FMT
 
 
+class UnParsableRaidResultLine(Exception):
+    pass
+
+
 class Clan(models.Model):
     """Generic clan model. Simply storing the clan name and code."""
     class Meta:
@@ -88,6 +92,33 @@ class RaidResultManager(models.Manager):
 
         Finally, we generate the RaidResult with all associated data.
         """
+        def split_csv(_csv):
+            """
+            Split the clipboard text result by any newline instances. Some malformed data may
+            be present after the proper data when split, so we remove it if it is present.
+            """
+            data = _csv.split("\n")
+
+            if len(data) > 51:
+                return data[1:51]
+            else:
+                return data[1:]
+
+        def parse_line(line):
+            try:
+                _rank, _name, _code, _attacks, _damage = line.split(",")
+            except ValueError:
+                raise UnParsableRaidResultLine
+
+            try:
+                _rank = int(_rank)
+                _attacks = int(_attacks)
+                _damage = int(_damage)
+            except ValueError:
+                raise UnParsableRaidResultLine
+
+            return _rank, _name, _code, _attacks, _damage
+
         def generate_digest(csv):
             """
             Generate a simple digested version of the clipboard content. We use this to simply compare
@@ -96,18 +127,19 @@ class RaidResultManager(models.Manager):
             _dmg = 0
             _atks = 0
 
-            for _res in csv.split("\n")[1:]:
+            for _res in split_csv(csv):
                 try:
-                    _rank, _name, _code, _attacks, _damage = _res.split(",")
-                except ValueError:
+                    _rank, _name, _code, _attacks, _damage = parse_line(_res)
+                except UnParsableRaidResultLine:
                     continue
 
-                _dmg += int(_damage)
-                _atks += int(_attacks)
+                _dmg += _damage
+                _atks += _attacks
 
             return str(_atks) + str(_dmg)
 
         digest = generate_digest(clipboard)
+
         if self.filter(digest=digest).count() > 0:
             return False
 
@@ -116,21 +148,18 @@ class RaidResultManager(models.Manager):
         members = []
         raid_damage_results = []
 
-        for res in clipboard.split("\n")[1:]:
+        for res in split_csv(clipboard):
             try:
-                rank, name, code, attacks, damage = res.split(",")
-
-            # CSV data may be malformed at some points, skipping this loop
-            # iteration if this is encountered.
-            except ValueError:
+                rank, name, code, attacks, damage = parse_line(res)
+            except UnParsableRaidResultLine:
                 continue
 
             # Clan members can easily change their usernames, ensure
             # the name stays up to date in the database if the name changes.
             try:
-                member = Member.objects.get(code=code)
+                member = Member.objects.get(code=code, clan=clan)
             except Member.DoesNotExist:
-                member = Member.objects.create(code=code, name=name)
+                member = Member.objects.create(code=code, name=name, clan=clan)
 
             if member.name != name:
                 member.name = name
