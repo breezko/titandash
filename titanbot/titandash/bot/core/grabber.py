@@ -37,11 +37,11 @@ class Grabber:
         an explicit region is specified to use to take a screen-shot with.
         """
         if not region:
-            self.logger.debug("Taking snapshot of game screen (X1: {x}, Y1: {x}, X2: {x2}, Y2: {y2})".format(
+            self.logger.debug("taking snapshot of game screen (X1: {x}, Y1: {x}, X2: {x2}, Y2: {y2})".format(
                 x=self.x, y=self.y, x2=self.x2, y2=self.y2))
             self.current = region_grabber((self.x, self.y, self.x2, self.y2))
         else:
-            self.logger.debug("Taking snapshot of region in game screen (X1: {x}, Y1: {y}, X2: {x2}, Y2: {y2}".format(
+            self.logger.debug("taking snapshot of region in game screen (X1: {x}, Y1: {y}, X2: {x2}, Y2: {y2}".format(
                 x=region[0], y=region[1], x2=region[2], y2=region[3]))
             self.current = region_grabber(region)
 
@@ -55,7 +55,7 @@ class Grabber:
         of the actual screen.
         """
         if not testing:
-            self.logger.debug("Searching for {image} in game and returning {bool_or_both}".format(
+            self.logger.debug("searching for {image} in game and returning {bool_or_both}".format(
                 image=image, bool_or_both="bool only" if bool_only else "bool and position"))
             self.snapshot()
 
@@ -66,7 +66,7 @@ class Grabber:
             else:
                 position = imagesearcharea(image, self.x, self.y, self.x2, self.y2, precision, self.current)
         except cv2.error:
-            self.logger.error("Error occurred during image search, does the file: {file} exist?".format(file=image))
+            self.logger.error("error occurred during image search, does the file: {file} exist?".format(file=image))
             raise ValueError()
 
         if position[0] != -1:

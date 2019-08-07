@@ -21,7 +21,10 @@ from .props import Props
 from .grabber import Grabber
 from .stats import Stats
 from .wrap import Images, Locs, Colors
-from .utilities import click_on_point, click_on_image, drag_mouse, make_logger, strfdelta, sleep
+from .utilities import (
+    click_on_point, click_on_image, drag_mouse, make_logger, strfdelta,
+    strfnumber, sleep
+)
 from .decorators import not_in_transition, wait_afterwards
 from .shortcuts import ShortcutListener
 
@@ -88,7 +91,7 @@ class Bot:
         self.instance.start(session=self.stats.session)
 
         self.logger.info("=======================================================")
-        self.logger.info("Bot (v{version}) (v{game_version}) [{commit}] has been initialized.".format(version=BOT_VERSION, game_version=GAME_VERSION, commit=GIT_COMMIT[:10]))
+        self.logger.info("bot (v{version}) (v{game_version}) [{commit}] has been initialized.".format(version=BOT_VERSION, game_version=GAME_VERSION, commit=GIT_COMMIT[:10]))
         self.logger.info("[{session}]".format(session=str(self.stats.session)))
         self.logger.info("=======================================================")
 
@@ -123,7 +126,6 @@ class Bot:
         The testing boolean is used to ignore the owned filter so all artifacts will be grabbed
         and can be tested thoroughly.
         """
-        self.logger.info("Retrieving owned artifacts that will be used when upgrading after prestige.")
         lst = []
 
         # Grabbing all configuration values used to determine which artifacts are
@@ -148,24 +150,22 @@ class Bot:
                 continue
             if artifact.artifact.tier.tier in upgrade_tiers or artifact.artifact.name in upgrade_artifacts:
                 lst.append(artifact.artifact.name)
-                self.logger.info("{artifact} WILL be upgraded".format(artifact=artifact))
+                self.logger.debug("{artifact} will be upgraded".format(artifact=artifact))
                 continue
 
         if len(lst) == 0:
-            self.logger.error("No owned artifacts could be found... You must parse artifacts before beginning...")
-            self.logger.info("Attempting to parse artifacts now...")
+            self.logger.error("no owned artifacts were found... parsed artifacts must be present before starting a session.")
+            self.logger.info("attempting to force artifacts parse now...")
             self.parse_artifacts()
             lst = self.get_upgrade_artifacts()
 
             if len(lst) == 0:
-                self.logger.error("No artifacts were parsed... Disabling artifact purchase for this session.")
+                self.logger.error("no artifacts were parsed... disabling artifact purchase for this session.")
                 self.configuration.enable_artifact_purchase = False
 
         if self.configuration.shuffle_artifacts:
-            self.logger.info("SHUFFLING artifacts that should be upgraded")
             random.shuffle(lst)
 
-        self.logger.info("Next ARTIFACT UPGRADE: {artifact}".format(artifact=lst[0]))
         return lst
 
     def update_next_artifact_upgrade(self):
@@ -179,24 +179,26 @@ class Bot:
         self.instance.next_artifact_upgrade = self.next_artifact_upgrade
         self.instance.save()
 
-        self.logger.info("Next artifact_upgrade: {artifact}".format(artifact=self.next_artifact_upgrade))
+        self.logger.info("next artifact upgrade: {artifact}".format(artifact=self.next_artifact_upgrade))
 
     def parse_advanced_start(self, stage_text):
         """Attempt to parse out the advanced start stage value into a valid integer."""
         try:
             stage = int(stage_text)
-            self.logger.info("Advanced start stage: {stage_text} was successfully coerced into an integer: {stage}".format(stage_text=stage_text, stage=stage))
+            self.logger.info("advanced start stage: {stage_text} was successfully coerced into an integer: {stage}".format(
+                stage_text=stage_text, stage=strfnumber(stage)))
 
             if stage > STAGE_CAP:
-                self.logger.info("Stage: {stage} is > the STAGE CAP: {stage_cap}, resetting advanced start".format(stage=stage, stage_cap=STAGE_CAP))
+                self.logger.info("stage: {stage} is greater then {stage_cap}, resetting advanced start now.".format(
+                    stage=strfnumber(stage), stage_cap=STAGE_CAP))
                 self.ADVANCED_START = None
                 return
 
-            self.logger.info("Current advanced start in game was successfully parsed: {stage}".format(stage=stage))
+            self.logger.info("current advanced start in game was successfully parsed: {stage}".format(stage=strfnumber(stage)))
             self.ADVANCED_START = stage
 
         except ValueError:
-            self.logger.error("OCR check could not parse out a proper string from image, resetting advanced start value.")
+            self.logger.warning("ocr check could not parse out a proper string from image, resetting advanced start value...")
             self.ADVANCED_START = None
 
     def parse_current_stage(self):
@@ -211,14 +213,17 @@ class Bot:
         stage_parsed = self.stats.stage_ocr()
         try:
             stage = int(stage_parsed)
-            self.logger.info("Stage '{stage_text}' successfully coerced into an integer: {stage}.".format(stage_text=stage_parsed, stage=stage))
+            self.logger.info("stage {stage_text} was successfully coerced into an integer: {stage}.".format(
+                stage_text=stage_parsed, stage=strfnumber(stage)))
             if stage > STAGE_CAP:
-                self.logger.info("Stage {stage} is > the STAGE_CAP: {stage_cap}, resetting stage variables.".format(stage=stage, stage_cap=STAGE_CAP))
+                self.logger.info("stage {stage} is greater then the stage cap: {stage_cap}, resetting stage variables.".format(
+                    stage=strfnumber(stage), stage_cap=STAGE_CAP))
                 return
 
             if self.ADVANCED_START:
                 if stage < self.ADVANCED_START:
-                    self.logger.info("Stage: {stage} is < the ADVANCED START: {advanced_start}, leaving current stage unchanged".format(stage=stage, advanced_start=self.ADVANCED_START))
+                    self.logger.info("stage: {stage} is less then the advanced start: {advanced_start}, leaving current stage unchanged.".format(
+                        stage=strfnumber(stage), advanced_start=self.ADVANCED_START))
                     return
 
             # Is the stage potentially way greater than the last check? Could mean the parse failed.
@@ -226,23 +231,23 @@ class Bot:
                 diff = stage - self.last_stage
                 if diff > STAGE_PARSE_THRESHOLD:
                     self.logger.info(
-                        "Difference between current stage and last stage passes the stage change threshold: "
-                        "{stage_thresh} ({stage} - {last_stage} = {diff}), resetting stage variables.".format(
-                            stage_thresh=STAGE_PARSE_THRESHOLD, stage=stage, last_stage=self.last_stage, diff=diff))
+                        "difference between current stage and last stage passes the stage change threshold: "
+                        "{stage_thresh} ({stage} - {last_stage} = {diff}), resetting stage variables...".format(
+                            stage_thresh=STAGE_PARSE_THRESHOLD, stage=strfnumber(stage), last_stage=strfnumber(self.last_stage), diff=strfnumber(diff)))
 
                     self.last_stage, self.props.current_stage = None, None
                     return
 
-            self.logger.info("Current stage in game was successfully parsed: {stage}".format(stage=stage))
+            self.logger.info("current stage in game was successfully parsed: {stage}".format(stage=strfnumber(stage)))
             self.last_stage = self.props.current_stage
-            self.logger.info("Last stage has been set to the previous current stage in game: {last_stage}".format(last_stage=self.last_stage))
+            self.logger.info("last stage has been set to the previous current stage in game: {last_stage}".format(last_stage=strfnumber(self.last_stage)))
             self.props.current_stage = stage
 
         # ValueError when the parsed stage isn't able to be coerced.
         except ValueError:
-            self.logger.error("OCR check could not parse out a proper string from image, leaving stage variables as they were before...")
-            self.logger.info("Current Stage: {current}".format(current=self.props.current_stage))
-            self.logger.info("Last Stage: {last}".format(last=self.last_stage))
+            self.logger.error("ocr check could not parse out a proper string from image, leaving stage variables as they were before...")
+            self.logger.info("current stage: {current}".format(current=strfnumber(self.props.current_stage)))
+            self.logger.info("last stage: {last}".format(last=strfnumber(self.last_stage)))
             self.last_stage, self.props.current_stage = None, None
 
     def _order_actions(self):
@@ -253,7 +258,7 @@ class Bot:
             (self.configuration.order_level_skills, self.level_skills, "level_skills"),
         ], key=lambda x: x[0])
 
-        self.logger.info("Actions in game have been ordered successfully.")
+        self.logger.info("actions in game have been ordered successfully...")
         for action in sort:
             self.logger.info("{order} : {action_key}.".format(order=action[0], action_key=action[2]))
 
@@ -270,9 +275,10 @@ class Bot:
             (self.configuration.interval_shadow_clone, "shadow_clone"),
         ], key=lambda x: x[0], reverse=True)
 
-        self.logger.info("Skill intervals have been ordered successfully.")
+        self.logger.info("skill intervals have been ordered successfully.")
         for index, skill in enumerate(sort, start=1):
-            self.logger.info("{index}: {key} ({interval})".format(index=index, key=skill[1], interval=skill[0]))
+            if skill[0] != 0:
+                self.logger.info("{index}: {key} ({interval})".format(index=index, key=skill[1], interval=skill[0]))
 
         return sort
 
@@ -323,14 +329,14 @@ class Bot:
         now = timezone.now()
         dt = now + datetime.timedelta(seconds=self.configuration.prestige_x_minutes * 60)
         self.props.next_prestige = dt
-        self.logger.info("The next timed prestige will take place in {time}".format(time=strfdelta(dt - now)))
+        self.logger.info("the next timed prestige will take place in {time}".format(time=strfdelta(dt - now)))
 
     def calculate_next_recovery_reset(self):
         """Calculate when the next recovery reset will take place."""
         now = timezone.now()
         dt = now + datetime.timedelta(seconds=self.configuration.recovery_check_interval_minutes * 60)
         self.props.next_recovery_reset = dt
-        self.logger.info("The next recovery reset will take place in {time}".format(time=strfdelta(dt - now)))
+        self.logger.info("the next recovery reset will take place in {time}".format(time=strfdelta(dt - now)))
 
     def recover(self, force=False):
         """
@@ -348,29 +354,29 @@ class Bot:
             # restart TapTitans 2.
             self.ERRORS = 0
             if force:
-                self.logger.info("Forcing an in game recovery now and attempting to restart the game.")
+                self.logger.info("forcing an in game recovery now and attempting to restart the game.")
             else:
                 self.logger.info("{amount} errors have occurred before a reset, attempting to restart the game now...".format(amount=self.ERRORS))
 
             sleep(3)
             # Restart the emulator and wait for a while for it to boot up...
-            self.logger.info("Attempting to restart the emulator...")
+            self.logger.info("attempting to restart the emulator...")
             click_on_point(EMULATOR_LOCS[self.configuration.emulator]["close_emulator"], pause=1)
 
             while self.grabber.search(self.images.restart, bool_only=True):
                 found, pos = self.grabber.search(self.images.restart)
                 if found:
-                    self.logger.info("Restarting Emulator Now...")
+                    self.logger.info("restarting emulator now...")
                     click_on_image(self.images.restart, pos, pause=2)
 
-            self.logger.info("Waiting For TapTitans2 Launcher To Become Available...")
+            self.logger.info("waiting for game launcher to become visible...")
             while not self.grabber.search(self.images.tap_titans_2, bool_only=True):
-                self.logger.info("Couldn't find TapTitans2... Waiting and trying again.")
+                self.logger.info("searching...")
                 sleep(2)
 
             found, pos = self.grabber.search(self.images.tap_titans_2)
             if found:
-                self.logger.info("TapTitans2 was found, starting game now...")
+                self.logger.info("game launcher was found, starting game...")
                 click_on_image(self.images.tap_titans_2, pos, pause=40)
 
             self.calculate_next_recovery_reset()
@@ -382,7 +388,7 @@ class Bot:
             now = timezone.now()
             if now > self.props.next_recovery_reset:
                 self.logger.info("{amount}/{needed} errors occurred before reset, recovery will not take place.".format(amount=self.ERRORS, needed=self.configuration.recovery_allowed_failures))
-                self.logger.info("Resetting error count now...")
+                self.logger.info("resetting error count now...")
                 self.ERRORS = 0
                 self.calculate_next_recovery_reset()
 
@@ -398,13 +404,13 @@ class Bot:
         """
         if self.configuration.prestige_x_minutes != 0:
             now = timezone.now()
-            self.logger.info("Timed prestige is enabled, and should take place in {time}".format(time=strfdelta(self.props.next_prestige - now)))
+            self.logger.info("timed prestige is enabled, and should take place in {time}".format(time=strfdelta(self.props.next_prestige - now)))
 
             # Is the hard time limit set? If it is, perform prestige no matter what,
             # otherwise, look at the current stage conditionals present and prestige
             # off of those instead.
             if now > self.props.next_prestige:
-                self.logger.debug("Timed prestige will happen now.")
+                self.logger.debug("timed prestige will happen now.")
                 return True
 
         # Current stage must not be None, using time gate before this check. stage == None is only possible when
@@ -412,14 +418,14 @@ class Bot:
         # the image recognition to fail. OR if the parsed text doesn't pass the validation checks when parse is
         # malformed.
         if self.props.current_stage is None:
-            self.logger.info("Current stage is currently None, no stage conditionals can be checked currently.")
+            self.logger.info("current stage is currently none, no stage conditionals can be checked...")
             return False
 
         # Any other conditionals will be using the current stage attribute of the bot.
         elif self.configuration.prestige_at_stage != 0:
-            self.logger.info("Prestige at specific stage: {current}/{needed}.".format(current=self.props.current_stage, needed=self.configuration.PRESTIGE_AT_STAGE))
+            self.logger.info("prestige at specific stage: {current}/{needed}.".format(current=strfnumber(self.props.current_stage), needed=strfnumber(self.configuration.PRESTIGE_AT_STAGE)))
             if self.props.current_stage >= self.configuration.prestige_at_stage:
-                self.logger.info("Prestige stage has been reached, prestige will happen now.")
+                self.logger.info("prestige stage has been reached, prestige will happen now.")
                 return True
             else:
                 return False
@@ -427,9 +433,9 @@ class Bot:
         # These conditionals are dependant on the highest stage reached taken
         # from the bot's current game statistics.
         if self.configuration.prestige_at_max_stage:
-            self.logger.info("Prestige at max stage: {current}/{needed}.".format(current=self.props.current_stage, needed=self.stats.highest_stage))
+            self.logger.info("prestige at max stage: {current}/{needed}.".format(current=strfnumber(self.props.current_stage), needed=strfnumber(self.stats.highest_stage)))
             if self.props.current_stage >= self.stats.highest_stage:
-                self.logger.info("Max stage has been reached, prestige will happen now.")
+                self.logger.info("max stage has been reached, prestige will happen now.")
                 return True
             else:
                 return False
@@ -437,9 +443,9 @@ class Bot:
         elif self.configuration.prestige_at_max_stage_percent != 0:
             percent = float(self.configuration.prestige_at_max_stage_percent) / 100
             threshold = int(self.stats.highest_stage * percent)
-            self.logger.info("Prestige at max stage percent ({percent}): {current}/{needed}".format(percent=percent, current=self.props.current_stage, needed=threshold))
+            self.logger.info("prestige at max stage percent ({percent}): {current}/{needed}".format(percent=percent, current=strfnumber(self.props.current_stage), needed=strfnumber(threshold)))
             if self.props.current_stage >= threshold:
-                self.logger.info("Percent of max stage has been reached, prestige will happen now.")
+                self.logger.info("percent of max stage has been reached, prestige will happen now.")
                 return True
             else:
                 return False
@@ -452,21 +458,21 @@ class Bot:
         now = timezone.now()
         dt = now + datetime.timedelta(seconds=self.configuration.run_actions_every_x_seconds)
         self.props.next_action_run = dt
-        self.logger.info("Actions in game will be initiated in {time}".format(time=strfdelta(dt - now)))
+        self.logger.info("enabled actions in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     def calculate_next_stats_update(self):
         """Calculate when the next stats update should take place."""
         now = timezone.now()
         dt = now + datetime.timedelta(seconds=self.configuration.update_stats_every_x_minutes * 60)
         self.props.next_stats_update = dt
-        self.logger.info("Statistics update in game will be initiated in {time}".format(time=strfdelta(dt - now)))
+        self.logger.info("in game statistics update in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     def calculate_next_daily_achievement_check(self):
         """Calculate when the next daily achievement check should take place."""
         now = timezone.now()
         dt = now + datetime.timedelta(hours=self.configuration.daily_achievements_check_every_x_hours)
         self.props.next_daily_achievement_check = dt
-        self.logger.info("Daily achievement check in game will be initiated in {time}".format(time=strfdelta(dt - now)))
+        self.logger.info("daily achievement check in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     def calculate_next_clan_result_parse(self):
         """Calculate when the next clan result parse should take place."""
@@ -474,7 +480,7 @@ class Bot:
             now = timezone.now()
             dt = now + datetime.timedelta(minutes=self.configuration.parse_clan_results_every_x_minutes)
             self.props.next_clan_results_parse = dt
-            self.logger.info("Clan results parse will be initiated in {time}".format(time=strfdelta(dt - now)))
+            self.logger.info("clan results parse in game will be initiated in {time}".format(time=strfdelta(dt - now)))
         else:
             # If result parsing is disabled, No datetime is configured and will be ignored.
             self.props.next_clan_results_parse = None
@@ -483,7 +489,7 @@ class Bot:
     def level_heroes(self):
         """Perform all actions related to the levelling of all heroes in game."""
         if self.configuration.enable_heroes:
-            self.logger.info("Hero levelling process is beginning now.")
+            self.logger.info("levelling heroes in game...")
             if not self.goto_heroes(collapsed=False):
                 return False
 
@@ -492,8 +498,7 @@ class Bot:
             # that all heroes below have been maxed out. Instead of scrolling and levelling
             # all heroes, just level the top heroes.
             if self.grabber.search(self.images.max_level, bool_only=True):
-                self.logger.info("A max levelled hero has been found on the top portion of the hero panel.")
-                self.logger.info("Only the first set of heroes will be levelled.")
+                self.logger.info("a max levelled hero has been found! Only first set of heroes will be levelled.")
                 for point in HEROES_LOCS["level_heroes"][::-1][1:9]:
                     click_on_point(point, self.configuration.hero_level_intensity, interval=0.07)
 
@@ -501,7 +506,7 @@ class Bot:
                 return
 
             # Always level the first 5 heroes in the list.
-            self.logger.info("Levelling first five heroes in list.")
+            self.logger.info("levelling the first five heroes available.")
             for point in HEROES_LOCS["level_heroes"][::-1][1:6]:
                 click_on_point(point, self.configuration.hero_level_intensity, interval=0.07)
 
@@ -514,7 +519,7 @@ class Bot:
 
             # Begin level and scrolling process. An assumption is made that all heroes
             # are unlocked, meaning that some un-necessary scrolls may take place.
-            self.logger.info("Scrolling and levelling all heroes.")
+            self.logger.info("scrolling and levelling all heroes present.")
             for i in range(4):
                 for point in HEROES_LOCS["level_heroes"]:
                     click_on_point(point, clicks=self.configuration.hero_level_intensity, interval=0.07)
@@ -527,7 +532,7 @@ class Bot:
     def level_master(self):
         """Perform all actions related to the levelling of the sword master in game."""
         if self.configuration.enable_master:
-            self.logger.info("Levelling the sword master {clicks} time(s)".format(clicks=self.configuration.master_level_intensity))
+            self.logger.info("levelling the sword master {clicks} time(s)".format(clicks=self.configuration.master_level_intensity))
             if not self.goto_master(collapsed=False):
                 return False
 
@@ -537,7 +542,7 @@ class Bot:
     def level_skills(self):
         """Perform all actions related to the levelling of skills in game."""
         if self.configuration.enable_skills:
-            self.logger.info("Levelling up skills in game if they are inactive and not maxed.")
+            self.logger.info("levelling up inactive and un-maxed skills in game.")
             if not self.goto_master(collapsed=False):
                 return False
 
@@ -555,19 +560,20 @@ class Bot:
                     # Take a snapshot right after, and check for the point being the proper color.
                     self.grabber.snapshot()
                     if self.grabber.current.getpixel(color_point) == self.colors.WHITE:
-                        self.logger.info("Levelling max amount of available upgrades for skill: {skill}.".format(skill=skill))
+                        self.logger.info("levelling max amount of available upgrades for skill: {skill}.".format(skill=skill))
                         click_on_point(color_point, pause=0.5)
 
                 # Otherwise, just level up the skills normally using the intensity setting.
                 else:
-                    self.logger.info("Levelling skill: {skill} {intensity} time(s).".format(skill=skill, intensity=self.configuration.skill_level_intensity))
+                    self.logger.info("levelling skill: {skill} {intensity} time(s).".format(skill=skill, intensity=self.configuration.skill_level_intensity))
                     click_on_point(MASTER_LOCS["skills"].get(skill), clicks=self.configuration.skill_level_intensity)
 
     def actions(self, force=False):
         """Perform bot actions in game."""
         now = timezone.now()
         if force or now > self.props.next_action_run:
-            self.logger.info("{force_or_initiate} in game actions now.".format(force_or_initiate="Forcing" if force else "Beginning"))
+            self.logger.info("{force_or_initiate} in game actions now.".format(
+                force_or_initiate="forcing" if force else "beginning"))
             if not self.goto_master(collapsed=False):
                 return
 
@@ -590,7 +596,8 @@ class Bot:
         if self.configuration.enable_stats:
             now = timezone.now()
             if force or now > self.props.next_stats_update:
-                self.logger.info("{force_or_initiate} in game statistics update now.".format(force_or_initiate="Forcing" if force else "Beginning"))
+                self.logger.info("{force_or_initiate} in game statistics update now.".format(
+                    force_or_initiate="forcing" if force else "beginning"))
 
                 # Leaving boss fight here so that a stage transition does not take place
                 # in the middle of a stats update.
@@ -621,7 +628,8 @@ class Bot:
         """Perform a prestige in game."""
         if self.configuration.enable_auto_prestige:
             if self.should_prestige() or force:
-                self.logger.info("{begin_force} prestige process in game now.".format(begin_force="Beginning" if not force else "Forcing"))
+                self.logger.info("{begin_force} prestige process in game now.".format(
+                    begin_force="beginning" if not force else "forcing"))
                 tournament = self.check_tournament()
 
                 # If tournament==True, then a tournament was available to join (which means we prestiged, exit early).
@@ -659,7 +667,8 @@ class Bot:
                     # to reflect that a new max stage has been reached. This allows for
                     if self.props.current_stage and self.stats.highest_stage:
                             if self.props.current_stage > self.stats.highest_stage:
-                                self.logger.info("Current run stage is greater than your previous max stage {max}, forcing a stats update to reflect these changes.".format(max=self.stats.highest_stage))
+                                self.logger.info("current stage is greater than your previous max stage {max}, forcing a stats update to reflect new max stage.".format(
+                                    max=self.stats.highest_stage))
                                 self.update_stats(force=True)
 
                     self.props.current_stage = self.ADVANCED_START
@@ -672,7 +681,7 @@ class Bot:
     @not_in_transition
     def parse_artifacts(self):
         """Begin the process to parse owned artifacts from in game."""
-        self.logger.info("Beginning artifact parsing process.")
+        self.logger.info("beginning artifact parsing process.")
         if not self.leave_boss():
             return False
         if not self.goto_artifacts(collapsed=False):
@@ -685,7 +694,7 @@ class Bot:
     def artifacts(self):
         """Determine whether or not any artifacts should be purchased, and purchase them."""
         if self.configuration.enable_artifact_purchase:
-            self.logger.info("Beginning artifact purchase process.")
+            self.logger.info("beginning artifact purchase process.")
             if not self.goto_artifacts(collapsed=False):
                 return False
 
@@ -697,7 +706,7 @@ class Bot:
             else:
                 artifact = self.owned_artifacts[0]
 
-            self.logger.info("Attempting to upgrade {artifact} now.".format(artifact=artifact))
+            self.logger.info("attempting to upgrade {artifact} now.".format(artifact=artifact))
 
             # Make sure that the proper spend max multiplier is used to fully upgrade an artifact.
             # 1.) Ensure that the percentage (%) multiplier is selected.
@@ -705,7 +714,7 @@ class Bot:
             while not self.grabber.search(self.images.percent_on, bool_only=True):
                 loops += 1
                 if loops == FUNCTION_LOOP_TIMEOUT:
-                    self.logger.warning("Unable to set the artifact buy multiplier to use percentage, skipping.")
+                    self.logger.warning("unable to set the artifact buy multiplier to use percentage, skipping...")
                     self.ERRORS += 1
                     return False
 
@@ -716,7 +725,7 @@ class Bot:
             while not self.grabber.search(self.images.spend_max, bool_only=True):
                 loops += 1
                 if loops == FUNCTION_LOOP_TIMEOUT:
-                    self.logger.warning("Unable to set the spend multiplier to SPEND Max, skipping for now.")
+                    self.logger.warning("unable to set the spend multiplier to spend max... skipping.")
                     self.ERRORS += 1
                     return False
 
@@ -728,7 +737,7 @@ class Bot:
             while not self.grabber.search(ARTIFACT_MAP.get(artifact), bool_only=True):
                 loops += 1
                 if loops == FUNCTION_LOOP_TIMEOUT:
-                    self.logger.warning("Artifact: {artifact} couldn't be found on screen, skipping for now for now.".format(artifact=artifact))
+                    self.logger.warning("artifact: {artifact} couldn't be found on screen... skipping.".format(artifact=artifact))
                     self.ERRORS += 1
                     return False
 
@@ -747,7 +756,7 @@ class Bot:
     def check_tournament(self):
         """Check that a tournament is available/active. Tournament will be joined if a new possible."""
         if self.configuration.enable_tournaments:
-            self.logger.info("Checking for tournament ready to join/in progress.")
+            self.logger.info("checking for tournament ready to join or in progress.")
             if not self.goto_master():
                 return False
 
@@ -768,7 +777,7 @@ class Bot:
                 if found:
                     # A tournament is ready to be joined. First, we must travel the the base
                     # prestige screen, perform a prestige update, before joining the tournament.
-                    self.logger.info("Tournament is available to join. Generating prestige instance before joining.")
+                    self.logger.info("tournament is available to join. generating prestige instance before joining.")
                     click_on_point(MASTER_LOCS["screen_top"], pause=1)
                     if not self.goto_master(collapsed=False, top=False):
                         return False
@@ -784,7 +793,7 @@ class Bot:
                     # Collapsing the master panel... Then attempting to join tournament.
                     self.goto_master()
                     click_on_point(self.locs.tournament, pause=2)
-                    self.logger.info("Joining new tournament now...")
+                    self.logger.info("joining new tournament now...")
                     click_on_point(self.locs.join, pause=2)
                     click_on_point(self.locs.tournament_prestige, pause=35)
                     self.props.current_stage = self.ADVANCED_START
@@ -795,7 +804,7 @@ class Bot:
                 else:
                     collect_found, collect_position = self.grabber.search(self.images.collect_prize)
                     if collect_found:
-                        self.logger.info("Tournament is over, attempting to collect reward now.")
+                        self.logger.info("tournament is over, attempting to collect reward now.")
                         click_on_point(self.locs.collect_prize, pause=2)
                         click_on_point(self.locs.game_middle, clicks=10, interval=0.5)
                         return False
@@ -803,13 +812,13 @@ class Bot:
     @not_in_transition
     def daily_rewards(self):
         """Collect any daily gifts if they're available."""
-        self.logger.info("Checking if any daily rewards are currently available to collect.")
+        self.logger.info("checking if any daily rewards are currently available to collect.")
         if not self.goto_master():
             return False
 
         reward_found = self.grabber.search(self.images.daily_reward, bool_only=True)
         if reward_found:
-            self.logger.info("Daily rewards are available, collecting now.")
+            self.logger.info("daily rewards are available, collecting!")
             click_on_point(self.locs.open_rewards, pause=1)
             click_on_point(self.locs.collect_rewards, pause=1)
             click_on_point(self.locs.game_middle, 5, interval=0.5, pause=1)
@@ -821,13 +830,13 @@ class Bot:
     def hatch_eggs(self):
         """Hatch any eggs if they're available."""
         if self.configuration.enable_egg_collection:
-            self.logger.info("Checking if any eggs are available to be hatched in game.")
+            self.logger.info("checking if any eggs are available to be hatched in game.")
             if not self.goto_master():
                 return False
 
             egg_found = self.grabber.search(self.images.hatch_egg, bool_only=True)
             if egg_found:
-                self.logger.info("Egg(s) are available, collecting now.")
+                self.logger.info("egg(s) are available, collecting!")
                 click_on_point(self.locs.hatch_egg, pause=1)
                 click_on_point(self.locs.game_middle, clicks=5, interval=0.5, pause=1)
 
@@ -842,7 +851,7 @@ class Bot:
         click_on_point(self.locs.clan_crate, pause=0.5)
         found, pos = self.grabber.search(self.images.okay)
         if found:
-            self.logger.info("Clan crate was found, collecting now.")
+            self.logger.info("clan crate is available, collecting!")
             click_on_image(self.images.okay, pos, pause=1)
 
         return found
@@ -853,7 +862,8 @@ class Bot:
         if self.configuration.enable_daily_achievements:
             now = timezone.now()
             if force or now > self.props.next_daily_achievement_check:
-                self.logger.info("{force_or_initiate} daily achievement check now".format(force_or_initiate="Forcing" if force else "Beginning"))
+                self.logger.info("{force_or_initiate} daily achievement check now".format(
+                    force_or_initiate="forcing" if force else "beginning"))
 
                 if not self.goto_master():
                     return False
@@ -868,10 +878,10 @@ class Bot:
                     found, pos = self.grabber.search(self.images.daily_collect)
                     if found:
                         # Collect the achievement reward here.
-                        self.logger.info("Completed daily achievement found, collecting now.")
+                        self.logger.info("completed daily achievement found, collecting now.")
                         click_on_point(pos, pause=2)
                         click_on_point(GAME_LOCS["GAME_SCREEN"]["game_middle"], clicks=5, pause=1)
-                        sleep(2)
+                        sleep(5)
 
                 # Exiting achievements screen now.
                 self.calculate_next_daily_achievement_check()
@@ -899,7 +909,7 @@ class Bot:
         if self.configuration.enable_clan_results_parse:
             if force or timezone.now() > self.props.next_clan_results_parse:
                 self.logger.info("{force_or_initiate} clan results parsing now.".format(
-                    force_or_initiate="Forcing" if force else "Beginning"))
+                    force_or_initiate="forcing" if force else "beginning"))
 
                 # The clan results parse should take place.
                 if not self.no_panel():
@@ -915,23 +925,24 @@ class Bot:
                 # Is the user in a clan or not? If no clan is present,
                 # exiting early and not attempting to parse.
                 if not self.grabber.search(self.images.clan_info, bool_only=True):
-                    self.logger.warning("It looks like no clan is available to parse, giving up...")
+                    self.logger.warning("no clan is available to parse, giving up...")
 
                 # A clan is available, begin by opening the information panel
                 # to retrieve some generic information about the clan.
                 click_on_point(self.locs.clan_info, pause=2)
 
-                self.logger.info("Attempting to parse out generic clan information now...")
+                self.logger.info("attempting to parse out generic clan information now...")
 
                 # The clan info panel is open and we can attempt to grab the name and code
                 # of the users current clan.
                 name, code = self.stats.clan_name_and_code()
 
                 if not name:
-                    self.logger.warning("Unable to parse clan name, giving up...")
+                    self.logger.warning("unable to parse clan name, giving up...")
                     return False
                 if not code:
-                    self.logger.warning("Unable to parse clan code, giving up...")
+                    self.logger.warning("unable to parse clan code, giving up...")
+                    return False
 
                 # Getting or creating the initial clan objects. Updating the clan name
                 # if it's changed since the last results parse, the code may not change.
@@ -941,7 +952,8 @@ class Bot:
                     clan = Clan.objects.create(code=code, name=name)
 
                 if clan.name != name:
-                    self.logger.info("Clan name: {orig_name} has changed to {new_name}".format(orig_name=clan.name, new_name=name))
+                    self.logger.info("clan name: {orig_name} has changed to {new_name}, updating clan information.".format(
+                        orig_name=clan.name, new_name=name))
                     clan.name = name
                     clan.save()
 
@@ -970,10 +982,10 @@ class Bot:
                 raid = RaidResult.objects.generate(clipboard=results, clan=clan)
 
                 if not raid:
-                    self.logger.warning("The parsed raid results already exist and likely haven't changed since the last parse.")
+                    self.logger.warning("the parsed raid results already exist and likely haven't changed since the last parse.")
                 else:
-                    self.logger.info("Successfully parsed and created a new raid result instance.")
-                    self.logger.info("RaidResult: {raid}".format(raid=raid))
+                    self.logger.info("successfully parsed and created a new raid result instance.")
+                    self.logger.info("raid result: {raid}".format(raid=raid))
 
                 self.calculate_next_clan_result_parse()
 
@@ -987,24 +999,24 @@ class Bot:
         """
         while self.grabber.search(self.images.collect_ad, bool_only=True):
             if self.configuration.enable_premium_ad_collect:
-                self.logger.info("Collecting premium ad now.")
+                self.logger.info("collecting premium ad!")
                 click_on_point(self.locs.collect_ad, pause=1, offset=1)
                 self.stats.statistics.bot_statistics.premium_ads += 1
                 self.stats.statistics.bot_statistics.save()
             else:
-                self.logger.info("Declining premium ad now.")
+                self.logger.info("declining premium ad!")
                 click_on_point(self.locs.no_thanks, pause=1, offset=1)
 
     def collect_ad_no_transition(self):
         """Collect ad if one is available on the screen. No transition wrapper is included here."""
         while self.grabber.search(self.images.collect_ad, bool_only=True):
             if self.configuration.enable_premium_ad_collect:
-                self.logger.info("Collecting premium ad now.")
+                self.logger.info("collecting premium ad!")
                 click_on_point(self.locs.collect_ad, pause=1, offset=1)
                 self.stats.statistics.bot_statistics.premium_ads += 1
                 self.stats.statistics.bot_statistics.save()
             else:
-                self.logger.info("Declining premium ad now.")
+                self.logger.info("declining premium ad!")
                 click_on_point(self.locs.no_thanks, pause=1, offset=1)
 
     @not_in_transition
@@ -1014,12 +1026,12 @@ class Bot:
         while True:
             loops += 1
             if loops == BOSS_LOOP_TIMEOUT:
-                self.logger.warning("Error occurred, exiting function early.")
+                self.logger.warning("error occurred, exiting function early.")
                 self.ERRORS += 1
                 return False
 
             if self.grabber.search(self.images.fight_boss, bool_only=True):
-                self.logger.info("Attempting to initiate boss fight in game. ({tries}/{max})".format(tries=loops, max=BOSS_LOOP_TIMEOUT))
+                self.logger.info("attempting to initiate boss fight in game. ({tries}/{max})".format(tries=loops, max=BOSS_LOOP_TIMEOUT))
                 click_on_point(self.locs.fight_boss, pause=0.8)
             else:
                 break
@@ -1033,12 +1045,13 @@ class Bot:
         while True:
             loops += 1
             if loops == BOSS_LOOP_TIMEOUT:
-                self.logger.warning("Error occurred, exiting function early.")
+                self.logger.warning("error occurred, exiting function early.")
                 self.ERRORS += 1
                 return False
 
             if not self.grabber.search(self.images.fight_boss, bool_only=True):
-                self.logger.info("Attempting to leave active boss fight in game. ({tries}/{max})".format(tries=loops, max=BOSS_LOOP_TIMEOUT))
+                self.logger.info("attempting to leave active boss fight in game. ({tries}/{max})".format(
+                    tries=loops, max=BOSS_LOOP_TIMEOUT))
                 click_on_point(self.locs.fight_boss, pause=0.8)
             else:
                 break
@@ -1052,7 +1065,7 @@ class Bot:
     def tap(self):
         """Perform simple screen tap over entire game area."""
         if self.configuration.enable_tapping:
-            self.logger.info("Tapping...")
+            self.logger.info("tapping!")
             taps = 0
             for point in self.locs.fairies_map:
                 taps += 1
@@ -1085,7 +1098,7 @@ class Bot:
             if self.configuration.force_enabled_skills_wait and not force:
                 attr = getattr(self, next_key + skills[0][1])
                 if not now > attr:
-                    self.logger.info("Skills will only be activated once {key} is ready.".format(key=skills[0][1]))
+                    self.logger.info("skills will only be activated once {key} is ready.".format(key=skills[0][1]))
                     self.logger.info("{key} will be ready in {time}.".format(key=skills[0][1], time=strfdelta(attr - now)))
                     return
 
@@ -1093,9 +1106,9 @@ class Bot:
             if not self.no_panel():
                 return False
 
-            self.logger.info("Activating skills in game now.")
+            self.logger.info("activating skills in game now.")
             for skill in skills:
-                self.logger.info("Activating {skill} now.".format(skill=skill[1]))
+                self.logger.info("activating {skill} now.".format(skill=skill[1]))
                 click_on_point(getattr(self.locs, skill[1]), pause=0.2)
 
             # Recalculate all skill execution times.
@@ -1114,13 +1127,14 @@ class Bot:
         NOTE: This function will return a boolean to determine if the panel was reached successfully. This can be
               used to exit out of actions or other pieces of bot functionality early if something has gone wrong.
         """
-        self.logger.debug("attempting to travel to the {collapse_expand} {top_bot} of {panel} panel".format(collapse_expand="collapsed" if collapsed else "expanded", top_bot="top" if top else "bottom", panel=panel))
+        self.logger.debug("attempting to travel to the {collapse_expand} {top_bot} of {panel} panel".format(
+            collapse_expand="collapsed" if collapsed else "expanded", top_bot="top" if top else "bottom", panel=panel))
 
         loops = 0
         while not self.grabber.search(icon, bool_only=True):
             loops += 1
             if loops == FUNCTION_LOOP_TIMEOUT:
-                self.logger.warning("Error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
+                self.logger.warning("error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
                 self.ERRORS += 1
                 return False
 
@@ -1136,7 +1150,7 @@ class Bot:
         while not self.grabber.search(find, bool_only=True):
             loops += 1
             if loops == FUNCTION_LOOP_TIMEOUT:
-                self.logger.warning("Error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
+                self.logger.warning("error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
                 self.ERRORS += 1
                 return False
 
@@ -1152,7 +1166,7 @@ class Bot:
                 while not self.grabber.search(self.images.expand_panel, bool_only=True):
                     loops += 1
                     if loops == FUNCTION_LOOP_TIMEOUT:
-                        self.logger.warning("Unable to collapse panel: {panel}, exiting function early.".format(panel=panel))
+                        self.logger.warning("unable to collapse panel: {panel}, exiting function early.".format(panel=panel))
                         self.ERRORS += 1
                         return False
                     click_on_point(self.locs.expand_collapse_top, pause=1, offset=1)
@@ -1160,7 +1174,7 @@ class Bot:
                 while not self.grabber.search(self.images.collapse_panel, bool_only=True):
                     loops += 1
                     if loops == FUNCTION_LOOP_TIMEOUT:
-                        self.logger.warning("Unable to expand panel: {panel}, exiting function early.".format(panel=panel))
+                        self.logger.warning("unable to expand panel: {panel}, exiting function early.".format(panel=panel))
                         self.ERRORS += 1
                         return False
                     click_on_point(self.locs.expand_collapse_bottom, pause=1, offset=1)
@@ -1199,7 +1213,7 @@ class Bot:
         while self.grabber.search(self.images.exit_panel, bool_only=True):
             loops += 1
             if loops == FUNCTION_LOOP_TIMEOUT:
-                self.logger.warning("Error occurred while attempting to close all panels, exiting early.")
+                self.logger.warning("error occurred while attempting to close all panels, exiting early.")
                 self.ERRORS += 1
                 return False
 
@@ -1221,7 +1235,7 @@ class Bot:
         loops = 0
         while not self.grabber.search(self.images.clan, bool_only=True):
             if loops == FUNCTION_LOOP_TIMEOUT:
-                self.logger.info("Unable to open clan panel, giving up.")
+                self.logger.info("unable to open clan panel, giving up.")
                 return False
 
             loops += 1
@@ -1232,7 +1246,7 @@ class Bot:
 
     def soft_shutdown(self):
         """Perform a soft shutdown of the bot, taking care of any cleanup or related tasks."""
-        self.logger.info("Beginning soft shutdown now.")
+        self.logger.info("beginning soft shutdown...")
         self.update_stats(force=True)
 
     def pause(self):
@@ -1258,7 +1272,7 @@ class Bot:
 
     def setup_shortcuts(self):
         """Setup the keypress shortcut listener."""
-        self.logger.info("Initiating Keyboard (Shortcut) Listener...")
+        self.logger.info("initiating keyboard (shortcut) listener...")
         # Attach the ShortcutListener callback function that is called whenever a key is pressed.
         listener = ShortcutListener(logger=self.logger, cooldown=2)
 
@@ -1311,12 +1325,14 @@ class Bot:
                     # The Queue handles the validation to ensure only available functions can be created...
                     for qfunc in Queue.objects.all().order_by("-created"):
                         if qfunc.function not in QUEUEABLE_FUNCTIONS:
-                            self.logger.info("QueuedFunction: {func} encountered but this function does not exist on the Bot...".format(func=qfunc.function))
-                            self.logger.info("Skipping queued function.")
+                            self.logger.info("queued function: {func} encountered but this function does not exist on the bot... ignoring function!".format(
+                                func=qfunc.function))
+
                             qfunc.finish()
                             continue
 
-                        self.props.current_function = "QUEUED: {func}".format(func=qfunc.function)
+                        self.logger.info("queued function: {func} will be executed!".format(func=qfunc.function))
+                        self.props.current_function = "queued: {func}".format(func=qfunc.function)
 
                         # Executing the function directly on the Bot. We can force the function if it
                         # requires it to be ran manually.
@@ -1333,13 +1349,13 @@ class Bot:
                         qfunc.finish()
 
                     if self.TERMINATE:
-                        self.logger.info("TERMINATE SIGNAL, EXITING.")
+                        self.logger.info("terminate signal encountered, exiting...")
                         raise TerminationEncountered()
                     if self.PAUSE:
                         now = timezone.now()
                         if now > pause_log_dt:
-                            pause_log_dt = now + datetime.timedelta(seconds=5)
-                            self.logger.info("BOT IS PAUSED... WAITING FOR RESUME...")
+                            pause_log_dt = now + datetime.timedelta(seconds=10)
+                            self.logger.info("waiting for resume...")
 
                         # PAUSED. Continue loop forever unless resumed/stopped.
                         continue
@@ -1348,14 +1364,14 @@ class Bot:
                     wait_afterwards(getattr(self, func), floor=self.configuration.post_action_min_wait_time, ceiling=self.configuration.post_action_max_wait_time)()
 
         except TerminationEncountered:
-            self.logger.info("MANUAL TERMINATION ENCOUNTERED: Terminating BotInstance...")
+            self.logger.info("manual termination encountered... terminating!")
         except FailSafeException:
-            self.logger.info("FAILSAFE TERMINATION ENCOUNTERED: Terminating BotInstance...")
+            self.logger.info("failsafe termination encountered: terminating!")
         except Exception as exc:
-            self.logger.critical("CRITICAL ERROR ENCOUNTERED: {exc}".format(exc=exc))
-            self.logger.info("Terminating BotInstance...")
+            self.logger.critical("critical error encountered: {exc}".format(exc=exc))
+            self.logger.info("terminating!")
             if self.configuration.soft_shutdown_on_critical_error:
-                self.logger.info("BotInstance Soft Shutdown is enabled on critical exception... Attempting to shutdown softly now...")
+                self.logger.info("soft shutdown is enabled on critical error... attempting to shutdown softly...")
                 self.soft_shutdown()
 
         # Cleaning up the BotInstance once a termination has been received.
@@ -1369,5 +1385,5 @@ class Bot:
             keyboard.unhook_all()
 
             self.logger.info("=================================================================")
-            self.logger.info("Session: {session} ended...".format(session=self.stats.session))
+            self.logger.info("session: {session} ended...".format(session=self.stats.session))
             self.logger.info("=================================================================")
