@@ -131,7 +131,10 @@ class BotInstance(models.Model):
                 "datetime": str(self.started) if self.started else None,
                 "formatted": self.started.astimezone().strftime(DATETIME_FMT) if self.started else None
             },
-            "current_function": self.current_function,
+            "current_function": {
+                "function": self.current_function,
+                "title": title(self.current_function) if self.current_function else None,
+            },
             "log_file": reverse('log', kwargs={'pk': self.log.pk}) if self.log else "N/A",
             "current_stage": {
                 "stage": self.current_stage,

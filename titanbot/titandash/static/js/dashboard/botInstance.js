@@ -334,10 +334,10 @@ let BotInstanceConsumer = function() {
      */
     this.setupCurrentFunction = function(active, data) {
         if (active) {
-            if (data["current_function"] !== null) {
+            if (data["current_function"]["function"] !== null) {
                 elements.instanceCurrentFunction.closest("tr").animate({opacity: 1}, 200);
-                if (elements.instanceCurrentFunction.text() !== data["current_function"])
-                    elements.instanceCurrentFunction.text(data["current_function"]);
+                if (elements.instanceCurrentFunction.text() !== data["current_function"]["title"])
+                    elements.instanceCurrentFunction.text(data["current_function"]["title"]);
             } else
                 elements.instanceCurrentFunction.closest("tr").animate({opacity: 0.4}, 200);
         }
