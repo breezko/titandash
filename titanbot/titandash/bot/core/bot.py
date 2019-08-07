@@ -15,8 +15,9 @@ from titandash.models.clan import Clan, RaidResult
 from .maps import *
 from .constants import (
     STAGE_PARSE_THRESHOLD, FUNCTION_LOOP_TIMEOUT, BOSS_LOOP_TIMEOUT,
-    QUEUEABLE_FUNCTIONS, FORCEABLE_FUNCTIONS
+    QUEUEABLE_FUNCTIONS, FORCEABLE_FUNCTIONS, PROPERTIES
 )
+from .props import Props
 from .grabber import Grabber
 from .stats import Stats
 from .wrap import Images, Locs, Colors
@@ -30,10 +31,6 @@ import datetime
 import random
 import keyboard
 import win32clipboard
-
-
-class NoTokenException(Exception):
-    pass
 
 
 class TerminationEncountered(Exception):
@@ -63,22 +60,10 @@ class Bot:
         self.instance.configuration = configuration
         self.instance.errors = self.ERRORS
 
-        # Initial property instance attributes. These are confined to their properties/setters
-        # defined below.
-        self.current_stage = None
-        self.current_function = None
-        self.next_action_run = None
-        self.next_prestige = None
-        self.next_stats_update = None
-        self.next_recovery_reset = None
-        self.next_daily_achievement_check = None
-        self.next_clan_results_parse = None
-        self.next_heavenly_strike = None
-        self.next_deadly_strike = None
-        self.next_hand_of_midas = None
-        self.next_fire_sword = None
-        self.next_war_cry = None
-        self.next_shadow_clone = None
+        # Initialize and setup our Props object which is used to handle BotInstance
+        # realtime updates using our Django Channels sockets.
+        self.props = Props(instance=self.instance, props=PROPERTIES)
+        self.last_stage = None
 
         if logger:
             self.logger = logger
@@ -99,24 +84,6 @@ class Bot:
         self.images = Images(IMAGES, self.logger)
         self.locs = Locs(GAME_LOCS, self.logger)
         self.colors = Colors(GAME_COLORS, self.logger)
-
-        self._last_stage = None
-        self._current_stage = None
-        self._current_function = None
-
-        self._next_action_run = None
-        self._next_prestige = None
-        self._next_stats_update = None
-        self._next_recovery_reset = None
-        self._next_daily_achievement_check = None
-        self._next_clan_results_parse = None
-
-        self._next_heavenly_strike = None
-        self._next_deadly_strike = None
-        self._next_hand_of_midas = None
-        self._next_fire_sword = None
-        self._next_war_cry = None
-        self._next_shadow_clone = None
 
         self.instance.start(session=self.stats.session)
 
@@ -147,147 +114,6 @@ class Bot:
 
         if start:
             self.run()
-
-    # Setup Instance/Attr Setters.
-    @property
-    def current_stage(self):
-        return self._current_stage
-
-    @current_stage.setter
-    def current_stage(self, value):
-        self._current_stage = value
-        self.instance.current_stage = value
-        self.instance.save()
-
-    @property
-    def current_function(self):
-        return self._current_function
-
-    @current_function.setter
-    def current_function(self, value):
-        self._current_function = value
-        self.instance.current_function = value
-        self.instance.save()
-
-    @property
-    def next_action_run(self):
-        return self._next_action_run
-
-    @next_action_run.setter
-    def next_action_run(self, value):
-        self._next_action_run = value
-        self.instance.next_action_run = value
-        self.instance.save()
-
-    @property
-    def next_prestige(self):
-        return self._next_prestige
-
-    @next_prestige.setter
-    def next_prestige(self, value):
-        self._next_prestige = value
-        self.instance.next_prestige = value
-        self.instance.save()
-
-    @property
-    def next_stats_update(self):
-        return self._next_stats_update
-
-    @next_stats_update.setter
-    def next_stats_update(self, value):
-        self._next_stats_update = value
-        self.instance.next_stats_update = value
-        self.instance.save()
-
-    @property
-    def next_recovery_reset(self):
-        return self._next_recovery_reset
-
-    @next_recovery_reset.setter
-    def next_recovery_reset(self, value):
-        self._next_recovery_reset = value
-        self.instance.next_recovery_reset = value
-        self.instance.save()
-
-    @property
-    def next_daily_achievement_check(self):
-        return self._next_daily_achievement_check
-
-    @next_daily_achievement_check.setter
-    def next_daily_achievement_check(self, value):
-        self._next_daily_achievement_check = value
-        self.instance.next_daily_achievement_check = value
-        self.instance.save()
-
-    @property
-    def next_clan_results_parse(self):
-        return self._next_clan_results_parse
-
-    @next_clan_results_parse.setter
-    def next_clan_results_parse(self, value):
-        self._next_clan_results_parse = value
-        self.instance.next_clan_results_parse = value
-        self.instance.save()
-
-    @property
-    def next_heavenly_strike(self):
-        return self._next_heavenly_strike
-
-    @next_heavenly_strike.setter
-    def next_heavenly_strike(self, value):
-        self._next_heavenly_strike = value
-        self.instance.next_heavenly_strike = value
-        self.instance.save()
-
-    @property
-    def next_deadly_strike(self):
-        return self._next_deadly_strike
-
-    @next_deadly_strike.setter
-    def next_deadly_strike(self, value):
-        self._next_deadly_strike = value
-        self.instance.next_deadly_strike = value
-        self.instance.save()
-
-    @property
-    def next_hand_of_midas(self):
-        return self._next_deadly_strike
-
-    @next_hand_of_midas.setter
-    def next_hand_of_midas(self, value):
-        self._next_hand_of_midas = value
-        self.instance.next_hand_of_midas = value
-        self.instance.save()
-
-    @property
-    def next_fire_sword(self):
-        return self._next_deadly_strike
-
-    @next_fire_sword.setter
-    def next_fire_sword(self, value):
-        self._next_fire_sword = value
-        self.instance.next_fire_sword = value
-        self.instance.save()
-
-    @property
-    def next_war_cry(self):
-        return self._next_deadly_strike
-
-    @next_war_cry.setter
-    def next_war_cry(self, value):
-        self._next_war_cry = value
-        self.instance.next_war_cry = value
-        self.instance.save()
-
-    @property
-    def next_shadow_clone(self):
-        return self._next_deadly_strike
-
-    @next_shadow_clone.setter
-    def next_shadow_clone(self, value):
-        self._next_shadow_clone = value
-        self.instance.next_shadow_clone = value
-        self.instance.save()
 
     def get_upgrade_artifacts(self, testing=False):
         """
@@ -396,28 +222,28 @@ class Bot:
                     return
 
             # Is the stage potentially way greater than the last check? Could mean the parse failed.
-            if isinstance(self._last_stage, int):
-                diff = stage - self._last_stage
+            if isinstance(self.last_stage, int):
+                diff = stage - self.last_stage
                 if diff > STAGE_PARSE_THRESHOLD:
                     self.logger.info(
                         "Difference between current stage and last stage passes the stage change threshold: "
                         "{stage_thresh} ({stage} - {last_stage} = {diff}), resetting stage variables.".format(
-                            stage_thresh=STAGE_PARSE_THRESHOLD, stage=stage, last_stage=self._last_stage, diff=diff))
+                            stage_thresh=STAGE_PARSE_THRESHOLD, stage=stage, last_stage=self.last_stage, diff=diff))
 
-                    self._last_stage, self.current_stage = None, None
+                    self.last_stage, self.props.current_stage = None, None
                     return
 
             self.logger.info("Current stage in game was successfully parsed: {stage}".format(stage=stage))
-            self._last_stage = self.current_stage
-            self.logger.info("Last stage has been set to the previous current stage in game: {last_stage}".format(last_stage=self._last_stage))
-            self.current_stage = stage
+            self.last_stage = self.props.current_stage
+            self.logger.info("Last stage has been set to the previous current stage in game: {last_stage}".format(last_stage=self.last_stage))
+            self.props.current_stage = stage
 
         # ValueError when the parsed stage isn't able to be coerced.
         except ValueError:
             self.logger.error("OCR check could not parse out a proper string from image, leaving stage variables as they were before...")
-            self.logger.info("Current Stage: {current}".format(current=self.current_stage))
-            self.logger.info("Last Stage: {last}".format(last=self._last_stage))
-            self._last_stage, self.current_stage = None, None
+            self.logger.info("Current Stage: {current}".format(current=self.props.current_stage))
+            self.logger.info("Last Stage: {last}".format(last=self.last_stage))
+            self.last_stage, self.props.current_stage = None, None
 
     def _order_actions(self):
         """Determine order of in game actions. Mapped to their respective functions."""
@@ -487,7 +313,7 @@ class Bot:
             interval = getattr(self.configuration, interval_key, 0)
             if interval != 0:
                 dt = now + datetime.timedelta(seconds=interval)
-                setattr(self, next_key, dt)
+                setattr(self.props, next_key, dt)
                 self.logger.info("{skill} will be activated in {time}.".format(skill=key, time=strfdelta(dt - now)))
             else:
                 self.logger.info("{skill} has interval set to zero, will not be activated.".format(skill=key))
@@ -496,14 +322,14 @@ class Bot:
         """Calculate when the next timed prestige will take place."""
         now = timezone.now()
         dt = now + datetime.timedelta(seconds=self.configuration.prestige_x_minutes * 60)
-        self.next_prestige = dt
+        self.props.next_prestige = dt
         self.logger.info("The next timed prestige will take place in {time}".format(time=strfdelta(dt - now)))
 
     def calculate_next_recovery_reset(self):
         """Calculate when the next recovery reset will take place."""
         now = timezone.now()
         dt = now + datetime.timedelta(seconds=self.configuration.recovery_check_interval_minutes * 60)
-        self.next_recovery_reset = dt
+        self.props.next_recovery_reset = dt
         self.logger.info("The next recovery reset will take place in {time}".format(time=strfdelta(dt - now)))
 
     def recover(self, force=False):
@@ -554,7 +380,7 @@ class Bot:
         # To ensure an un-necessary recovery doesn't take place.
         else:
             now = timezone.now()
-            if now > self.next_recovery_reset:
+            if now > self.props.next_recovery_reset:
                 self.logger.info("{amount}/{needed} errors occurred before reset, recovery will not take place.".format(amount=self.ERRORS, needed=self.configuration.recovery_allowed_failures))
                 self.logger.info("Resetting error count now...")
                 self.ERRORS = 0
@@ -572,12 +398,12 @@ class Bot:
         """
         if self.configuration.prestige_x_minutes != 0:
             now = timezone.now()
-            self.logger.info("Timed prestige is enabled, and should take place in {time}".format(time=strfdelta(self.next_prestige - now)))
+            self.logger.info("Timed prestige is enabled, and should take place in {time}".format(time=strfdelta(self.props.next_prestige - now)))
 
             # Is the hard time limit set? If it is, perform prestige no matter what,
             # otherwise, look at the current stage conditionals present and prestige
             # off of those instead.
-            if now > self.next_prestige:
+            if now > self.props.next_prestige:
                 self.logger.debug("Timed prestige will happen now.")
                 return True
 
@@ -585,14 +411,14 @@ class Bot:
         # OCR checks are failing, this can happen when a stage change happens as the check takes place, causing
         # the image recognition to fail. OR if the parsed text doesn't pass the validation checks when parse is
         # malformed.
-        if self.current_stage is None:
+        if self.props.current_stage is None:
             self.logger.info("Current stage is currently None, no stage conditionals can be checked currently.")
             return False
 
         # Any other conditionals will be using the current stage attribute of the bot.
         elif self.configuration.prestige_at_stage != 0:
-            self.logger.info("Prestige at specific stage: {current}/{needed}.".format(current=self.current_stage, needed=self.configuration.PRESTIGE_AT_STAGE))
-            if self.current_stage >= self.configuration.prestige_at_stage:
+            self.logger.info("Prestige at specific stage: {current}/{needed}.".format(current=self.props.current_stage, needed=self.configuration.PRESTIGE_AT_STAGE))
+            if self.props.current_stage >= self.configuration.prestige_at_stage:
                 self.logger.info("Prestige stage has been reached, prestige will happen now.")
                 return True
             else:
@@ -601,8 +427,8 @@ class Bot:
         # These conditionals are dependant on the highest stage reached taken
         # from the bot's current game statistics.
         if self.configuration.prestige_at_max_stage:
-            self.logger.info("Prestige at max stage: {current}/{needed}.".format(current=self.current_stage, needed=self.stats.highest_stage))
-            if self.current_stage >= self.stats.highest_stage:
+            self.logger.info("Prestige at max stage: {current}/{needed}.".format(current=self.props.current_stage, needed=self.stats.highest_stage))
+            if self.props.current_stage >= self.stats.highest_stage:
                 self.logger.info("Max stage has been reached, prestige will happen now.")
                 return True
             else:
@@ -611,8 +437,8 @@ class Bot:
         elif self.configuration.prestige_at_max_stage_percent != 0:
             percent = float(self.configuration.prestige_at_max_stage_percent) / 100
             threshold = int(self.stats.highest_stage * percent)
-            self.logger.info("Prestige at max stage percent ({percent}): {current}/{needed}".format(percent=percent, current=self.current_stage, needed=threshold))
-            if self.current_stage >= threshold:
+            self.logger.info("Prestige at max stage percent ({percent}): {current}/{needed}".format(percent=percent, current=self.props.current_stage, needed=threshold))
+            if self.props.current_stage >= threshold:
                 self.logger.info("Percent of max stage has been reached, prestige will happen now.")
                 return True
             else:
@@ -625,21 +451,21 @@ class Bot:
         """Calculate when the next set of actions will be ran."""
         now = timezone.now()
         dt = now + datetime.timedelta(seconds=self.configuration.run_actions_every_x_seconds)
-        self.next_action_run = dt
+        self.props.next_action_run = dt
         self.logger.info("Actions in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     def calculate_next_stats_update(self):
         """Calculate when the next stats update should take place."""
         now = timezone.now()
         dt = now + datetime.timedelta(seconds=self.configuration.update_stats_every_x_minutes * 60)
-        self.next_stats_update = dt
+        self.props.next_stats_update = dt
         self.logger.info("Statistics update in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     def calculate_next_daily_achievement_check(self):
         """Calculate when the next daily achievement check should take place."""
         now = timezone.now()
         dt = now + datetime.timedelta(hours=self.configuration.daily_achievements_check_every_x_hours)
-        self.next_daily_achievement_check = dt
+        self.props.next_daily_achievement_check = dt
         self.logger.info("Daily achievement check in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     def calculate_next_clan_result_parse(self):
@@ -647,11 +473,11 @@ class Bot:
         if self.configuration.enable_clan_results_parse:
             now = timezone.now()
             dt = now + datetime.timedelta(minutes=self.configuration.parse_clan_results_every_x_minutes)
-            self.next_clan_results_parse = dt
+            self.props.next_clan_results_parse = dt
             self.logger.info("Clan results parse will be initiated in {time}".format(time=strfdelta(dt - now)))
         else:
             # If result parsing is disabled, No datetime is configured and will be ignored.
-            self.next_clan_results_parse = None
+            self.props.next_clan_results_parse = None
 
     @not_in_transition
     def level_heroes(self):
@@ -740,7 +566,7 @@ class Bot:
     def actions(self, force=False):
         """Perform bot actions in game."""
         now = timezone.now()
-        if force or now > self.next_action_run:
+        if force or now > self.props.next_action_run:
             self.logger.info("{force_or_initiate} in game actions now.".format(force_or_initiate="Forcing" if force else "Beginning"))
             if not self.goto_master(collapsed=False):
                 return
@@ -763,7 +589,7 @@ class Bot:
         """Update the bot stats by travelling to the stats page in the heroes panel and performing OCR update."""
         if self.configuration.enable_stats:
             now = timezone.now()
-            if force or now > self.next_stats_update:
+            if force or now > self.props.next_stats_update:
                 self.logger.info("{force_or_initiate} in game statistics update now.".format(force_or_initiate="Forcing" if force else "Beginning"))
 
                 # Leaving boss fight here so that a stage transition does not take place
@@ -812,7 +638,7 @@ class Bot:
                     # Parsing the advanced start value that is present before a prestige takes place...
                     # This is used to improve stage parsing to not allow values < the advanced start value.
                     self.parse_advanced_start(self.stats.update_prestige(
-                        artifact=self.next_artifact_upgrade, current_stage=self.current_stage))
+                        artifact=self.next_artifact_upgrade, current_stage=self.props.current_stage))
 
                     click_on_point(MASTER_LOCS["prestige_confirm"], pause=1)
                     # Waiting for a while after prestiging, this reduces the chance
@@ -831,12 +657,12 @@ class Bot:
 
                     # If the current stage currently is greater than the current max stage, lets update our stats
                     # to reflect that a new max stage has been reached. This allows for
-                    if self.current_stage and self.stats.highest_stage:
-                            if self.current_stage > self.stats.highest_stage:
+                    if self.props.current_stage and self.stats.highest_stage:
+                            if self.props.current_stage > self.stats.highest_stage:
                                 self.logger.info("Current run stage is greater than your previous max stage {max}, forcing a stats update to reflect these changes.".format(max=self.stats.highest_stage))
                                 self.update_stats(force=True)
 
-                    self.current_stage = self.ADVANCED_START
+                    self.props.current_stage = self.ADVANCED_START
 
                     # Additional checks can take place during a prestige.
                     self.artifacts()
@@ -952,7 +778,7 @@ class Bot:
                     if prestige_found:
                         # Parsing the advanced start value that is present before a prestige takes place...
                         # This is used to improve stage parsing to not allow values < the advanced start value.
-                        self.parse_advanced_start(self.stats.update_prestige(current_stage=self.current_stage, artifact=self.next_artifact_upgrade))
+                        self.parse_advanced_start(self.stats.update_prestige(current_stage=self.props.current_stage, artifact=self.next_artifact_upgrade))
                         click_on_point(MASTER_LOCS["screen_top"], pause=1)
 
                     # Collapsing the master panel... Then attempting to join tournament.
@@ -961,7 +787,7 @@ class Bot:
                     self.logger.info("Joining new tournament now...")
                     click_on_point(self.locs.join, pause=2)
                     click_on_point(self.locs.tournament_prestige, pause=35)
-                    self.current_stage = self.ADVANCED_START
+                    self.props.current_stage = self.ADVANCED_START
 
                     return True
 
@@ -1026,7 +852,7 @@ class Bot:
         """Perform a check for any completed daily achievements, collecting them as long as any are present."""
         if self.configuration.enable_daily_achievements:
             now = timezone.now()
-            if force or now > self.next_daily_achievement_check:
+            if force or now > self.props.next_daily_achievement_check:
                 self.logger.info("{force_or_initiate} daily achievement check now".format(force_or_initiate="Forcing" if force else "Beginning"))
 
                 if not self.goto_master():
@@ -1071,7 +897,7 @@ class Bot:
             - A digested version of the CSV data is used as the primary key for our clan results.
         """
         if self.configuration.enable_clan_results_parse:
-            if force or timezone.now() > self.next_clan_results_parse:
+            if force or timezone.now() > self.props.next_clan_results_parse:
                 self.logger.info("{force_or_initiate} clan results parsing now.".format(
                     force_or_initiate="Forcing" if force else "Beginning"))
 
@@ -1490,7 +1316,7 @@ class Bot:
                             qfunc.finish()
                             continue
 
-                        self.current_function = "QUEUED: {func}".format(func=qfunc.function)
+                        self.props.current_function = "QUEUED: {func}".format(func=qfunc.function)
 
                         # Executing the function directly on the Bot. We can force the function if it
                         # requires it to be ran manually.
@@ -1518,7 +1344,7 @@ class Bot:
                         # PAUSED. Continue loop forever unless resumed/stopped.
                         continue
 
-                    self.current_function = func
+                    self.props.current_function = func
                     wait_afterwards(getattr(self, func), floor=self.configuration.post_action_min_wait_time, ceiling=self.configuration.post_action_max_wait_time)()
 
         except TerminationEncountered:

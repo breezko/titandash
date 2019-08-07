@@ -133,3 +133,10 @@ QUEUEABLE_TOOLTIPS = {
     "daily_achievement_check": "Force a daily achievement check in game.",
     "activate_skills": "Force a skill activation in game."
 }
+
+PROPERTIES = [
+    "current_stage", "current_function", "next_action_run", "next_prestige",
+    "next_stats_update", "next_recovery_reset", "next_daily_achievement_check",
+    "next_clan_results_parse", "next_heavenly_strike", "next_deadly_strike",
+    "next_hand_of_midas", "next_fire_sword", "next_war_cry", "next_shadow_clone"
+]
