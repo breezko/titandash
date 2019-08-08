@@ -16,6 +16,11 @@ $(document).ready(function() {
     table.DataTable({
         paging: false,
         info: false,
+        order: [[1, "asc"]],
+        columnDefs: [
+            {targets: [0], orderable: false}
+        ]
+
     });
     table.fadeIn(200);
 

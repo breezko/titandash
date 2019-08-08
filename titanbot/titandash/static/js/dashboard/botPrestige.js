@@ -16,7 +16,6 @@ let BotPrestigeConsumer = function() {
      * Add a single row to the list of the most recent prestiges.
      */
     this.addTableRow = function(data) {
-        debugger;
         let row = $(`
             <tr data-duration="${data["duration"]["seconds"]}" data-stage="${data["stage"]}" style="display: none;">
                 <td>${data["timestamp"]["formatted"]}</td>

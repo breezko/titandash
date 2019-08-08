@@ -11,7 +11,12 @@ $(document).ready(function() {
      * Generate DataTable Instance...
      */
     table.DataTable({
-        pageLength: 25
+        pageLength: 25,
+        order: [[1, "desc"]],
+        columnDefs: [
+            {targets: [0], orderable: false},
+        ]
+
     });
 
     /**
