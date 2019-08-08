@@ -1279,6 +1279,30 @@ class Bot:
         keyboard.on_press(callback=listener.on_press)
         keyboard.on_release(callback=listener.on_release)
 
+    def setup_loop_functions(self):
+        """Generate list of loop functions based on the enabled functions specified in the configuration."""
+        lst = [
+            k for k, v in {
+                "goto_master": True,
+                "fight_boss": True,
+                "clan_crate": True,
+                "tap": self.configuration.enable_tapping,
+                "collect_ad": True,
+                "parse_current_stage": True,
+                "prestige": self.configuration.enable_auto_prestige,
+                "daily_achievement_check": self.configuration.enable_daily_achievements,
+                "clan_results_parse": self.configuration.enable_clan_results_parse,
+                "actions": True,
+                "activate_skills": self.configuration.enable_skills,
+                "update_stats": self.configuration.enable_stats,
+                "recover": True
+            }.items() if v
+        ]
+
+        self.logger.info("loop functions have been setup...")
+        self.logger.info("{loop_funcs}".format(loop_funcs=", ".join(lst)))
+        return lst
+
     def run(self):
         """
         A run encapsulates the entire bot runtime process into a single function that conditionally
@@ -1308,10 +1332,7 @@ class Bot:
                 self.update_next_artifact_upgrade()
 
             # Setup main game loop variables.
-            loop_funcs = [
-                "goto_master", "fight_boss", "clan_crate", "tap", "collect_ad", "parse_current_stage", "prestige",
-                "daily_achievement_check", "clan_results_parse", "actions", "activate_skills", "update_stats", "recover",
-            ]
+            loop_funcs = self.setup_loop_functions()
 
             # Generating an initial datetime that will be checked when the bot has been paused.
             # If this datetime is surpassed when the pause functionality is checked, a log will be sent.
