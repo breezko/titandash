@@ -134,6 +134,9 @@ QUEUEABLE_TOOLTIPS = {
     "activate_skills": "Force a skill activation in game."
 }
 
+# Place any properties here that will be present on both the Bot and BotInstance
+# simultaneously, this is required to allow the Bot to update the value and at the
+# same time, update the current BotInstance and send out socket updates to the dashboard.
 PROPERTIES = [
     "current_stage", "current_function", "next_action_run", "next_prestige",
     "next_stats_update", "next_recovery_reset", "next_daily_achievement_check",
