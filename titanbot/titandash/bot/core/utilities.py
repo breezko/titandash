@@ -27,7 +27,7 @@ logger = logging.getLogger(LOGGER_NAME)
 
 def sleep(seconds):
     """Wrap the time.sleep method to allow for logging the time to sleep for."""
-    logger.debug("Sleeping for {seconds} second(s)".format(seconds=seconds))
+    logger.debug("sleeping for {seconds} second(s)".format(seconds=seconds))
     time.sleep(seconds)
 
 
@@ -51,6 +51,18 @@ def strfdelta(timedelta, fmt=STATS_TIMEDELTA_STR):
         if value < 10 and "D" not in key:
             d[key] = "0" + str(value)
     return f.format(fmt, **d)
+
+
+def strfnumber(number):
+    """
+    Return a number with properly formatted thousand separators.
+
+    ie: 43123 -> "43,123"
+    """
+    if number:
+        return "{:,}".format(int(number))
+    else:
+        return None
 
 
 def convert(value):
@@ -112,7 +124,8 @@ def diff(old, new):
 
         # Gracefully exit and return None, treated as null in JSON.
         except Exception as exc:
-            logger.error("Error occurred while getting diff between {old}, {new} - {exc}".format(old=old, new=new, exc=exc))
+            logger.error("error occurred while getting diff between {old}, {new} - {exc}".format(
+                old=old, new=new, exc=exc))
             return "ERROR DIFFING"
     return None
 
@@ -192,14 +205,14 @@ def in_transition_func(*args, max_loops):
         # Clicking the top of the screen in case of a transition taking place due to something being
         # present on the screen that requires clicking.
         click_on_point(MASTER_LOCS["screen_top"], clicks=3, pause=0.5)
-        _self.logger.info("In a transition? waiting 1 second before continuing")
+        _self.logger.info("in a transition? waiting one second before continuing")
         sleep(1)
 
         loops += 1
         if loops == max_loops:
             # In this case, the game may of broke? A crash may of occurred. It's safe to attempt to restart the
             # game at this point.
-            _self.logger.error("Unable to resolve transition state of game, attempting to restart game.")
+            _self.logger.error("unable to resolve transition state of game, attempting to restart game.")
             _self.recover(force=True)
 
 

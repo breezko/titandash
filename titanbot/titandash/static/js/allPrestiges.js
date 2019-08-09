@@ -14,6 +14,7 @@ $(document).ready(function() {
      */
     table.DataTable({
         pageLength: 50,
+        order: [[0, "desc"]],
     });
 
     /**

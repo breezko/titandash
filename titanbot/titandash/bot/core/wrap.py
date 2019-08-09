@@ -13,7 +13,7 @@ class Images:
         for group, d in images.items():
             for key, value in d.items():
                 setattr(self, key, value)
-                self.logger.debug("Images.{attr}: {value}".format(attr=key, value=value))
+                self.logger.debug("images.{attr}: {value}".format(attr=key, value=value))
 
     def _base(self):
         """Manually set every expected value, allows for easier access later on."""
@@ -125,7 +125,7 @@ class Locs:
         for group, d in locs.items():
             for key, value in d.items():
                 setattr(self, key, value)
-                self.logger.debug("Locs.{attr}: {value}".format(attr=key, value=value))
+                self.logger.debug("locs.{attr}: {value}".format(attr=key, value=value))
 
     def _base(self):
         """Manually set every expected value."""
@@ -203,7 +203,7 @@ class Colors:
         self.logger = logger
         for key, value in colors.items():
             setattr(self, key, value)
-            self.logger.debug("Colors.{attr}: {value}".format(attr=key, value=value))
+            self.logger.debug("colors.{attr}: {value}".format(attr=key, value=value))
 
     def _base(self):
         self.WHITE = None

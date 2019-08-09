@@ -11,6 +11,8 @@ A transition state refers to one of the following states in game:
 These states are handled through clicking on the top of the screen if required. The ad collection
 is handled manually by clicking on either accept or decline based on user settings.
 """
+from functools import wraps
+
 from .utilities import in_transition_func, sleep
 from random import randint
 
@@ -27,6 +29,7 @@ def not_in_transition(function, max_loops=30):
     before the actual function is called. in_transition_func can be called directly if needed in specific
     parts of the bot.
     """
+    @wraps(function)
     def in_transition(*args, **kwargs):
         """Looping until a transition state is no longer found. Or max loops has been reached."""
         in_transition_func(*args, max_loops=max_loops)
@@ -40,3 +43,10 @@ def wait_afterwards(function, floor, ceiling):
         function(*args, **kwargs)
         sleep(randint(floor, ceiling))
     return wrapped
+
+
+def wrap_current_function(function):
+    def current_function(*args, **kwargs):
+        args[0].props.current_function = function.__name__
+        return function(*args, **kwargs)
+    return current_function

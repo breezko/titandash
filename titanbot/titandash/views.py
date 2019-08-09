@@ -205,8 +205,6 @@ def prestiges(request):
         else:
             p = Prestige.objects.all()
 
-        p = p.order_by("timestamp")
-
         # Parse out filtered data...
         # Prestige data as well as averaged out data (average stage prestige, average time per prestige).
         dct = {
@@ -272,7 +270,7 @@ def screen(request):
     grab = grab.resize((360, 600), ANTIALIAS)
 
     buffered = BytesIO()
-    grab.save(buffered, format="JPEG", quality=10)
+    grab.save(buffered, format="JPEG", quality=30)
 
     b = base64.b64encode(buffered.getvalue())
     image_str = "data:image/jpeg;base64, {b64}".format(b64=b.decode("utf-8"))

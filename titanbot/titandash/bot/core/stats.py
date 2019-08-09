@@ -79,7 +79,7 @@ class Stats:
         """Retrieve the highest stage reached from game stats, returning None if it is un parsable."""
         stat = self.statistics.game_statistics.highest_stage_reached
         value = convert(stat)
-        self.logger.info("Highest stage parsed: {before} -> {after}".format(before=stat, after=value))
+        self.logger.info("highest stage parsed: {before} -> {after}".format(before=stat, after=value))
 
         try:
             return int(value)
@@ -169,15 +169,18 @@ class Stats:
                             continue
 
                         if self.grabber.search(image=ARTIFACT_MAP.get(art.artifact.name), bool_only=True):
-                            self.logger.info("Artifact: {artifact} was successfully found, marking as owned".format(artifact=artifact))
+                            self.logger.info("artifact: {artifact} was successfully found, marking as owned".format(
+                                artifact=artifact))
                             art.owned = True
                             art.save()
 
                     except ValueError:
-                        self.logger.error("Artifact: {artifact} could not be searched for, leaving false".format(artifact=artifact))
+                        self.logger.error("artifact: {artifact} could not be searched for, leaving false".format(
+                            artifact=artifact))
 
             if break_next:
-                self.logger.info("Artifact: {artifact} was found at the bottom of the screen, exiting parse loop now".format(artifact=self.session.configuration.bottom_artifact))
+                self.logger.info("artifact: {artifact} was found at the bottom of the screen, exiting parse loop now".format(
+                    artifact=self.session.configuration.bottom_artifact))
                 break
 
             # Scroll down slightly and check for artifacts again.
@@ -203,7 +206,7 @@ class Stats:
                 image = self._process()
 
             text = pytesseract.image_to_string(image, config='--psm 7')
-            self.logger.debug("OCR result: {key} -> {text}".format(key=key, text=text))
+            self.logger.debug("ocr result: {key} -> {text}".format(key=key, text=text))
 
             # The images do not always parse correctly, so we can attempt to parse out our expected
             # value from the STATS_COORD tuple being used.
@@ -211,7 +214,7 @@ class Stats:
             # Firstly, confirm that a number is present in the text result, if no numbers are present
             # at all, safe to assume the OCR has failed wonderfully.
             if not any(char.isdigit() for char in text):
-                self.logger.warning("No digits found in OCR result, skipping key: {key}".format(key=key))
+                self.logger.warning("no digits found in ocr result, skipping key: {key}".format(key=key))
                 continue
 
             # Otherwise, attempt to parse out the proper value.
@@ -251,17 +254,17 @@ class Stats:
                         self.logger.error(
                             "{key} - {value} could not be accessed parsed properly.".format(key=key, value=value))
 
-                self.logger.info("Parsed value: {key} -> {value}".format(key=key, value=value))
+                self.logger.info("parsed value: {key} -> {value}".format(key=key, value=value))
                 setattr(self.statistics.game_statistics, key, value)
                 self.statistics.game_statistics.save()
 
             # Gracefully continuing loop if failure occurs.
             except ValueError:
-                self.logger.error("Could not parse {key}: (OCR Result: {text})".format(key=key, text=text))
+                self.logger.error("could not parse {key}: (ocr result: {text})".format(key=key, text=text))
 
     def stage_ocr(self, test_image=None):
         """Attempt to parse out the current stage in game through an OCR check."""
-        self.logger.debug("Attempting to parse out the current stage from in game")
+        self.logger.debug("attempting to parse out the current stage from in game")
         region = STAGE_COORDS["region"]
 
         if test_image:
@@ -271,7 +274,7 @@ class Stats:
             image = self._process_stage(scale=3)
 
         text = pytesseract.image_to_string(image, config='--psm 7 nobatch digits')
-        self.logger.debug("Parsed value: {text}".format(text=text))
+        self.logger.debug("parsed value: {text}".format(text=text))
 
         # Do some light parse work here to make sure only digit like characters are present
         # in the returned 'text' variable retrieved through tesseract.
@@ -284,7 +287,7 @@ class Stats:
         Grab the users advance start value. We can use this to improve the accuracy of our stage parsing
         within the Bot if we know what the users minimum stage value currently is.
         """
-        self.logger.info("Attempting to parse out the advance start value for current prestige")
+        self.logger.info("attempting to parse out the advance start value for current prestige")
         region = PRESTIGE_COORDS["advance_start"]
 
         if test_image:
@@ -294,7 +297,7 @@ class Stats:
             image = self._process_stage()
 
         text = pytesseract.image_to_string(image, config="--psm 7 nobatch digits")
-        self.logger.debug("Parsed value: {text}".format(text=text))
+        self.logger.debug("parsed value: {text}".format(text=text))
 
         # Doing some light parse work, similar to the stage ocr function to remove letters if present.
         return ''.join(filter(lambda x: x.isdigit(), text))
@@ -319,11 +322,11 @@ class Stats:
             image = self._process(scale=3, current=True, region=region)
 
         text = pytesseract.image_to_string(image, config='--psm 7')
-        self.logger.info("Parsed value: {text}".format(text=text))
+        self.logger.info("parsed value: {text}".format(text=text))
 
         # We now have the amount of time that this prestige took place, appending it to the list of prestiges
         # present in the statistics instance.
-        self.logger.info("Attempting to parse hours, minutes and seconds from parsed text.")
+        self.logger.info("attempting to parse hours, minutes and seconds from parsed text.")
         try:
             try:
                 hours, minutes, seconds = [int(t) for t in text.split(":")]
@@ -334,8 +337,7 @@ class Stats:
             if hours or minutes or seconds:
                 delta = datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
 
-            self.logger.info("Generating new Prestige instance")
-
+            self.logger.info("generating new prestige instance")
             artifact = Artifact.objects.get(name=artifact)
             prestige = Prestige.objects.create(
                 timestamp=timezone.now(),
@@ -344,7 +346,7 @@ class Stats:
                 artifact=artifact,
                 session=self.session)
 
-            self.logger.info("Prestige generated successfully: {prestige}".format(prestige=str(prestige)))
+            self.logger.info("prestige generated successfully: {prestige}".format(prestige=str(prestige)))
             self.prestige_statistics.prestiges.add(prestige)
             self.prestige_statistics.save()
 
@@ -352,7 +354,7 @@ class Stats:
             return self.get_advance_start()
 
         except Exception as exc:
-            self.logger.error("Error occurred while creating a Prestige instance.")
+            self.logger.error("error occurred while creating a prestige instance.")
             self.logger.error(str(exc))
 
     def clan_name_and_code(self, test_images=None):
@@ -361,7 +363,7 @@ class Stats:
 
         Assuming that the information panel of their clan is currently open.
         """
-        self.logger.info("Attempting to parse out current clan name.")
+        self.logger.info("attempting to parse out current clan name and code...")
         region_name = CLAN_COORDS["info_name"]
         region_code = CLAN_COORDS["info_code"]
 

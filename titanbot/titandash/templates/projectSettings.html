@@ -15,12 +15,12 @@
 
             <div id="collapseOne" class="collapse show" data-parent="#accordion">
                 <div class="card-body">
-                    <table class="table table-sm table-borderless table-hover">
+                    <table class="table table-sm table-borderless table-hover table-striped">
                         <tbody>
                             {% for key, value in BOT.items %}
                                 <tr>
-                                    <td><small>{{ key }}</small></td>
-                                    <td><code class="text-dark"><small>{{ value }}</small></code></td>
+                                    <td><strong>{{ key }}</strong></td>
+                                    <td><small>{{ value }}</small></td>
                                 </tr>
                             {% endfor %}
                         </tbody>
