@@ -232,13 +232,11 @@ class BotInstance(models.Model):
         self.state = RUNNING
         self.session = session
         self.started = timezone.now()
-        self.current_function = "INITIALIZING..."
         self.save()
 
     def pause(self):
         """Pause the BotInstance. Called when signal is sent from user."""
         self.state = PAUSED
-        self.current_function = "PAUSED..."
         self.save()
 
     def stop(self):
