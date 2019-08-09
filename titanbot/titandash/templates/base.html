@@ -40,6 +40,13 @@
 
 <body>
     <div id="alert-container" class="sticky-top dash-sticky-top" style="width: 100%;"></div>
+    <div id="away-overlay">
+        <h3 id="away-text" class="text-center" style="margin-top: 100px;">AFK</h3>
+        <h5 id="away-help" class="text-center">
+            Click anywhere to resume your dashboard session...
+        </h5>
+        <h1 class="text-center" id="away-time"></h1>
+    </div>
     <div class="d-flex" id="wrapper">
 
         <!-- Sidebar -->
@@ -105,7 +112,7 @@
 
      <!-- TitanDash Utilities -->
     <script src="{% static "js/utils.js" %}"></script>
-
+    <script src="{% static "js/away.js" %}"></script>
     <!-- Extra JS -->
     {% block extra_js %}{% endblock %}
 
