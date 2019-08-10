@@ -361,7 +361,11 @@ let BotInstanceConsumer = function() {
     this.setupLastPrestige = function(active, data) {
         if (active) {
             if (data["last_prestige"] === NA) {
-                elements.instanceLastPrestigeTimestamp.text("------");
+                if (lastPrestigeStopwatch !== null) {
+                    lastPrestigeStopwatch.destroy();
+                    lastPrestigeStopwatch = null;
+                    elements.instanceLastPrestigeTimestamp.text("------");
+                }
                 elements.instanceLastPrestigeStage.text("------");
                 elements.instanceLastPrestigeDuration.text("------");
                 elements.instanceLastPrestigeArtifact.text("------");
@@ -408,8 +412,16 @@ let BotInstanceConsumer = function() {
                             <img height="25" width="25" src="${data["last_prestige"]["artifact"]["path"]}" alt="${data["last_prestige"]["artifact"]["image"]}">
                         `)
                 }
-
             }
+        } else {
+            if (lastPrestigeStopwatch !== null) {
+                lastPrestigeStopwatch.destroy();
+                lastPrestigeStopwatch = null;
+                elements.instanceLastPrestigeTimestamp.text("------");
+            }
+            elements.instanceLastPrestigeStage.text("------");
+            elements.instanceLastPrestigeDuration.text("------");
+            elements.instanceLastPrestigeArtifact.text("------");
         }
     };
 
