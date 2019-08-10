@@ -906,6 +906,7 @@ class Bot(object):
                         click_on_point(pos, pause=2)
                         click_on_point(GAME_LOCS["GAME_SCREEN"]["game_middle"], clicks=5, pause=1)
                         sleep(5)
+                        click_on_point(GAME_LOCS["GAME_SCREEN"]["game_middle"], clicks=5, pause=2)
 
                 # Exiting achievements screen now.
                 self.calculate_next_daily_achievement_check()
