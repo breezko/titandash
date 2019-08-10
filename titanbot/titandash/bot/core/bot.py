@@ -400,7 +400,6 @@ class Bot(object):
                 self.ERRORS = 0
                 self.calculate_next_recovery_reset()
 
-    @wrap_current_function
     def should_prestige(self):
         """
         Determine if prestige will take place. This value is based off of the configuration
@@ -584,7 +583,6 @@ class Bot(object):
                     self.logger.info("levelling skill: {skill} {intensity} time(s).".format(skill=skill, intensity=self.configuration.skill_level_intensity))
                     click_on_point(MASTER_LOCS["skills"].get(skill), clicks=self.configuration.skill_level_intensity)
 
-    @wrap_current_function
     def actions(self, force=False):
         """Perform bot actions in game."""
         now = timezone.now()
@@ -774,7 +772,6 @@ class Bot(object):
             # to determine how much to upgrade an artifact by.
             click_on_point((new_x, new_y), pause=1)
 
-    @wrap_current_function
     @not_in_transition
     def check_tournament(self):
         """Check that a tournament is available/active. Tournament will be joined if a new possible."""
