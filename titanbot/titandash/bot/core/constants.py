@@ -138,7 +138,7 @@ QUEUEABLE_TOOLTIPS = {
 # simultaneously, this is required to allow the Bot to update the value and at the
 # same time, update the current BotInstance and send out socket updates to the dashboard.
 PROPERTIES = [
-    "current_stage", "current_function", "next_action_run", "next_prestige",
+    "current_stage", "current_function", "last_prestige", "next_action_run", "next_prestige",
     "next_stats_update", "next_recovery_reset", "next_daily_achievement_check",
     "next_clan_results_parse", "next_heavenly_strike", "next_deadly_strike",
     "next_hand_of_midas", "next_fire_sword", "next_war_cry", "next_shadow_clone"

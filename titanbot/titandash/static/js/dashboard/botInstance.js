@@ -18,7 +18,8 @@ let BotInstanceConsumer = function() {
     const NA = "N/A";
 
     /* Stopwatch */
-    let stopwatch = null;
+    let instanceStartedStopwatch = null;
+    let lastPrestigeStopwatch = null;
 
     /**
      * Main success function.
@@ -42,6 +43,8 @@ let BotInstanceConsumer = function() {
         this.setupPrestige(active);
         this.setupQueued(active);
         this.setupCurrentFunction(active, data);
+        // Last Prestige Success.
+        this.setupLastPrestige(active, data);
         // Variables Success.
         this.setupInstanceLogVar(active, data);
         this.setupInstanceConfigVar(active, data);
@@ -71,6 +74,12 @@ let BotInstanceConsumer = function() {
             instanceTimeRunningTd: $("#dashboardBotTimeRunningTd"),
             instanceTimeRunning: $("#dashboardBotTimeRunningValue"),
             instanceCurrentFunction: $("#dashboardBotCurrentFunctionValue"),
+
+            /* Last Prestige */
+            instanceLastPrestigeTimestamp: $("#dashboardBotLastPrestigeTimestampValue"),
+            instanceLastPrestigeStage: $("#dashboardBotLastPrestigeStageValue"),
+            instanceLastPrestigeDuration: $("#dashboardBotLastPrestigeDurationValue"),
+            instanceLastPrestigeArtifact: $("#dashboardBotLastPrestigeArtifactValue"),
 
             /* BotInstance Variables */
             instanceVariablesTable: $("#dashboardBotCurrentVariablesTable"),
@@ -285,11 +294,11 @@ let BotInstanceConsumer = function() {
             if (elements.instanceSession.text() !== data["session"]["uuid"])
                 elements.instanceSession.attr("href", data["session"]["url"]).text(data["session"]["uuid"]);
             if (elements.instanceStarted.data("datetime") !== data["started"]["datetime"]) {
-                if (stopwatch !== null) {
-                    if (stopwatch.dateOrig !== data["started"]["datetime"]) {
-                        stopwatch.destroy();
-                        stopwatch = null;
-                        stopwatch = new Stopwatch(
+                if (instanceStartedStopwatch !== null) {
+                    if (instanceStartedStopwatch.dateOrig !== data["started"]["datetime"]) {
+                        instanceStartedStopwatch.destroy();
+                        instanceStartedStopwatch = null;
+                        instanceStartedStopwatch = new Stopwatch(
                             data["started"]["datetime"],
                             data["started"]["formatted"],
                             elements.instanceStarted,
@@ -297,7 +306,7 @@ let BotInstanceConsumer = function() {
                         );
                     }
                 } else {
-                    stopwatch = new Stopwatch(
+                    instanceStartedStopwatch = new Stopwatch(
                         data["started"]["datetime"],
                         data["started"]["formatted"],
                         elements.instanceStarted,
@@ -305,8 +314,8 @@ let BotInstanceConsumer = function() {
                     );
                 }
             } else {
-                if (stopwatch === null)
-                    stopwatch = new Stopwatch(
+                if (instanceStartedStopwatch === null)
+                    instanceStartedStopwatch = new Stopwatch(
                         data["started"]["datetime"],
                         data["started"]["formatted"],
                         elements.instanceStarted,
@@ -322,8 +331,8 @@ let BotInstanceConsumer = function() {
             elements.instanceSession.attr("href", "#").text(NA);
 
             // BotInstance Stopwatch.
-            if (stopwatch !== null)
-                stopwatch.destroy();
+            if (instanceStartedStopwatch !== null)
+                instanceStartedStopwatch.destroy();
         }
         // Always display the content once grabbed...
         if (!elements.instanceContent.is(":visible"))
@@ -343,6 +352,64 @@ let BotInstanceConsumer = function() {
         }
         else {
             elements.instanceCurrentFunction.text(NA);
+        }
+    };
+
+    /**
+     * Setup the last prestige information.
+     */
+    this.setupLastPrestige = function(active, data) {
+        if (active) {
+            if (data["last_prestige"] === NA) {
+                elements.instanceLastPrestigeTimestamp.text("------");
+                elements.instanceLastPrestigeStage.text("------");
+                elements.instanceLastPrestigeDuration.text("------");
+                elements.instanceLastPrestigeArtifact.text("------");
+            } else {
+                if (elements.instanceLastPrestigeTimestamp.data("datetime") !== data["last_prestige"]["timestamp"]["datetime"]) {
+                    if (lastPrestigeStopwatch !== null) {
+                        if (lastPrestigeStopwatch.dateOrig !== data["last_prestige"]["timestamp"]["datetime"]) {
+                            lastPrestigeStopwatch.destroy();
+                            lastPrestigeStopwatch = null;
+                            lastPrestigeStopwatch = new Stopwatch(
+                                data["last_prestige"]["timestamp"]["datetime"],
+                                data["last_prestige"]["timestamp"]["formatted"],
+                                elements.instanceLastPrestigeTimestamp,
+                                "0"
+                            );
+                        }
+                    } else {
+                        lastPrestigeStopwatch = new Stopwatch(
+                            data["last_prestige"]["timestamp"]["datetime"],
+                            data["last_prestige"]["timestamp"]["formatted"],
+                            elements.instanceLastPrestigeTimestamp,
+                            "0"
+                        );
+                    }
+                } else {
+                    if (lastPrestigeStopwatch === null)
+                        lastPrestigeStopwatch = new Stopwatch(
+                            data["last_prestige"]["timestamp"]["datetime"],
+                            data["last_prestige"]["timestamp"]["formatted"],
+                            elements.instanceLastPrestigeTimestamp,
+                            "0"
+                        );
+                }
+
+                if (elements.instanceLastPrestigeStage.text() !== data["last_prestige"]["stage"])
+                    elements.instanceLastPrestigeStage.text(data["last_prestige"]["stage"]);
+                if (elements.instanceLastPrestigeDuration.text() !== data["last_prestige"]["duration"]["formatted"])
+                    elements.instanceLastPrestigeDuration.text(data["last_prestige"]["duration"]["formatted"]);
+                if (elements.instanceLastPrestigeArtifact.data("title") !== data["last_prestige"]["artifact"]["title"]) {
+                    elements.instanceLastPrestigeArtifact
+                        .data("title", data["last_prestige"]["artifact"]["title"])
+                        .html(`
+                            <strong>${data["last_prestige"]["artifact"]["title"]}</strong>
+                            <img height="25" width="25" src="${data["last_prestige"]["artifact"]["path"]}" alt="${data["last_prestige"]["artifact"]["image"]}">
+                        `)
+                }
+
+            }
         }
     };
 
