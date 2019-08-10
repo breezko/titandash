@@ -664,8 +664,9 @@ class Bot(object):
                 if prestige_found:
                     # Parsing the advanced start value that is present before a prestige takes place...
                     # This is used to improve stage parsing to not allow values < the advanced start value.
-                    self.parse_advanced_start(self.stats.update_prestige(
-                        artifact=self.next_artifact_upgrade, current_stage=self.props.current_stage))
+                    prestige, advanced_start = self.stats.update_prestige(artifact=self.next_artifact_upgrade, current_stage=self.props.current_stage)
+                    self.props.last_prestige = prestige
+                    self.parse_advanced_start(advanced_start)
 
                     click_on_point(MASTER_LOCS["prestige_confirm"], pause=1)
                     # Waiting for a while after prestiging, this reduces the chance

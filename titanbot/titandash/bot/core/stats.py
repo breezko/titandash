@@ -351,7 +351,7 @@ class Stats:
             self.prestige_statistics.save()
 
             # Additionally, we want to attempt to grab the users advanced start value.
-            return self.get_advance_start()
+            return prestige, self.get_advance_start()
 
         except Exception as exc:
             self.logger.error("error occurred while creating a prestige instance.")
