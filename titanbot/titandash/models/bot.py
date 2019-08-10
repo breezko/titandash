@@ -7,6 +7,7 @@ from channels.layers import get_channel_layer
 
 from titandash.constants import RUNNING, PAUSED, STOPPED, DATETIME_FMT
 from titandash.models.statistics import Statistics, Log
+from titandash.models.prestige import Prestige
 from titandash.models.queue import Queue
 
 
@@ -59,6 +60,9 @@ class BotInstance(models.Model):
     session = models.ForeignKey(verbose_name="Session", blank=True, null=True, to="Session", on_delete=models.CASCADE, help_text=BOT_HELP_TEXT["session"])
     started = models.DateTimeField(verbose_name="Started", blank=True, null=True, help_text=BOT_HELP_TEXT["started"])
     current_function = models.CharField(verbose_name="Current Function", max_length=255, blank=True, null=True, help_text=BOT_HELP_TEXT["current_function"])
+
+    # Last Prestige...
+    last_prestige = models.ForeignKey(verbose_name="Last Prestige", to=Prestige, blank=True, null=True, on_delete=models.CASCADE)
 
     # Bot Variables...
     configuration = models.ForeignKey(verbose_name="Current Configuration", to="Configuration", blank=True, null=True, on_delete=models.CASCADE)
@@ -135,6 +139,7 @@ class BotInstance(models.Model):
                 "function": self.current_function,
                 "title": title(self.current_function) if self.current_function else None,
             },
+            "last_prestige": self.last_prestige.json() if self.last_prestige else "N/A",
             "log_file": reverse('log', kwargs={'pk': self.log.pk}) if self.log else "N/A",
             "current_stage": {
                 "stage": self.current_stage,
@@ -210,6 +215,7 @@ class BotInstance(models.Model):
 
     def reset_vars(self):
         self.current_function = None
+        self.last_prestige = None
         self.configuration = None
         self.log_file = None
         self.current_stage = None
