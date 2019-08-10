@@ -90,8 +90,8 @@ class Images:
         self.war_cry = None
 
         # NO_PANELS.
-        self.clan_battle_ready = None
-        self.clan_no_battle = None
+        self.clan_raid_ready = None
+        self.clan_no_raid = None
         self.daily_reward = None
         self.fight_boss = None
         self.hatch_egg = None

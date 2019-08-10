@@ -246,8 +246,8 @@ IMAGES = {
         "war_cry": IMAGE_DIR + "/master/war_cry.png",
     },
     "NO_PANELS": {
-        "clan_battle_ready": IMAGE_DIR + "/no_panels/clan_battle_ready.png",
-        "clan_no_battle": IMAGE_DIR + "/no_panels/clan_no_battle.png",
+        "clan_raid_ready": IMAGE_DIR + "/no_panels/clan_raid_ready.png",
+        "clan_no_raid": IMAGE_DIR + "/no_panels/clan_no_raid.png",
         "daily_reward": IMAGE_DIR + "/no_panels/daily_reward.png",
         "fight_boss": IMAGE_DIR + "/no_panels/fight_boss.png",
         "hatch_egg": IMAGE_DIR + "/no_panels/hatch_egg.png",
