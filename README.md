@@ -13,6 +13,7 @@
 - View all log records associated with the current bot session.
 - Countdowns until specific functionality takes place.
 - View all sessions that have taken place and review logs/duration/prestiges that happened while a session was active.
+- View all raid results instances and view data about damage done and who did damage.
 - Create multiple configurations that can be swapped out quickly when needed (farming, tournaments, push).
 - Review all current statistics taken from the game, as well as statistics related to the bot.
 - View all prestiges and review additional information (average stage, average duration).
@@ -20,8 +21,10 @@
 
 ### Bot
 - Activate chosen in game skills on a specified cooldown, with the option to wait for a specific skill before activating others.
+- Activate specific functions using keyboard shortcuts.
 - Automatically level up the sword master, skills and heroes in game with a specific intensity (clicks).
 - Automatically prestige after a threshold has been reached (stage, percent of max stage, max stage, time limit).
+- Automatically parse out clan raid results from in game.
 - Upgrade or ignore specific artifacts or tiers after a prestige.
 - Participate in tournaments when they are available (enter/collect rewards).
 - Hatch and collect any eggs when they become available.
