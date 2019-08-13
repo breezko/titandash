@@ -87,12 +87,14 @@ let BotInstanceConsumer = function() {
             instanceVariablesConfiguration: $("#dashboardBotConfigurationValue"),
             instanceVariablesLogFile: $("#dashboardBotLogFileValue"),
             instanceVariablesCurrentStage: $("#dashboardBotCurrentStageValue"),
+            instanceVariablesRaidAttackReset: $("#dashboardBotRaidAttackResetValue"),
             instanceVariablesNextArtifactUpgrade: $("#dashboardBotNextArtifactUpgradeValue"),
             instanceVariablesNextActionRun: $("#dashboardBotNextActionRunValue"),
             instanceVariablesNextPrestige: $("#dashboardBotNextPrestigeValue"),
             instanceVariablesNextStatsUpdate: $("#dashboardBotNextStatsUpdateValue"),
             instanceVariablesNextRecoveryReset: $("#dashboardBotNextRecoveryResetValue"),
             instanceVariablesNextDailyAchievementCheck: $("#dashboardBotNextDailyAchievementCheckValue"),
+            instanceVariablesNextRaidNotificationsCheck: $("#dashboardBotNextRaidNotificationsCheckValue"),
             instanceVariablesNextClanResultsParse: $("#dashboardBotNextClanResultsParseValue"),
             instanceVariablesNextHeavenlyStrike: $("#dashboardBotNextHeavenlyStrikeValue"),
             instanceVariablesNextDeadlyStrike: $("#dashboardBotNextDeadlyStrikeValue"),
@@ -132,11 +134,13 @@ let BotInstanceConsumer = function() {
      */
     this.configureCountdowns = function() {
         return {
+            raidAttackReset: [null, elements.instanceVariablesRaidAttackReset, "next_raid_attack_reset"],
             nextActionRunCountdown: [null, elements.instanceVariablesNextActionRun, "next_action_run"],
             nextPrestigeCountdown: [null, elements.instanceVariablesNextPrestige, "next_prestige"],
             nextStatsUpdateCountdown: [null, elements.instanceVariablesNextStatsUpdate, "next_stats_update"],
             nextRecoveryResetCountdown: [null, elements.instanceVariablesNextRecoveryReset, "next_recovery_reset"],
             nextDailyAchievementCheckCountdown: [null, elements.instanceVariablesNextDailyAchievementCheck, "next_daily_achievement_check"],
+            nextRaidNotificationsCheckCountdown: [null, elements.instanceVariablesNextRaidNotificationsCheck, "next_raid_notifications_check"],
             nextClanResultsParseCountdown: [null, elements.instanceVariablesNextClanResultsParse, "next_clan_results_parse"],
             nextHeavenlyStrikeCountdown: [null, elements.instanceVariablesNextHeavenlyStrike, "next_heavenly_strike"],
             nextDeadlyStrikeCountdown: [null, elements.instanceVariablesNextDeadlyStrike, "next_deadly_strike"],
