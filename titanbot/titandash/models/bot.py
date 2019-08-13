@@ -64,6 +64,15 @@ class BotInstance(models.Model):
     # Last Prestige...
     last_prestige = models.ForeignKey(verbose_name="Last Prestige", to=Prestige, blank=True, null=True, on_delete=models.CASCADE)
 
+    # Raid Attack Reset...
+    # --------------------
+    # This field is treated quite differently than any other field on the
+    # BotInstance currently. This field persists throughout session start/stop.
+    # Since a raid attack reset uses a DateTime to determine when it resets,
+    # We can leave it as is throughout bot sessions to ensure a notification is
+    # not sent every single time a session is started.
+    next_raid_attack_reset = models.DateTimeField(verbose_name="Next Raid Attacks Reset", blank=True, null=True)
+
     # Bot Variables...
     configuration = models.ForeignKey(verbose_name="Current Configuration", to="Configuration", blank=True, null=True, on_delete=models.CASCADE)
     log = models.ForeignKey(verbose_name="Current Log", to=Log, on_delete=models.CASCADE, blank=True, null=True)
@@ -73,6 +82,7 @@ class BotInstance(models.Model):
     next_stats_update = models.DateTimeField(verbose_name="Next Stats Update", blank=True, null=True)
     next_recovery_reset = models.DateTimeField(verbose_name="Next Recovery Reset", blank=True, null=True)
     next_daily_achievement_check = models.DateTimeField(verbose_name="Next Daily Achievement Check", blank=True, null=True)
+    next_raid_notifications_check = models.DateTimeField(verbose_name="Next Raid Notifications Check", blank=True, null=True)
     next_clan_results_parse = models.DateTimeField(verbose_name="Next Clan Results Parse", blank=True, null=True)
     next_heavenly_strike = models.DateTimeField(verbose_name="Next Heavenly Strike", blank=True, null=True)
     next_deadly_strike = models.DateTimeField(verbose_name="Next Deadly Strike", blank=True, null=True)
@@ -170,6 +180,14 @@ class BotInstance(models.Model):
                 "datetime": str(self.next_daily_achievement_check) if self.next_daily_achievement_check else None,
                 "formatted": self.next_daily_achievement_check.astimezone().strftime(DATETIME_FMT) if self.next_daily_achievement_check else None
             },
+            "next_raid_notifications_check": {
+                "datetime": str(self.next_raid_notifications_check) if self.next_raid_notifications_check else None,
+                "formatted": self.next_raid_notifications_check.astimezone().strftime(DATETIME_FMT) if self.next_raid_notifications_check else None
+            },
+            "next_raid_attack_reset": {
+                "datetime": str(self.next_raid_attack_reset) if self.next_raid_attack_reset else None,
+                "formatted": self.next_raid_attack_reset.astimezone().strftime(DATETIME_FMT) if self.next_raid_attack_reset else None
+            },
             "next_clan_results_parse": {
                 "datetime": str(self.next_clan_results_parse) if self.next_clan_results_parse else None,
                 "formatted": self.next_clan_results_parse.astimezone().strftime(DATETIME_FMT) if self.next_clan_results_parse else None
@@ -224,6 +242,7 @@ class BotInstance(models.Model):
         self.next_stats_update = None
         self.next_recovery_reset = None
         self.next_daily_achievement_check = None
+        self.next_raid_notifications_check = None
         self.next_clan_results_parse = None
         self.next_deadly_strike = None
         self.next_hand_of_midas = None
