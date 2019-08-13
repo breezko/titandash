@@ -1418,6 +1418,8 @@ class Bot(object):
             self.daily_achievement_check(force=True)
         if self.configuration.parse_clan_results_on_start:
             self.clan_results_parse(force=True)
+        if self.configuration.raid_notifications_check_on_start:
+            self.raid_notifications(force=True)
 
     @wrap_current_function
     def run(self):
