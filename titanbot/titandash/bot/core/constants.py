@@ -62,7 +62,7 @@ FUNCTION_LOOP_TIMEOUT = 40
 BOSS_LOOP_TIMEOUT = int(FUNCTION_LOOP_TIMEOUT / 2)
 
 # Specify any functions that may be forced.
-FORCEABLE_FUNCTIONS = ["recover", "actions", "update_stats", "prestige", "daily_achievement_check", "activate_skills"]
+FORCEABLE_FUNCTIONS = ["recover", "actions", "update_stats", "prestige", "daily_achievement_check", "raid_notifications", "activate_skills"]
 
 # Specify functions that can be activated through keyboard shortcuts.
 # The key present should represent a function that's present on the Bot.
@@ -86,6 +86,7 @@ SHORTCUT_FUNCTIONS = {
     "update_stats": "shift+u",
     "prestige": "shift+p",
     "daily_achievement_check": "ctrl+d",
+    "raid_notifications": "ctrl+r",
     "activate_skills": "ctrl+a",
 }
 
@@ -95,7 +96,7 @@ FUNCTION_SHORTCUTS = {v: k for k, v in SHORTCUT_FUNCTIONS.items()}
 # Specify any functions that be queued. These will be grabbed by the TitanDashboard to provide a user
 # with the ability to manually add functions that will be executed by the Bot.
 QUEUEABLE_FUNCTIONS = FORCEABLE_FUNCTIONS + [
-    "calculate_next_action_run", "calculate_next_stats_update", "calculate_next_daily_achievement_check",
+    "calculate_next_action_run", "calculate_next_stats_update", "calculate_next_daily_achievement_check", "calculate_next_raid_notifications_check",
     "calculate_next_skill_execution", "calculate_next_prestige", "calculate_next_recovery_reset", "update_next_artifact_upgrade",
     "parse_current_stage", "level_heroes", "level_master", "level_skills", "artifacts", "parse_artifacts", "check_tournament",
     "daily_rewards", "hatch_eggs", "clan_crate", "collect_ad", "fight_boss", "leave_boss", "tap",
@@ -107,6 +108,7 @@ QUEUEABLE_TOOLTIPS = {
     "calculate_next_action_run": "Calculate the next time that an action run will take place.",
     "calculate_next_stats_update": "Calculate the next time a statistics update will take place.",
     "calculate_next_daily_achievement_check": "Calculate the next time a daily achievement check will take place",
+    "calculate_next_raid_notifications_check": "Calculate the next time raid notification check will take place.",
     "calculate_next_skill_execution": "Calculate the next time a skill execution will take place.",
     "calculate_next_prestige": "Calculate the next time a prestige will take place.",
     "calculate_next_recovery_reset": "Calculate the next time a recovery reset will tak place.",
@@ -134,6 +136,7 @@ QUEUEABLE_TOOLTIPS = {
     "update_stats": "Force a statistics update in game.",
     "prestige": "Force a prestige in game.",
     "daily_achievement_check": "Force a daily achievement check in game.",
+    "raid_notifications": "Force a raid notifications check in game.",
     "activate_skills": "Force a skill activation in game."
 }
 
