@@ -7,6 +7,9 @@ from settings import LOG_DIR
 import re
 import datetime
 
+# Raid notifications string used to template out the message sent to a user.
+RAID_NOTIFICATION_MESSAGE = "Raid attacks are available! You may now attack the active titan!"
+
 # The lookup multiplier is used to convert in game values that are formatted with specific multipliers
 # (K, M, T) into their respective float values, or the closest we can get to the actual value. These
 # values can then be parsed and diffed.
@@ -140,6 +143,6 @@ QUEUEABLE_TOOLTIPS = {
 PROPERTIES = [
     "current_stage", "current_function", "last_prestige", "next_action_run", "next_prestige",
     "next_stats_update", "next_recovery_reset", "next_daily_achievement_check",
-    "next_clan_results_parse", "next_heavenly_strike", "next_deadly_strike",
-    "next_hand_of_midas", "next_fire_sword", "next_war_cry", "next_shadow_clone"
+    "next_raid_notifications_check", "next_raid_attack_reset", "next_clan_results_parse", "next_heavenly_strike",
+    "next_deadly_strike", "next_hand_of_midas", "next_fire_sword", "next_war_cry", "next_shadow_clone"
 ]
