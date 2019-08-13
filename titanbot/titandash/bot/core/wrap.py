@@ -41,6 +41,9 @@ class Images:
         self.clan = None
         self.clan_info = None
 
+        # RAID.
+        self.raid_fight = None
+
         # DAILY_REWARD.
         self.collect_reward = None
 
@@ -186,6 +189,7 @@ class Locs:
         self.clan_info_close = None
         self.clan_results = None
         self.clan_results_copy = None
+        self.clan_raid = None
 
         # AD.
         self.collect_ad = None

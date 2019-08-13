@@ -45,6 +45,7 @@ GAME_LOCS = {
         "clan_info_close": (408, 97),
         "clan_results": (267, 153),
         "clan_results_copy": (80, 262),
+        "clan_raid": (109, 750),
     },
     "SKILL_BAR": {
         "heavenly_strike": (43, 744),
@@ -275,6 +276,9 @@ IMAGES = {
     "CLAN": {
         "clan": IMAGE_DIR + "/clan/clan.png",
         "clan_info": IMAGE_DIR + "/clan/clan_info.png",
+    },
+    "RAID": {
+        "raid_fight": IMAGE_DIR + "/raid/raid_fight.png",
     }
 }
 
@@ -321,6 +325,11 @@ MASTER_COORDS = {
 CLAN_COORDS = {
     "info_name": (133, 70, 362, 103),
     "info_code": (123, 730, 172, 745),
+}
+
+# Clan raid coordinates located in the main clan raid page.
+CLAN_RAID_COORDS = {
+    "raid_attack_reset": (55, 753, 240, 771),
 }
 
 # Set of skills in game.
