@@ -236,9 +236,9 @@ def in_transition_func(*args, max_loops):
         # if the game is not in a transition state.
         if _self.grabber.search(_self.images.exit_panel, bool_only=True):
             break
-        if _self.grabber.search(_self.images.clan_no_battle, bool_only=True):
+        if _self.grabber.search(_self.images.clan_no_raid, bool_only=True):
             break
-        if _self.grabber.search(_self.images.clan_battle_ready, bool_only=True):
+        if _self.grabber.search(_self.images.clan_raid_ready, bool_only=True):
             break
 
         # Can a stage be parsed out in the game?
