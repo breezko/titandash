@@ -364,11 +364,11 @@ let BotInstanceConsumer = function() {
                 if (lastPrestigeStopwatch !== null) {
                     lastPrestigeStopwatch.destroy();
                     lastPrestigeStopwatch = null;
-                    elements.instanceLastPrestigeTimestamp.text("------");
+                    elements.instanceLastPrestigeTimestamp.text("N/A");
                 }
-                elements.instanceLastPrestigeStage.text("------");
-                elements.instanceLastPrestigeDuration.text("------");
-                elements.instanceLastPrestigeArtifact.text("------");
+                elements.instanceLastPrestigeStage.text("N/A");
+                elements.instanceLastPrestigeDuration.text("N/A");
+                elements.instanceLastPrestigeArtifact.text("N/A");
             } else {
                 if (elements.instanceLastPrestigeTimestamp.data("datetime") !== data["last_prestige"]["timestamp"]["datetime"]) {
                     if (lastPrestigeStopwatch !== null) {
@@ -417,11 +417,11 @@ let BotInstanceConsumer = function() {
             if (lastPrestigeStopwatch !== null) {
                 lastPrestigeStopwatch.destroy();
                 lastPrestigeStopwatch = null;
-                elements.instanceLastPrestigeTimestamp.text("------");
+                elements.instanceLastPrestigeTimestamp.text("N/A");
             }
-            elements.instanceLastPrestigeStage.text("------");
-            elements.instanceLastPrestigeDuration.text("------");
-            elements.instanceLastPrestigeArtifact.text("------");
+            elements.instanceLastPrestigeStage.text("N/A");
+            elements.instanceLastPrestigeDuration.text("N/A");
+            elements.instanceLastPrestigeArtifact.text("N/A");
         }
     };
 
