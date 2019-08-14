@@ -65,6 +65,12 @@ class ConfigurationAdmin(admin.ModelAdmin):
             "classes": ("expanded",),
             "fields": ("enable_daily_achievements", "daily_achievements_check_on_start", "daily_achievements_check_every_x_hours",),
         }),
+        ("Clan Raid Notifications Settings", {
+            "classes": ("expanded",),
+            "fields": ("enable_raid_notifications", "raid_notifications_check_on_start", "raid_notifications_check_every_x_minutes",
+                       "raid_notifications_twilio_account_sid", "raid_notifications_twilio_auth_token", "raid_notifications_twilio_from_number",
+                       "raid_notifications_twilio_to_number"),
+        }),
         ("Clan Results Parsing Settings", {
             "classes": ("expanded",),
             "fields": ("enable_clan_results_parse", "parse_clan_results_on_start", "parse_clan_results_every_x_minutes",),

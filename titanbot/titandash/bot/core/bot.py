@@ -23,7 +23,7 @@ from .stats import Stats
 from .wrap import Images, Locs, Colors
 from .utilities import (
     click_on_point, click_on_image, drag_mouse, make_logger, strfdelta,
-    strfnumber, sleep
+    strfnumber, sleep, send_raid_notification
 )
 from .decorators import not_in_transition, wait_afterwards, wrap_current_function
 from .shortcuts import ShortcutListener
@@ -109,6 +109,7 @@ class Bot(object):
         self.calculate_next_action_run()
         self.calculate_next_recovery_reset()
         self.calculate_next_daily_achievement_check()
+        self.calculate_next_raid_notifications_check()
         self.calculate_next_clan_result_parse()
 
         if start:
@@ -484,6 +485,14 @@ class Bot(object):
         dt = now + datetime.timedelta(hours=self.configuration.daily_achievements_check_every_x_hours)
         self.props.next_daily_achievement_check = dt
         self.logger.info("daily achievement check in game will be initiated in {time}".format(time=strfdelta(dt - now)))
+
+    @wrap_current_function
+    def calculate_next_raid_notifications_check(self):
+        """Calculate when the next raid notifications check should take place."""
+        now = timezone.now()
+        dt = now + datetime.timedelta(minutes=self.configuration.raid_notifications_check_every_x_minutes)
+        self.props.next_raid_notifications_check = dt
+        self.logger.info("raid notifications check will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     @wrap_current_function
     def calculate_next_clan_result_parse(self):
@@ -914,6 +923,58 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    def raid_notifications(self, force=False):
+        """Perform all checks to see if a sms message will be sent to notify a user of an active raid."""
+        if self.configuration.enable_raid_notifications:
+            now = timezone.now()
+            if force or now > self.props.next_raid_notifications_check:
+                self.logger.info("{force_or_initiate} raid notifications check now".format(
+                    force_or_initiate="forcing" if force else "beginning"))
+
+                # Has an attack reset value already been parsed?
+                if self.props.next_raid_attack_reset:
+                    if self.props.next_raid_attack_reset > now:
+                        self.logger.info("the next raid attack reset is still in the future, no notification will be sent.")
+                        self.calculate_next_raid_notifications_check()
+                        return False
+
+                # Opening up the clan raid panel and checking if the fight button is available.
+                # This would mean that we can perform some fights, if it is present, we also check to
+                # see how much time until the attacks reset, once the current time has surpassed that
+                # value, we allow another notification to be sent.
+                if not self.goto_clan():
+                    return False
+
+                click_on_point(self.locs.clan_raid, pause=4)
+
+                if self.grabber.search(self.images.raid_fight, bool_only=True):
+                    # Fights are available, lets also parse out the next time that attacks will be reset.
+                    self.props.next_raid_attack_reset = self.stats.get_raid_attacks_reset()
+                    if not self.props.next_raid_attack_reset:
+                        self.logger.info("The next raid attack reset could not be parsed correctly, a notification will not be sent...")
+
+                    # Send out a notification to the user through Twilio.
+                    notification = send_raid_notification(
+                        sid=self.configuration.raid_notifications_twilio_account_sid,
+                        token=self.configuration.raid_notifications_twilio_auth_token,
+                        from_num=self.configuration.raid_notifications_twilio_from_number,
+                        to_num=self.configuration.raid_notifications_twilio_to_number)
+
+                    self.logger.info("a notification has been sent to {to_num} from {from_num}".format(
+                        to_num=self.configuration.raid_notifications_twilio_to_number,
+                        from_num=self.configuration.raid_notifications_twilio_from_number))
+
+                    self.logger.info("message sid: {sid}".format(sid=notification.sid))
+                    self.logger.info("message body: {body}".format(body=notification.body))
+                    self.logger.info("the next notification will only be sent after the current raid attack reset has been reached...")
+                    self.logger.info("next raid attack reset: {next_raid_attack}".format(next_raid_attack=self.props.next_raid_attack_reset))
+                else:
+                    self.logger.info("no raid fight is currently active or available! No notification will be sent.")
+
+                self.calculate_next_raid_notifications_check()
+
+    @wrap_current_function
+    @not_in_transition
     def clan_results_parse(self, force=False):
         """
         If the time threshold has been reached and clan result parsing is enabled, initiate the process
@@ -1329,6 +1390,7 @@ class Bot(object):
                 "parse_current_stage": True,
                 "prestige": self.configuration.enable_auto_prestige,
                 "daily_achievement_check": self.configuration.enable_daily_achievements,
+                "raid_notifications": self.configuration.enable_raid_notifications,
                 "clan_results_parse": self.configuration.enable_clan_results_parse,
                 "actions": True,
                 "activate_skills": self.configuration.enable_skills,
@@ -1356,6 +1418,8 @@ class Bot(object):
             self.daily_achievement_check(force=True)
         if self.configuration.parse_clan_results_on_start:
             self.clan_results_parse(force=True)
+        if self.configuration.raid_notifications_check_on_start:
+            self.raid_notifications(force=True)
 
     @wrap_current_function
     def run(self):
