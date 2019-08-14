@@ -1115,7 +1115,7 @@ class Bot(object):
         while True:
             loops += 1
             if loops == BOSS_LOOP_TIMEOUT:
-                self.logger.warning("error occurred, exiting function early.")
+                self.logger.warning("unable to enter boss fight currently...")
                 self.ERRORS += 1
                 return False
 
@@ -1135,9 +1135,9 @@ class Bot(object):
         while True:
             loops += 1
             if loops == BOSS_LOOP_TIMEOUT:
-                self.logger.warning("error occurred, exiting function early.")
+                self.logger.warning("unable to leave boss fight, assuming boss could not be reached...")
                 self.ERRORS += 1
-                return False
+                return True
 
             if not self.grabber.search(self.images.fight_boss, bool_only=True):
                 self.logger.info("attempting to leave active boss fight in game. ({tries}/{max})".format(
