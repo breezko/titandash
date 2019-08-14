@@ -42,6 +42,7 @@ class ArtifactAdmin(admin.ModelAdmin):
 
 @register(Configuration)
 class ConfigurationAdmin(admin.ModelAdmin):
+    save_as = True
     filter_horizontal = ["upgrade_owned_tier", "ignore_artifacts", "upgrade_artifacts"]
     fieldsets = (
         (None, {
