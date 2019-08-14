@@ -635,9 +635,15 @@ class Bot(object):
                 if not self.goto_heroes():
                     return False
 
-                # Opening the stats panel within the heroes panel in game.
-                # Scrolling to the bottom of this page, which contains all needed game stats info.
-                click_on_point(HEROES_LOCS["stats_collapsed"], pause=0.5)
+                # Ensure we are at the top of the stats screen while collapsed.
+                while not self.grabber.search(self.images.stats, bool_only=True):
+                    drag_mouse(self.locs.scroll_start, self.locs.scroll_top_end)
+                # Ensure the stats panel has been opened before continuing.
+                while not self.grabber.search(self.images.stats_title, bool_only=True):
+                    click_on_point(HEROES_LOCS["stats_collapsed"], pause=1)
+
+                # Scrolling to the bottom of the stats panel.
+                sleep(2)
                 for i in range(5):
                     drag_mouse(self.locs.scroll_start, self.locs.scroll_bottom_end)
 
