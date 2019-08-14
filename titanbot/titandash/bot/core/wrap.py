@@ -44,6 +44,9 @@ class Images:
         # RAID.
         self.raid_fight = None
 
+        # STATS.
+        self.stats_title = None
+
         # DAILY_REWARD.
         self.collect_reward = None
 

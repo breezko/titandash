@@ -279,6 +279,9 @@ IMAGES = {
     },
     "RAID": {
         "raid_fight": IMAGE_DIR + "/raid/raid_fight.png",
+    },
+    "STATS": {
+        "stats_title": IMAGE_DIR + "/stats/stats_title.png",
     }
 }
 
@@ -294,6 +297,7 @@ STATS_COORDS = {
     "critical_hits": (55, 602, 430, 621),
     "chestersons_killed": (55, 623, 430, 643),
     "prestiges": (55, 645, 430, 666),
+    "days_since_install": (55, 670, 430, 686),
     "play_time": (55, 687, 430, 708),
     "relics_earned": (55, 709, 430, 729),
     "fairies_tapped": (55, 731, 430, 751),
