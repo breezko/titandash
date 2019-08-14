@@ -1,4 +1,5 @@
 from django.db import models
+from django_paranoid.models import ParanoidModel
 
 from titandash.constants import INFO, LOGGING_LEVEL_CHOICES, EMULATOR_CHOICES
 
@@ -68,7 +69,7 @@ HELP_TEXT = {
 }
 
 
-class Configuration(models.Model):
+class Configuration(ParanoidModel):
     """
     Configuration Model.
 

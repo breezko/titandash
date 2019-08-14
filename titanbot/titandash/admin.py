@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.admin.decorators import register
-from django.contrib.auth.models import User, Group
+
+from django_paranoid.admin import ParanoidAdmin
 
 # from .models.token import Token
 from .models.artifact import Artifact, Tier
@@ -41,13 +42,17 @@ class ArtifactAdmin(admin.ModelAdmin):
 
 
 @register(Configuration)
-class ConfigurationAdmin(admin.ModelAdmin):
+class ConfigurationAdmin(ParanoidAdmin):
     save_as = True
     filter_horizontal = ["upgrade_owned_tier", "ignore_artifacts", "upgrade_artifacts"]
     fieldsets = (
         (None, {
             "classes": ("expanded",),
             "fields": ("name",),
+        }),
+        ("Timestamps", {
+            "classes": ("expanded",),
+            "fields": ("created_at", "updated_at", "deleted_at"),
         }),
         ("Runtime Settings", {
             "classes": ("expanded",),
