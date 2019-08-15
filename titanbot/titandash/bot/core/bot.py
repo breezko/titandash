@@ -369,24 +369,8 @@ class Bot(object):
 
             sleep(3)
             # Restart the emulator and wait for a while for it to boot up...
-            self.logger.info("attempting to restart the emulator...")
-            click_on_point(EMULATOR_LOCS[self.configuration.emulator]["close_emulator"], pause=1)
-
-            while self.grabber.search(self.images.restart, bool_only=True):
-                found, pos = self.grabber.search(self.images.restart)
-                if found:
-                    self.logger.info("restarting emulator now...")
-                    click_on_image(self.images.restart, pos, pause=2)
-
-            self.logger.info("waiting for game launcher to become visible...")
-            while not self.grabber.search(self.images.tap_titans_2, bool_only=True):
-                self.logger.info("searching...")
-                sleep(2)
-
-            found, pos = self.grabber.search(self.images.tap_titans_2)
-            if found:
-                self.logger.info("game launcher was found, starting game...")
-                click_on_image(self.images.tap_titans_2, pos, pause=40)
+            self.restart_emulator()
+            self.open_game()
 
             self.calculate_next_recovery_reset()
             return
@@ -1408,6 +1392,49 @@ class Bot(object):
         self.logger.info("loop functions have been setup...")
         self.logger.info("{loop_funcs}".format(loop_funcs=", ".join(lst)))
         return lst
+
+    @wrap_current_function
+    def restart_emulator(self, wait=30):
+        """Restart the emulator."""
+        self.logger.info("restarting emulator now...")
+        self.logger.info("attempting to restart the emulator...")
+        click_on_point(EMULATOR_LOCS[self.configuration.emulator]["close_emulator"], pause=1)
+
+        loops = 0
+        while self.grabber.search(self.images.restart, bool_only=True):
+            loops += 1
+            found, pos = self.grabber.search(self.images.restart)
+            if found:
+                self.logger.info("restarting emulator now...")
+                click_on_image(self.images.restart, pos)
+                sleep(wait)
+                return True
+
+            if loops == FUNCTION_LOOP_TIMEOUT:
+                self.logger.warn("unable to restart emulator...")
+                return False
+
+    @wrap_current_function
+    def open_game(self, wait=40):
+        """Open the game from the main emulator screen."""
+        self.logger.info("opening tap titans 2 now...")
+
+        loops = 0
+        while not self.grabber.search(self.images.tap_titans_2, bool_only=True):
+            loops += 1
+            if loops == FUNCTION_LOOP_TIMEOUT:
+                self.logger.warn("unable to open game...")
+                return False
+
+            # Sleep for a while after each check...
+            sleep(2)
+
+        found, pos = self.grabber.search(self.images.tap_titans_2)
+        if found:
+            self.logger.info("game launcher was found, starting game...")
+            click_on_image(self.images.tap_titans_2, pos)
+            sleep(wait)
+            return True
 
     @wrap_current_function
     def initialize(self):
