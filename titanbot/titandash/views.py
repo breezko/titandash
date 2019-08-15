@@ -38,7 +38,23 @@ def dashboard(request):
             "tooltip": QUEUEABLE_TOOLTIPS[queue]
         })
 
-    return render(request, "dashboard.html", context=ctx)
+    response = render(request, "dashboard.html", context=ctx)
+
+    theme = request.COOKIES.get("theme")
+    if not theme:
+        response.set_cookie("theme", "default")
+
+    return response
+
+
+def theme_change(request):
+    selected = request.GET.get("theme")
+    if not selected:
+        selected = "default"
+
+    response = render(request, "dashboard.html")
+    response.set_cookie("theme", selected)
+    return response
 
 
 def log(request, pk):
