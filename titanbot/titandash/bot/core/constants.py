@@ -62,7 +62,8 @@ FUNCTION_LOOP_TIMEOUT = 40
 BOSS_LOOP_TIMEOUT = int(FUNCTION_LOOP_TIMEOUT / 2)
 
 # Specify any functions that may be forced.
-FORCEABLE_FUNCTIONS = ["recover", "actions", "update_stats", "prestige", "daily_achievement_check", "raid_notifications", "activate_skills"]
+FORCEABLE_FUNCTIONS = ["recover", "actions", "update_stats", "prestige", "daily_achievement_check", "raid_notifications",
+                       "activate_skills", "breaks"]
 
 # Specify functions that can be activated through keyboard shortcuts.
 # The key present should represent a function that's present on the Bot.
@@ -75,6 +76,7 @@ SHORTCUT_FUNCTIONS = {
     "soft_terminate": "shift+esc",
     # Functional shortcuts.s
     "actions": "shift+a",
+    "breaks": "shift+b",
     "level_heroes": "shift+h",
     "level_master": "shift+m",
     "level_skills": "shift+s",
@@ -97,7 +99,7 @@ FUNCTION_SHORTCUTS = {v: k for k, v in SHORTCUT_FUNCTIONS.items()}
 # with the ability to manually add functions that will be executed by the Bot.
 QUEUEABLE_FUNCTIONS = FORCEABLE_FUNCTIONS + [
     "calculate_next_action_run", "calculate_next_stats_update", "calculate_next_daily_achievement_check", "calculate_next_raid_notifications_check",
-    "calculate_next_skill_execution", "calculate_next_prestige", "calculate_next_recovery_reset", "update_next_artifact_upgrade",
+    "calculate_next_skill_execution", "calculate_next_prestige", "calculate_next_recovery_reset", "update_next_artifact_upgrade", "calculate_next_break",
     "parse_current_stage", "level_heroes", "level_master", "level_skills", "artifacts", "parse_artifacts", "check_tournament",
     "daily_rewards", "hatch_eggs", "clan_crate", "collect_ad", "fight_boss", "leave_boss", "tap",
     "pause", "resume", "terminate", "soft_terminate"
@@ -112,6 +114,7 @@ QUEUEABLE_TOOLTIPS = {
     "calculate_next_skill_execution": "Calculate the next time a skill execution will take place.",
     "calculate_next_prestige": "Calculate the next time a prestige will take place.",
     "calculate_next_recovery_reset": "Calculate the next time a recovery reset will tak place.",
+    "calculate_next_break": "Calculate the next time a break will take place.",
     "update_next_artifact_upgrade": "Update the next artifact that will be upgraded.",
     "parse_current_stage": "Parse the current stage in game.",
     "level_heroes": "Level heroes in game.",
@@ -137,7 +140,8 @@ QUEUEABLE_TOOLTIPS = {
     "prestige": "Force a prestige in game.",
     "daily_achievement_check": "Force a daily achievement check in game.",
     "raid_notifications": "Force a raid notifications check in game.",
-    "activate_skills": "Force a skill activation in game."
+    "activate_skills": "Force a skill activation in game.",
+    "breaks": "Force a manual break in game."
 }
 
 # Place any properties here that will be present on both the Bot and BotInstance
