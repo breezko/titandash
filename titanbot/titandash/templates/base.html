@@ -86,7 +86,7 @@
 
         <!-- Sidebar -->
         <div class="bg-light border-right" id="sidebar-wrapper">
-            <div class="sidebar-heading text-uppercase"><img width="20" height="20" src="{% static "favicon.ico" %}" alt="logo"><small><strong>TitanDash</strong></small></div>
+            <div class="sidebar-heading text-uppercase" style="border-right: 0; padding: 0.8rem 1.25rem;"><img width="20" height="20" src="{% static "favicon.ico" %}" alt="logo"><small><strong>TitanDash</strong></small></div>
             <div class="list-group list-group-flush">
                 <a href="{% url "dashboard" %}" class="list-group-item list-group-item-action bg-light">Dashboard</a>
                 <a href="{% url "sessions" %}" class="list-group-item list-group-item-action bg-light">Sessions</a>
@@ -104,9 +104,9 @@
         <!-- Page Content -->
         <div id="page-content-wrapper">
 
-            <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+            <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom" style="border-left: 0;">
                 <button class="btn btn-primary" id="menu-toggle">Toggle Menu</button>
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler" style="padding: 1px 7px;" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                   <span class="navbar-toggler-icon"></span>
                 </button>
 
