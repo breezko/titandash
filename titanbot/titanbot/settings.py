@@ -69,6 +69,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'titandash.context_processors.bot',
+                'titandash.context_processors.themes',
             ],
         },
     },

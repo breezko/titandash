@@ -33,6 +33,9 @@ TEST_DIR = os.path.join(TITANDASH_DIR, "tests")
 TEST_BOT_DIR = os.path.join(TEST_DIR, "bot")
 TEST_IMAGE_DIR = os.path.join(TEST_BOT_DIR, "images")
 
+# Themes CSS directory.
+THEMES_DIR = os.path.join(TITANDASH_DIR, "static/css/theme")
+
 # Make sure a "logs" directory actually exists.
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)

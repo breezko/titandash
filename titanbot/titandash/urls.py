@@ -31,5 +31,6 @@ urlpatterns = [
     path('ajax/signal', views.signal, name='signal'),
     path('ajax/prestige', views.prestiges, name='prestiges'),
     path('ajax/game_screen', views.screen, name='game_screen'),
-    path('ajax/generate_queued', views.generate_queued, name='generate_queued')
+    path('ajax/generate_queued', views.generate_queued, name='generate_queued'),
+    path('ajax/theme_change', views.theme_change, name='theme_change')
 ]

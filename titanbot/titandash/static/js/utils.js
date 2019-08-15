@@ -40,3 +40,20 @@ function sendAlert(message, container, style, type="success") {
         });
     }, 2000);
 }
+
+/**
+ * Callback function used by theme selection to update the cookie and reload the page
+ * once one is selected.
+ */
+function selectTheme(theme) {
+    $.ajax({
+        url: "/ajax/theme_change",
+        dataType: "json",
+        data: {
+            "theme": theme
+        },
+        complete: function() {
+            window.location.reload(true);
+        }
+    });
+}
