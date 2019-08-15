@@ -15,7 +15,7 @@ from titandash.models.clan import Clan, RaidResult
 from .maps import *
 from .constants import (
     STAGE_PARSE_THRESHOLD, FUNCTION_LOOP_TIMEOUT, BOSS_LOOP_TIMEOUT,
-    QUEUEABLE_FUNCTIONS, FORCEABLE_FUNCTIONS, PROPERTIES
+    QUEUEABLE_FUNCTIONS, FORCEABLE_FUNCTIONS, PROPERTIES, BREAK_NEXT_PROPS
 )
 from .props import Props
 from .grabber import Grabber
@@ -111,6 +111,7 @@ class Bot(object):
         self.calculate_next_daily_achievement_check()
         self.calculate_next_raid_notifications_check()
         self.calculate_next_clan_result_parse()
+        self.calculate_next_break()
 
         if start:
             self.run()
@@ -489,6 +490,25 @@ class Bot(object):
         else:
             # If result parsing is disabled, No datetime is configured and will be ignored.
             self.props.next_clan_results_parse = None
+
+    @wrap_current_function
+    def calculate_next_break(self):
+        """Calculate when the next break will take place in game."""
+        if self.configuration.enable_breaks:
+            now = timezone.now()
+
+            # Calculating when the next break will begin.
+            jitter = random.randint(-self.configuration.breaks_jitter, self.configuration.breaks_jitter)
+            jitter = self.configuration.breaks_minutes_required + jitter
+
+            next_break_dt = now + datetime.timedelta(minutes=jitter)
+
+            # Calculate the datetime to determine when the bot will be resumed after a break takes place.
+            resume_jitter = random.randint(self.configuration.breaks_minutes_min, self.configuration.breaks_minutes_max)
+            next_break_res = next_break_dt + datetime.timedelta(minutes=resume_jitter + 10)
+
+            self.props.next_break = next_break_dt
+            self.props.resume_from_break = next_break_res
 
     @wrap_current_function
     @not_in_transition
@@ -877,6 +897,62 @@ class Bot(object):
             click_on_image(self.images.okay, pos, pause=1)
 
         return found
+
+    @wrap_current_function
+    def breaks(self, force=False):
+        """
+        Check to see if a break should take place, if a break should take place, the emulator will
+        be restarted and the bot will wait until the resume time has been reached, then the game
+        will be opened once again and the bot will resume its functionality. A resume will also
+        cause all calculable variables to be recalculated.
+        """
+        if self.configuration.enable_breaks:
+            assert self.props.next_break and self.props.resume_from_break
+            now = timezone.now()
+            if force or now > self.props.next_break:
+                # A break can now take place...
+                # Begin by completely restarting the emulator.
+                # After that has been completed, we will initiate a while loop
+                # that keeps the bot here until the break has ended.
+                # if not self.restart_emulator():
+                #     return False
+
+                time_break = self.props.next_break - now
+                time_resume = self.props.resume_from_break - now
+                delta = time_resume - time_break
+
+                # Forcing a break should modify our next break values to now plus whatever
+                # the most recent break was calculated as.
+                if force:
+                    self.props.next_break = now
+                    self.props.resume_from_break = now + delta
+
+                # Modify all next attributes to take place after their normal calculated
+                # time with a bit of padding after a break ends.
+                for prop in BREAK_NEXT_PROPS:
+                    current = getattr(self.props, prop, None)
+                    if current:
+                        # Adding a bit of padding to next activation values.
+                        new = current + delta + datetime.timedelta(seconds=30)
+                        setattr(self.props, prop, new)
+
+                break_log_dt = now + datetime.timedelta(seconds=60)
+                self.logger.info("waiting for break to end... ({break_end})".format(break_end=strfdelta(self.props.resume_from_break - now)))
+                while True:
+                    now = timezone.now()
+                    if now > self.props.resume_from_break:
+                        self.logger.info("break has ended... opening game now.")
+                        if not self.open_game():
+                            return False
+
+                        self.calculate_next_break()
+                        return True
+
+                    if now > break_log_dt:
+                        break_log_dt = now + datetime.timedelta(seconds=60)
+                        self.logger.info("waiting for break to end... ({break_end})".format(break_end=strfdelta(self.props.resume_from_break - now)))
+
+                    sleep(1)
 
     @wrap_current_function
     @not_in_transition
@@ -1385,7 +1461,8 @@ class Bot(object):
                 "actions": True,
                 "activate_skills": self.configuration.enable_skills,
                 "update_stats": self.configuration.enable_stats,
-                "recover": True
+                "recover": True,
+                "breaks": self.configuration.enable_breaks
             }.items() if v
         ]
 

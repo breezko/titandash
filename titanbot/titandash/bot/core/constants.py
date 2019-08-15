@@ -145,7 +145,13 @@ QUEUEABLE_TOOLTIPS = {
 # same time, update the current BotInstance and send out socket updates to the dashboard.
 PROPERTIES = [
     "current_stage", "current_function", "last_prestige", "next_action_run", "next_prestige",
-    "next_stats_update", "next_recovery_reset", "next_daily_achievement_check",
+    "next_stats_update", "next_recovery_reset", "next_daily_achievement_check", "next_break", "resume_from_break",
     "next_raid_notifications_check", "next_raid_attack_reset", "next_clan_results_parse", "next_heavenly_strike",
     "next_deadly_strike", "next_hand_of_midas", "next_fire_sword", "next_war_cry", "next_shadow_clone"
+]
+
+# Creating a list of all properties that should be modified when a break takes place so that
+# their next execution time take place at the proper time when a break finishes.
+BREAK_NEXT_PROPS = [
+    prop for prop in PROPERTIES if prop.split("_")[0] == "next" and prop not in ["next_break", "next_raid_attack_reset"]
 ]
