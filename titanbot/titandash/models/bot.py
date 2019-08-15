@@ -73,6 +73,10 @@ class BotInstance(models.Model):
     # not sent every single time a session is started.
     next_raid_attack_reset = models.DateTimeField(verbose_name="Next Raid Attacks Reset", blank=True, null=True)
 
+    # Breaks.
+    next_break = models.DateTimeField(verbose_name="Next Break", blank=True, null=True)
+    resume_from_break = models.DateTimeField(verbose_name="Resume From Break", blank=True, null=True)
+
     # Bot Variables...
     configuration = models.ForeignKey(verbose_name="Current Configuration", to="Configuration", blank=True, null=True, on_delete=models.CASCADE)
     log = models.ForeignKey(verbose_name="Current Log", to=Log, on_delete=models.CASCADE, blank=True, null=True)
@@ -215,7 +219,15 @@ class BotInstance(models.Model):
             "next_shadow_clone": {
                 "datetime": str(self.next_shadow_clone) if self.next_shadow_clone else None,
                 "formatted": self.next_shadow_clone.astimezone().strftime(DATETIME_FMT) if self.next_shadow_clone else None
-            }
+            },
+            "next_break": {
+                "datetime": str(self.next_break) if self.next_break else None,
+                "formatted": self.next_break.astimezone().strftime(DATETIME_FMT) if self.next_break else None
+            },
+            "resume_from_break": {
+                "datetime": str(self.resume_from_break) if self.resume_from_break else None,
+                "formatted": self.resume_from_break.astimezone().strftime(DATETIME_FMT) if self.resume_from_break else None
+            },
         }
 
         if self.session:
@@ -234,6 +246,8 @@ class BotInstance(models.Model):
     def reset_vars(self):
         self.current_function = None
         self.last_prestige = None
+        self.next_break = None
+        self.resume_from_break = None
         self.configuration = None
         self.log_file = None
         self.current_stage = None

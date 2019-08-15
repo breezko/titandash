@@ -14,6 +14,11 @@ HELP_TEXT = {
     "enable_egg_collection": "Enable the ability to collect and hatch eggs in game.",
     "enable_tapping": "Enable the ability to tap on titans (This also enables the clicking of fairies in game).",
     "enable_tournaments": "Enable the ability to enter and participate in tournaments.",
+    "enable_breaks": "Enable the ability to take breaks in game.",
+    "breaks_jitter": "Specify a jitter amount so that breaks take place at different intervals.",
+    "breaks_minutes_required": "How many minutes of concurrent playtime is required before a break takes place.",
+    "breaks_minutes_max": "Maximum amount of minutes to break for.",
+    "breaks_minutes_min": "Minimum amount of minutes to break for.",
     "enable_daily_achievements": "Enable the ability to check and collect daily achievements in game.",
     "daily_achievements_check_on_start": "Should daily achievements being checked for when a session is started.",
     "daily_achievements_check_every_x_hours": "Determine how many hours between each daily achievement check.",
@@ -96,6 +101,13 @@ class Configuration(ParanoidModel):
     enable_egg_collection = models.BooleanField(verbose_name="Enable Egg Collection", default=True, help_text=HELP_TEXT["enable_egg_collection"])
     enable_tapping = models.BooleanField(verbose_name="Enable Tapping", default=True, help_text=HELP_TEXT["enable_tapping"])
     enable_tournaments = models.BooleanField(verbose_name="Enable Tournaments", default=True, help_text=HELP_TEXT["enable_tournaments"])
+
+    # BREAKS Settings.
+    enable_breaks = models.BooleanField(verbose_name="Enable Breaks", default=True, help_text=HELP_TEXT["enable_breaks"])
+    breaks_jitter = models.PositiveIntegerField(verbose_name="Breaks Jitter Amount", default=40, help_text=HELP_TEXT["breaks_jitter"])
+    breaks_minutes_required = models.PositiveIntegerField(verbose_name="Minutes Required Before Break Is Activated", default=180, help_text=HELP_TEXT["breaks_minutes_required"])
+    breaks_minutes_max = models.PositiveIntegerField(verbose_name="Max Minutes For Break", default=60, help_text=HELP_TEXT["breaks_minutes_max"])
+    breaks_minutes_min = models.PositiveIntegerField(verbose_name="Min Minutes For Break", default=20, help_text=HELP_TEXT["breaks_minutes_min"])
 
     # DAILY ACHIEVEMENT Settings.
     enable_daily_achievements = models.BooleanField(verbose_name="Enable Daily Achievements", default=True, help_text=HELP_TEXT["enable_daily_achievements"])

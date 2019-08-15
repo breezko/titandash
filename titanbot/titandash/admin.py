@@ -67,6 +67,10 @@ class ConfigurationAdmin(ParanoidAdmin):
             "classes": ("expanded",),
             "fields": ("enable_premium_ad_collect", "enable_egg_collection", "enable_tapping", "enable_tournaments",),
         }),
+        ("Breaks Settings", {
+            "classes": ("expanded",),
+            "fields": ("enable_breaks", "breaks_jitter", "breaks_minutes_required", "breaks_minutes_max", "breaks_minutes_min"),
+        }),
         ("Daily Achievement Settings", {
             "classes": ("expanded",),
             "fields": ("enable_daily_achievements", "daily_achievements_check_on_start", "daily_achievements_check_every_x_hours",),

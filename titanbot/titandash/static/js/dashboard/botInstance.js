@@ -88,6 +88,8 @@ let BotInstanceConsumer = function() {
             instanceVariablesLogFile: $("#dashboardBotLogFileValue"),
             instanceVariablesCurrentStage: $("#dashboardBotCurrentStageValue"),
             instanceVariablesRaidAttackReset: $("#dashboardBotRaidAttackResetValue"),
+            instanceVariablesNextBreak: $("#dashboardBotNextBreakValue"),
+            instanceVariablesBreakResume: $("#dashboardBotBreakResumeValue"),
             instanceVariablesNextArtifactUpgrade: $("#dashboardBotNextArtifactUpgradeValue"),
             instanceVariablesNextActionRun: $("#dashboardBotNextActionRunValue"),
             instanceVariablesNextPrestige: $("#dashboardBotNextPrestigeValue"),
@@ -135,6 +137,8 @@ let BotInstanceConsumer = function() {
     this.configureCountdowns = function() {
         return {
             raidAttackReset: [null, elements.instanceVariablesRaidAttackReset, "next_raid_attack_reset"],
+            nextBreakCountdown: [null, elements.instanceVariablesNextBreak, "next_break"],
+            breakResumeCountdown: [null, elements.instanceVariablesBreakResume, "resume_from_break"],
             nextActionRunCountdown: [null, elements.instanceVariablesNextActionRun, "next_action_run"],
             nextPrestigeCountdown: [null, elements.instanceVariablesNextPrestige, "next_prestige"],
             nextStatsUpdateCountdown: [null, elements.instanceVariablesNextStatsUpdate, "next_stats_update"],
