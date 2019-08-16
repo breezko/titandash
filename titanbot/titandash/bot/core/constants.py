@@ -63,7 +63,7 @@ BOSS_LOOP_TIMEOUT = int(FUNCTION_LOOP_TIMEOUT / 2)
 
 # Specify any functions that may be forced.
 FORCEABLE_FUNCTIONS = ["recover", "actions", "update_stats", "prestige", "daily_achievement_check", "raid_notifications",
-                       "activate_skills", "breaks"]
+                       "activate_skills", "clan_results_parse", "breaks"]
 
 # Specify functions that can be activated through keyboard shortcuts.
 # The key present should represent a function that's present on the Bot.
@@ -72,9 +72,9 @@ SHORTCUT_FUNCTIONS = {
     # Utility shortcuts.
     "pause": "p",
     "resume": "r",
-    "terminate": "esc",
-    "soft_terminate": "shift+esc",
-    # Functional shortcuts.s
+    "terminate": "e",
+    "soft_terminate": "shift+e",
+    # Functional shortcuts.
     "actions": "shift+a",
     "breaks": "shift+b",
     "level_heroes": "shift+h",
@@ -88,6 +88,7 @@ SHORTCUT_FUNCTIONS = {
     "update_stats": "shift+u",
     "prestige": "shift+p",
     "daily_achievement_check": "ctrl+d",
+    "clan_results_parse": "ctrl+p",
     "raid_notifications": "ctrl+r",
     "activate_skills": "ctrl+a",
 }
@@ -113,7 +114,7 @@ QUEUEABLE_TOOLTIPS = {
     "calculate_next_raid_notifications_check": "Calculate the next time raid notification check will take place.",
     "calculate_next_skill_execution": "Calculate the next time a skill execution will take place.",
     "calculate_next_prestige": "Calculate the next time a prestige will take place.",
-    "calculate_next_recovery_reset": "Calculate the next time a recovery reset will tak place.",
+    "calculate_next_recovery_reset": "Calculate the next time a recovery reset will take place.",
     "calculate_next_break": "Calculate the next time a break will take place.",
     "update_next_artifact_upgrade": "Update the next artifact that will be upgraded.",
     "parse_current_stage": "Parse the current stage in game.",
@@ -139,6 +140,7 @@ QUEUEABLE_TOOLTIPS = {
     "update_stats": "Force a statistics update in game.",
     "prestige": "Force a prestige in game.",
     "daily_achievement_check": "Force a daily achievement check in game.",
+    "clan_results_parse": "Force a clan results parse in game.",
     "raid_notifications": "Force a raid notifications check in game.",
     "activate_skills": "Force a skill activation in game.",
     "breaks": "Force a manual break in game."
