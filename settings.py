@@ -45,5 +45,5 @@ GIT_COMMIT = git.Repo(ROOT_DIR).head.commit.hexsha
 
 # In game specific settings should be stored here. As the game is updated, these will change
 # and reflect the new constants that may be used by the bot.
-GAME_VERSION = "3.2.1"
+GAME_VERSION = "3.2.2"
 STAGE_CAP = 75000
