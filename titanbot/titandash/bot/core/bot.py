@@ -899,6 +899,7 @@ class Bot(object):
         return found
 
     @wrap_current_function
+    @not_in_transition
     def breaks(self, force=False):
         """
         Check to see if a break should take place, if a break should take place, the emulator will
@@ -914,8 +915,8 @@ class Bot(object):
                 # Begin by completely restarting the emulator.
                 # After that has been completed, we will initiate a while loop
                 # that keeps the bot here until the break has ended.
-                # if not self.restart_emulator():
-                #     return False
+                if not self.restart_emulator():
+                    return False
 
                 time_break = self.props.next_break - now
                 time_resume = self.props.resume_from_break - now
