@@ -16,7 +16,7 @@ Take a look at the [wiki](https://github.com/becurrie/titandash/wiki) for inform
 - View all log records associated with the current bot session.
 - Countdowns until specific functionality takes place.
 - View all sessions that have taken place and review logs/duration/prestiges that happened while a session was active.
-- View all raid results instances and view data about damage done and who did damage.
+- View all raid results instances and view data about damage done and who dealt damage.
 - Create multiple configurations that can be swapped out quickly when needed (farming, tournaments, push).
 - Review all current statistics taken from the game, as well as statistics related to the bot.
 - View all prestiges and review additional information (average stage, average duration).
