@@ -16,6 +16,7 @@ GAME_STATISTICS_HELP_TEXT = {
     "critical_hits": "How many critical hits have been scored in game overall.",
     "chestersons_killed": "How many chestersons have been killed in game overall.",
     "prestiges": "How many total prestiges have taken place in game overall.",
+    "days_since_install": "How many days since the game has been installed.",
     "play_time": "How much active play time has been accrued in game overall.",
     "relics_earned": "How many relics have been earned game overall.",
     "fairies_tapped": "How many fairies have been tapped on in game overall.",
@@ -43,6 +44,7 @@ class GameStatistics(models.Model):
     critical_hits = models.CharField(verbose_name="Critical Hits", blank=True, null=True, max_length=255, help_text=GAME_STATISTICS_HELP_TEXT["critical_hits"])
     chestersons_killed = models.CharField(verbose_name="Chestersons Killed", blank=True, null=True, max_length=255, help_text=GAME_STATISTICS_HELP_TEXT["chestersons_killed"])
     prestiges = models.CharField(verbose_name="Prestiges", blank=True, null=True, max_length=255, help_text=GAME_STATISTICS_HELP_TEXT["prestiges"])
+    days_since_install = models.CharField(verbose_name="Days Since Install", blank=True, null=True, max_length=255, help_text=GAME_STATISTICS_HELP_TEXT["days_since_install"])
     play_time = models.CharField(verbose_name="Play Time", blank=True, null=True, max_length=255, help_text=GAME_STATISTICS_HELP_TEXT["play_time"])
     relics_earned = models.CharField(verbose_name="Relics Earned", blank=True, null=True, max_length=255, help_text=GAME_STATISTICS_HELP_TEXT["relics_earned"])
     fairies_tapped = models.CharField(verbose_name="Fairies Tapped", blank=True, null=True, max_length=255, help_text=GAME_STATISTICS_HELP_TEXT["fairies_tapped"])
@@ -68,6 +70,7 @@ class GameStatistics(models.Model):
             "critical_hits": self.critical_hits,
             "chestersons_killed": self.chestersons_killed,
             "prestiges": self.prestiges,
+            "days_since_install": self.days_since_install,
             "play_time": self.play_time,
             "relics_earned": self.relics_earned,
             "fairies_tapped": self.fairies_tapped,

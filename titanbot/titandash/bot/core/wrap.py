@@ -41,6 +41,12 @@ class Images:
         self.clan = None
         self.clan_info = None
 
+        # RAID.
+        self.raid_fight = None
+
+        # STATS.
+        self.stats_title = None
+
         # DAILY_REWARD.
         self.collect_reward = None
 
@@ -90,8 +96,8 @@ class Images:
         self.war_cry = None
 
         # NO_PANELS.
-        self.clan_battle_ready = None
-        self.clan_no_battle = None
+        self.clan_raid_ready = None
+        self.clan_no_raid = None
         self.daily_reward = None
         self.fight_boss = None
         self.hatch_egg = None
@@ -186,6 +192,7 @@ class Locs:
         self.clan_info_close = None
         self.clan_results = None
         self.clan_results_copy = None
+        self.clan_raid = None
 
         # AD.
         self.collect_ad = None

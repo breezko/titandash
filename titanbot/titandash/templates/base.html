@@ -14,7 +14,7 @@
 
     <!-- Bootstrap core CSS -->
     <link href="{% static "bootstrap/dist/css/bootstrap.min.css"  %}" rel="stylesheet">
-    <link href="{% static "css/theme/boldstrap.css" %}" rel="stylesheet">
+    <link href="/static/css/theme/{{ THEMES.selected }}.css" rel="stylesheet">
 
     <!-- Font Awesome CSS -->
     <link href="{% static "@fortawesome/fontawesome-free/css/all.min.css" %}" rel="stylesheet">
@@ -49,9 +49,44 @@
     </div>
     <div class="d-flex" id="wrapper">
 
+        <!-- Themes Modal -->
+        <div class="modal fade" id="themesModal" tabindex="-1" role="dialog" aria-labelledby="themesModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Themes</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table table-sm table-borderless table-hover">
+                            <tbody>
+                                {% for theme in THEMES.available %}
+                                    <tr>
+                                        <td>{{ theme.theme|title }}</td>
+                                        <td>
+                                            {% if theme.selected %}
+                                                <button style="width: 100%;" class="btn btn-sm btn-primary" disabled>Selected</button>
+                                            {% else %}
+                                                <button onclick="selectTheme('{{ theme.theme }}')" style="width: 100%;" class="btn btn-sm btn-primary">Select</button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Sidebar -->
         <div class="bg-light border-right" id="sidebar-wrapper">
-            <div class="sidebar-heading text-uppercase"><img width="20" height="20" src="{% static "favicon.ico" %}" alt="logo"><small><strong>TitanDash</strong></small></div>
+            <div class="sidebar-heading text-uppercase" style="border-right: 0; padding: 0.8rem 1.25rem;"><img width="20" height="20" src="{% static "favicon.ico" %}" alt="logo"><small><strong>TitanDash</strong></small></div>
             <div class="list-group list-group-flush">
                 <a href="{% url "dashboard" %}" class="list-group-item list-group-item-action bg-light">Dashboard</a>
                 <a href="{% url "sessions" %}" class="list-group-item list-group-item-action bg-light">Sessions</a>
@@ -62,15 +97,16 @@
                 <a href="{% url "all_prestiges" %}" class="list-group-item list-group-item-action bg-light">Prestiges</a>
                 <a href="{% url "settings" %}" class="list-group-item list-group-item-action bg-light">Settings</a>
                 <a href="{% url "shortcuts" %}" class="list-group-item list-group-item-action bg-light">Shortcuts</a>
+                <a href="#" data-toggle="modal" data-target="#themesModal" class="list-group-item list-group-item-action bg-light">Theme</a>
             </div>
         </div>
 
         <!-- Page Content -->
         <div id="page-content-wrapper">
 
-            <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+            <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom" style="border-left: 0;">
                 <button class="btn btn-primary" id="menu-toggle">Toggle Menu</button>
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler" style="padding: 1px 7px;" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                   <span class="navbar-toggler-icon"></span>
                 </button>
 

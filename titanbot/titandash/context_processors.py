@@ -2,6 +2,7 @@ from django.conf import settings as titandash_settings
 import settings as bot_settings
 
 import json
+import os
 
 
 def bot(request):
@@ -20,5 +21,31 @@ def bot(request):
 
     # Including all settings as a json string.
     context["SETTINGS_JSON"] = json.dumps(context["BOT"])
+
+    return context
+
+
+def themes(request):
+    context = {
+        "THEMES": {
+            "selected": None,
+            "available": [],
+        }
+    }
+
+    cookie = request.COOKIES.get("theme")
+    if not cookie:
+        cookie = "default"
+
+    context["THEMES"]["selected"] = cookie
+
+    # Place default theme as first theme available.
+    for file in [f.split(".")[0] for f in os.listdir(bot_settings.THEMES_DIR)]:
+        if file == "default":
+            context["THEMES"]["available"].append({"theme": file, "selected": cookie and cookie == file})
+    # Place other themes after default.
+    for file in [f.split(".")[0] for f in os.listdir(bot_settings.THEMES_DIR)]:
+        if file != "default":
+            context["THEMES"]["available"].append({"theme": file, "selected": cookie and cookie == file})
 
     return context

@@ -45,6 +45,7 @@ GAME_LOCS = {
         "clan_info_close": (408, 97),
         "clan_results": (267, 153),
         "clan_results_copy": (80, 262),
+        "clan_raid": (109, 750),
     },
     "SKILL_BAR": {
         "heavenly_strike": (43, 744),
@@ -246,8 +247,8 @@ IMAGES = {
         "war_cry": IMAGE_DIR + "/master/war_cry.png",
     },
     "NO_PANELS": {
-        "clan_battle_ready": IMAGE_DIR + "/no_panels/clan_battle_ready.png",
-        "clan_no_battle": IMAGE_DIR + "/no_panels/clan_no_battle.png",
+        "clan_raid_ready": IMAGE_DIR + "/no_panels/clan_raid_ready.png",
+        "clan_no_raid": IMAGE_DIR + "/no_panels/clan_no_raid.png",
         "daily_reward": IMAGE_DIR + "/no_panels/daily_reward.png",
         "fight_boss": IMAGE_DIR + "/no_panels/fight_boss.png",
         "hatch_egg": IMAGE_DIR + "/no_panels/hatch_egg.png",
@@ -275,6 +276,12 @@ IMAGES = {
     "CLAN": {
         "clan": IMAGE_DIR + "/clan/clan.png",
         "clan_info": IMAGE_DIR + "/clan/clan_info.png",
+    },
+    "RAID": {
+        "raid_fight": IMAGE_DIR + "/raid/raid_fight.png",
+    },
+    "STATS": {
+        "stats_title": IMAGE_DIR + "/stats/stats_title.png",
     }
 }
 
@@ -290,6 +297,7 @@ STATS_COORDS = {
     "critical_hits": (55, 602, 430, 621),
     "chestersons_killed": (55, 623, 430, 643),
     "prestiges": (55, 645, 430, 666),
+    "days_since_install": (55, 670, 430, 686),
     "play_time": (55, 687, 430, 708),
     "relics_earned": (55, 709, 430, 729),
     "fairies_tapped": (55, 731, 430, 751),
@@ -321,6 +329,11 @@ MASTER_COORDS = {
 CLAN_COORDS = {
     "info_name": (133, 70, 362, 103),
     "info_code": (123, 730, 172, 745),
+}
+
+# Clan raid coordinates located in the main clan raid page.
+CLAN_RAID_COORDS = {
+    "raid_attack_reset": (55, 753, 240, 771),
 }
 
 # Set of skills in game.

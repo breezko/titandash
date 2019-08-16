@@ -7,6 +7,9 @@ from settings import LOG_DIR
 import re
 import datetime
 
+# Raid notifications string used to template out the message sent to a user.
+RAID_NOTIFICATION_MESSAGE = "Raid attacks are available! You may now attack the active titan!"
+
 # The lookup multiplier is used to convert in game values that are formatted with specific multipliers
 # (K, M, T) into their respective float values, or the closest we can get to the actual value. These
 # values can then be parsed and diffed.
@@ -59,7 +62,8 @@ FUNCTION_LOOP_TIMEOUT = 40
 BOSS_LOOP_TIMEOUT = int(FUNCTION_LOOP_TIMEOUT / 2)
 
 # Specify any functions that may be forced.
-FORCEABLE_FUNCTIONS = ["recover", "actions", "update_stats", "prestige", "daily_achievement_check", "activate_skills"]
+FORCEABLE_FUNCTIONS = ["recover", "actions", "update_stats", "prestige", "daily_achievement_check", "raid_notifications",
+                       "activate_skills", "clan_results_parse", "breaks"]
 
 # Specify functions that can be activated through keyboard shortcuts.
 # The key present should represent a function that's present on the Bot.
@@ -68,10 +72,11 @@ SHORTCUT_FUNCTIONS = {
     # Utility shortcuts.
     "pause": "p",
     "resume": "r",
-    "terminate": "esc",
-    "soft_terminate": "shift+esc",
-    # Functional shortcuts.s
+    "terminate": "e",
+    "soft_terminate": "shift+e",
+    # Functional shortcuts.
     "actions": "shift+a",
+    "breaks": "shift+b",
     "level_heroes": "shift+h",
     "level_master": "shift+m",
     "level_skills": "shift+s",
@@ -83,6 +88,8 @@ SHORTCUT_FUNCTIONS = {
     "update_stats": "shift+u",
     "prestige": "shift+p",
     "daily_achievement_check": "ctrl+d",
+    "clan_results_parse": "ctrl+p",
+    "raid_notifications": "ctrl+r",
     "activate_skills": "ctrl+a",
 }
 
@@ -92,8 +99,8 @@ FUNCTION_SHORTCUTS = {v: k for k, v in SHORTCUT_FUNCTIONS.items()}
 # Specify any functions that be queued. These will be grabbed by the TitanDashboard to provide a user
 # with the ability to manually add functions that will be executed by the Bot.
 QUEUEABLE_FUNCTIONS = FORCEABLE_FUNCTIONS + [
-    "calculate_next_action_run", "calculate_next_stats_update", "calculate_next_daily_achievement_check",
-    "calculate_next_skill_execution", "calculate_next_prestige", "calculate_next_recovery_reset", "update_next_artifact_upgrade",
+    "calculate_next_action_run", "calculate_next_stats_update", "calculate_next_daily_achievement_check", "calculate_next_raid_notifications_check",
+    "calculate_next_skill_execution", "calculate_next_prestige", "calculate_next_recovery_reset", "update_next_artifact_upgrade", "calculate_next_break",
     "parse_current_stage", "level_heroes", "level_master", "level_skills", "artifacts", "parse_artifacts", "check_tournament",
     "daily_rewards", "hatch_eggs", "clan_crate", "collect_ad", "fight_boss", "leave_boss", "tap",
     "pause", "resume", "terminate", "soft_terminate"
@@ -104,9 +111,11 @@ QUEUEABLE_TOOLTIPS = {
     "calculate_next_action_run": "Calculate the next time that an action run will take place.",
     "calculate_next_stats_update": "Calculate the next time a statistics update will take place.",
     "calculate_next_daily_achievement_check": "Calculate the next time a daily achievement check will take place",
+    "calculate_next_raid_notifications_check": "Calculate the next time raid notification check will take place.",
     "calculate_next_skill_execution": "Calculate the next time a skill execution will take place.",
     "calculate_next_prestige": "Calculate the next time a prestige will take place.",
-    "calculate_next_recovery_reset": "Calculate the next time a recovery reset will tak place.",
+    "calculate_next_recovery_reset": "Calculate the next time a recovery reset will take place.",
+    "calculate_next_break": "Calculate the next time a break will take place.",
     "update_next_artifact_upgrade": "Update the next artifact that will be upgraded.",
     "parse_current_stage": "Parse the current stage in game.",
     "level_heroes": "Level heroes in game.",
@@ -131,7 +140,10 @@ QUEUEABLE_TOOLTIPS = {
     "update_stats": "Force a statistics update in game.",
     "prestige": "Force a prestige in game.",
     "daily_achievement_check": "Force a daily achievement check in game.",
-    "activate_skills": "Force a skill activation in game."
+    "clan_results_parse": "Force a clan results parse in game.",
+    "raid_notifications": "Force a raid notifications check in game.",
+    "activate_skills": "Force a skill activation in game.",
+    "breaks": "Force a manual break in game."
 }
 
 # Place any properties here that will be present on both the Bot and BotInstance
@@ -139,7 +151,13 @@ QUEUEABLE_TOOLTIPS = {
 # same time, update the current BotInstance and send out socket updates to the dashboard.
 PROPERTIES = [
     "current_stage", "current_function", "last_prestige", "next_action_run", "next_prestige",
-    "next_stats_update", "next_recovery_reset", "next_daily_achievement_check",
-    "next_clan_results_parse", "next_heavenly_strike", "next_deadly_strike",
-    "next_hand_of_midas", "next_fire_sword", "next_war_cry", "next_shadow_clone"
+    "next_stats_update", "next_recovery_reset", "next_daily_achievement_check", "next_break", "resume_from_break",
+    "next_raid_notifications_check", "next_raid_attack_reset", "next_clan_results_parse", "next_heavenly_strike",
+    "next_deadly_strike", "next_hand_of_midas", "next_fire_sword", "next_war_cry", "next_shadow_clone"
+]
+
+# Creating a list of all properties that should be modified when a break takes place so that
+# their next execution time take place at the proper time when a break finishes.
+BREAK_NEXT_PROPS = [
+    prop for prop in PROPERTIES if prop.split("_")[0] == "next" and prop not in ["next_break", "next_raid_attack_reset"]
 ]

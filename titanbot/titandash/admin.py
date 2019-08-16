@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.admin.decorators import register
-from django.contrib.auth.models import User, Group
+
+from django_paranoid.admin import ParanoidAdmin
 
 # from .models.token import Token
 from .models.artifact import Artifact, Tier
@@ -41,12 +42,17 @@ class ArtifactAdmin(admin.ModelAdmin):
 
 
 @register(Configuration)
-class ConfigurationAdmin(admin.ModelAdmin):
+class ConfigurationAdmin(ParanoidAdmin):
+    save_as = True
     filter_horizontal = ["upgrade_owned_tier", "ignore_artifacts", "upgrade_artifacts"]
     fieldsets = (
         (None, {
             "classes": ("expanded",),
             "fields": ("name",),
+        }),
+        ("Timestamps", {
+            "classes": ("expanded",),
+            "fields": ("created_at", "updated_at", "deleted_at"),
         }),
         ("Runtime Settings", {
             "classes": ("expanded",),
@@ -61,9 +67,19 @@ class ConfigurationAdmin(admin.ModelAdmin):
             "classes": ("expanded",),
             "fields": ("enable_premium_ad_collect", "enable_egg_collection", "enable_tapping", "enable_tournaments",),
         }),
+        ("Breaks Settings", {
+            "classes": ("expanded",),
+            "fields": ("enable_breaks", "breaks_jitter", "breaks_minutes_required", "breaks_minutes_max", "breaks_minutes_min"),
+        }),
         ("Daily Achievement Settings", {
             "classes": ("expanded",),
             "fields": ("enable_daily_achievements", "daily_achievements_check_on_start", "daily_achievements_check_every_x_hours",),
+        }),
+        ("Clan Raid Notifications Settings", {
+            "classes": ("expanded",),
+            "fields": ("enable_raid_notifications", "raid_notifications_check_on_start", "raid_notifications_check_every_x_minutes",
+                       "raid_notifications_twilio_account_sid", "raid_notifications_twilio_auth_token", "raid_notifications_twilio_from_number",
+                       "raid_notifications_twilio_to_number"),
         }),
         ("Clan Results Parsing Settings", {
             "classes": ("expanded",),

@@ -15,7 +15,7 @@ from titandash.models.clan import Clan, RaidResult
 from .maps import *
 from .constants import (
     STAGE_PARSE_THRESHOLD, FUNCTION_LOOP_TIMEOUT, BOSS_LOOP_TIMEOUT,
-    QUEUEABLE_FUNCTIONS, FORCEABLE_FUNCTIONS, PROPERTIES
+    QUEUEABLE_FUNCTIONS, FORCEABLE_FUNCTIONS, PROPERTIES, BREAK_NEXT_PROPS
 )
 from .props import Props
 from .grabber import Grabber
@@ -23,7 +23,7 @@ from .stats import Stats
 from .wrap import Images, Locs, Colors
 from .utilities import (
     click_on_point, click_on_image, drag_mouse, make_logger, strfdelta,
-    strfnumber, sleep
+    strfnumber, sleep, send_raid_notification
 )
 from .decorators import not_in_transition, wait_afterwards, wrap_current_function
 from .shortcuts import ShortcutListener
@@ -109,7 +109,9 @@ class Bot(object):
         self.calculate_next_action_run()
         self.calculate_next_recovery_reset()
         self.calculate_next_daily_achievement_check()
+        self.calculate_next_raid_notifications_check()
         self.calculate_next_clan_result_parse()
+        self.calculate_next_break()
 
         if start:
             self.run()
@@ -368,24 +370,8 @@ class Bot(object):
 
             sleep(3)
             # Restart the emulator and wait for a while for it to boot up...
-            self.logger.info("attempting to restart the emulator...")
-            click_on_point(EMULATOR_LOCS[self.configuration.emulator]["close_emulator"], pause=1)
-
-            while self.grabber.search(self.images.restart, bool_only=True):
-                found, pos = self.grabber.search(self.images.restart)
-                if found:
-                    self.logger.info("restarting emulator now...")
-                    click_on_image(self.images.restart, pos, pause=2)
-
-            self.logger.info("waiting for game launcher to become visible...")
-            while not self.grabber.search(self.images.tap_titans_2, bool_only=True):
-                self.logger.info("searching...")
-                sleep(2)
-
-            found, pos = self.grabber.search(self.images.tap_titans_2)
-            if found:
-                self.logger.info("game launcher was found, starting game...")
-                click_on_image(self.images.tap_titans_2, pos, pause=40)
+            self.restart_emulator()
+            self.open_game()
 
             self.calculate_next_recovery_reset()
             return
@@ -486,6 +472,14 @@ class Bot(object):
         self.logger.info("daily achievement check in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     @wrap_current_function
+    def calculate_next_raid_notifications_check(self):
+        """Calculate when the next raid notifications check should take place."""
+        now = timezone.now()
+        dt = now + datetime.timedelta(minutes=self.configuration.raid_notifications_check_every_x_minutes)
+        self.props.next_raid_notifications_check = dt
+        self.logger.info("raid notifications check will be initiated in {time}".format(time=strfdelta(dt - now)))
+
+    @wrap_current_function
     def calculate_next_clan_result_parse(self):
         """Calculate when the next clan result parse should take place."""
         if self.configuration.enable_clan_results_parse:
@@ -496,6 +490,25 @@ class Bot(object):
         else:
             # If result parsing is disabled, No datetime is configured and will be ignored.
             self.props.next_clan_results_parse = None
+
+    @wrap_current_function
+    def calculate_next_break(self):
+        """Calculate when the next break will take place in game."""
+        if self.configuration.enable_breaks:
+            now = timezone.now()
+
+            # Calculating when the next break will begin.
+            jitter = random.randint(-self.configuration.breaks_jitter, self.configuration.breaks_jitter)
+            jitter = self.configuration.breaks_minutes_required + jitter
+
+            next_break_dt = now + datetime.timedelta(minutes=jitter)
+
+            # Calculate the datetime to determine when the bot will be resumed after a break takes place.
+            resume_jitter = random.randint(self.configuration.breaks_minutes_min, self.configuration.breaks_minutes_max)
+            next_break_res = next_break_dt + datetime.timedelta(minutes=resume_jitter + 10)
+
+            self.props.next_break = next_break_dt
+            self.props.resume_from_break = next_break_res
 
     @wrap_current_function
     @not_in_transition
@@ -626,9 +639,15 @@ class Bot(object):
                 if not self.goto_heroes():
                     return False
 
-                # Opening the stats panel within the heroes panel in game.
-                # Scrolling to the bottom of this page, which contains all needed game stats info.
-                click_on_point(HEROES_LOCS["stats_collapsed"], pause=0.5)
+                # Ensure we are at the top of the stats screen while collapsed.
+                while not self.grabber.search(self.images.stats, bool_only=True):
+                    drag_mouse(self.locs.scroll_start, self.locs.scroll_top_end)
+                # Ensure the stats panel has been opened before continuing.
+                while not self.grabber.search(self.images.stats_title, bool_only=True):
+                    click_on_point(HEROES_LOCS["stats_collapsed"], pause=1)
+
+                # Scrolling to the bottom of the stats panel.
+                sleep(2)
                 for i in range(5):
                     drag_mouse(self.locs.scroll_start, self.locs.scroll_bottom_end)
 
@@ -881,6 +900,63 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    def breaks(self, force=False):
+        """
+        Check to see if a break should take place, if a break should take place, the emulator will
+        be restarted and the bot will wait until the resume time has been reached, then the game
+        will be opened once again and the bot will resume its functionality. A resume will also
+        cause all calculable variables to be recalculated.
+        """
+        if self.configuration.enable_breaks:
+            assert self.props.next_break and self.props.resume_from_break
+            now = timezone.now()
+            if force or now > self.props.next_break:
+                # A break can now take place...
+                # Begin by completely restarting the emulator.
+                # After that has been completed, we will initiate a while loop
+                # that keeps the bot here until the break has ended.
+                if not self.restart_emulator():
+                    return False
+
+                time_break = self.props.next_break - now
+                time_resume = self.props.resume_from_break - now
+                delta = time_resume - time_break
+
+                # Forcing a break should modify our next break values to now plus whatever
+                # the most recent break was calculated as.
+                if force:
+                    self.props.next_break = now
+                    self.props.resume_from_break = now + delta
+
+                # Modify all next attributes to take place after their normal calculated
+                # time with a bit of padding after a break ends.
+                for prop in BREAK_NEXT_PROPS:
+                    current = getattr(self.props, prop, None)
+                    if current:
+                        # Adding a bit of padding to next activation values.
+                        new = current + delta + datetime.timedelta(seconds=30)
+                        setattr(self.props, prop, new)
+
+                break_log_dt = now + datetime.timedelta(seconds=60)
+                self.logger.info("waiting for break to end... ({break_end})".format(break_end=strfdelta(self.props.resume_from_break - now)))
+                while True:
+                    now = timezone.now()
+                    if now > self.props.resume_from_break:
+                        self.logger.info("break has ended... opening game now.")
+                        if not self.open_game():
+                            return False
+
+                        self.calculate_next_break()
+                        return True
+
+                    if now > break_log_dt:
+                        break_log_dt = now + datetime.timedelta(seconds=60)
+                        self.logger.info("waiting for break to end... ({break_end})".format(break_end=strfdelta(self.props.resume_from_break - now)))
+
+                    sleep(1)
+
+    @wrap_current_function
+    @not_in_transition
     def daily_achievement_check(self, force=False):
         """Perform a check for any completed daily achievements, collecting them as long as any are present."""
         if self.configuration.enable_daily_achievements:
@@ -906,10 +982,63 @@ class Bot(object):
                         click_on_point(pos, pause=2)
                         click_on_point(GAME_LOCS["GAME_SCREEN"]["game_middle"], clicks=5, pause=1)
                         sleep(5)
+                        click_on_point(GAME_LOCS["GAME_SCREEN"]["game_middle"], clicks=5, pause=2)
 
                 # Exiting achievements screen now.
                 self.calculate_next_daily_achievement_check()
                 click_on_point(MASTER_LOCS["screen_top"], clicks=3)
+
+    @wrap_current_function
+    @not_in_transition
+    def raid_notifications(self, force=False):
+        """Perform all checks to see if a sms message will be sent to notify a user of an active raid."""
+        if self.configuration.enable_raid_notifications:
+            now = timezone.now()
+            if force or now > self.props.next_raid_notifications_check:
+                self.logger.info("{force_or_initiate} raid notifications check now".format(
+                    force_or_initiate="forcing" if force else "beginning"))
+
+                # Has an attack reset value already been parsed?
+                if self.props.next_raid_attack_reset:
+                    if self.props.next_raid_attack_reset > now:
+                        self.logger.info("the next raid attack reset is still in the future, no notification will be sent.")
+                        self.calculate_next_raid_notifications_check()
+                        return False
+
+                # Opening up the clan raid panel and checking if the fight button is available.
+                # This would mean that we can perform some fights, if it is present, we also check to
+                # see how much time until the attacks reset, once the current time has surpassed that
+                # value, we allow another notification to be sent.
+                if not self.goto_clan():
+                    return False
+
+                click_on_point(self.locs.clan_raid, pause=4)
+
+                if self.grabber.search(self.images.raid_fight, bool_only=True):
+                    # Fights are available, lets also parse out the next time that attacks will be reset.
+                    self.props.next_raid_attack_reset = self.stats.get_raid_attacks_reset()
+                    if not self.props.next_raid_attack_reset:
+                        self.logger.info("The next raid attack reset could not be parsed correctly, a notification will not be sent...")
+
+                    # Send out a notification to the user through Twilio.
+                    notification = send_raid_notification(
+                        sid=self.configuration.raid_notifications_twilio_account_sid,
+                        token=self.configuration.raid_notifications_twilio_auth_token,
+                        from_num=self.configuration.raid_notifications_twilio_from_number,
+                        to_num=self.configuration.raid_notifications_twilio_to_number)
+
+                    self.logger.info("a notification has been sent to {to_num} from {from_num}".format(
+                        to_num=self.configuration.raid_notifications_twilio_to_number,
+                        from_num=self.configuration.raid_notifications_twilio_from_number))
+
+                    self.logger.info("message sid: {sid}".format(sid=notification.sid))
+                    self.logger.info("message body: {body}".format(body=notification.body))
+                    self.logger.info("the next notification will only be sent after the current raid attack reset has been reached...")
+                    self.logger.info("next raid attack reset: {next_raid_attack}".format(next_raid_attack=self.props.next_raid_attack_reset))
+                else:
+                    self.logger.info("no raid fight is currently active or available! No notification will be sent.")
+
+                self.calculate_next_raid_notifications_check()
 
     @wrap_current_function
     @not_in_transition
@@ -1053,7 +1182,7 @@ class Bot(object):
         while True:
             loops += 1
             if loops == BOSS_LOOP_TIMEOUT:
-                self.logger.warning("error occurred, exiting function early.")
+                self.logger.warning("unable to enter boss fight currently...")
                 self.ERRORS += 1
                 return False
 
@@ -1073,9 +1202,9 @@ class Bot(object):
         while True:
             loops += 1
             if loops == BOSS_LOOP_TIMEOUT:
-                self.logger.warning("error occurred, exiting function early.")
+                self.logger.warning("unable to leave boss fight, assuming boss could not be reached...")
                 self.ERRORS += 1
-                return False
+                return True
 
             if not self.grabber.search(self.images.fight_boss, bool_only=True):
                 self.logger.info("attempting to leave active boss fight in game. ({tries}/{max})".format(
@@ -1328,17 +1457,62 @@ class Bot(object):
                 "parse_current_stage": True,
                 "prestige": self.configuration.enable_auto_prestige,
                 "daily_achievement_check": self.configuration.enable_daily_achievements,
+                "raid_notifications": self.configuration.enable_raid_notifications,
                 "clan_results_parse": self.configuration.enable_clan_results_parse,
                 "actions": True,
                 "activate_skills": self.configuration.enable_skills,
                 "update_stats": self.configuration.enable_stats,
-                "recover": True
+                "recover": True,
+                "breaks": self.configuration.enable_breaks
             }.items() if v
         ]
 
         self.logger.info("loop functions have been setup...")
         self.logger.info("{loop_funcs}".format(loop_funcs=", ".join(lst)))
         return lst
+
+    @wrap_current_function
+    def restart_emulator(self, wait=30):
+        """Restart the emulator."""
+        self.logger.info("restarting emulator now...")
+        self.logger.info("attempting to restart the emulator...")
+        click_on_point(EMULATOR_LOCS[self.configuration.emulator]["close_emulator"], pause=1)
+
+        loops = 0
+        while self.grabber.search(self.images.restart, bool_only=True):
+            loops += 1
+            found, pos = self.grabber.search(self.images.restart)
+            if found:
+                self.logger.info("restarting emulator now...")
+                click_on_image(self.images.restart, pos)
+                sleep(wait)
+                return True
+
+            if loops == FUNCTION_LOOP_TIMEOUT:
+                self.logger.warn("unable to restart emulator...")
+                return False
+
+    @wrap_current_function
+    def open_game(self, wait=40):
+        """Open the game from the main emulator screen."""
+        self.logger.info("opening tap titans 2 now...")
+
+        loops = 0
+        while not self.grabber.search(self.images.tap_titans_2, bool_only=True):
+            loops += 1
+            if loops == FUNCTION_LOOP_TIMEOUT:
+                self.logger.warn("unable to open game...")
+                return False
+
+            # Sleep for a while after each check...
+            sleep(2)
+
+        found, pos = self.grabber.search(self.images.tap_titans_2)
+        if found:
+            self.logger.info("game launcher was found, starting game...")
+            click_on_image(self.images.tap_titans_2, pos)
+            sleep(wait)
+            return True
 
     @wrap_current_function
     def initialize(self):
@@ -1355,6 +1529,8 @@ class Bot(object):
             self.daily_achievement_check(force=True)
         if self.configuration.parse_clan_results_on_start:
             self.clan_results_parse(force=True)
+        if self.configuration.raid_notifications_check_on_start:
+            self.raid_notifications(force=True)
 
     @wrap_current_function
     def run(self):

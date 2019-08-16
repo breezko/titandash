@@ -20,6 +20,11 @@ class Props(object):
         self.instance = instance
         self.props = props
 
+        # Ensure any values that existed on the instance are brought
+        # over on initialization.
+        for key, value in {k: v for k, v in vars(self.instance).items() if k in PROP_KEYS and v}.items():
+            PROP_ATTR[key] = value
+
     def __getattribute__(self, item):
         if item in PROP_KEYS:
             return PROP_ATTR[item]

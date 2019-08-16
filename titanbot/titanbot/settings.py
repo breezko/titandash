@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_paranoid',
     'channels',
     'titandash.apps.TitandashConfig',
 ]
@@ -68,6 +69,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'titandash.context_processors.bot',
+                'titandash.context_processors.themes',
             ],
         },
     },

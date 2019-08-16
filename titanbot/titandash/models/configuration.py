@@ -1,4 +1,5 @@
 from django.db import models
+from django_paranoid.models import ParanoidModel
 
 from titandash.constants import INFO, LOGGING_LEVEL_CHOICES, EMULATOR_CHOICES
 
@@ -13,9 +14,21 @@ HELP_TEXT = {
     "enable_egg_collection": "Enable the ability to collect and hatch eggs in game.",
     "enable_tapping": "Enable the ability to tap on titans (This also enables the clicking of fairies in game).",
     "enable_tournaments": "Enable the ability to enter and participate in tournaments.",
+    "enable_breaks": "Enable the ability to take breaks in game.",
+    "breaks_jitter": "Specify a jitter amount so that breaks take place at different intervals.",
+    "breaks_minutes_required": "How many minutes of concurrent playtime is required before a break takes place.",
+    "breaks_minutes_max": "Maximum amount of minutes to break for.",
+    "breaks_minutes_min": "Minimum amount of minutes to break for.",
     "enable_daily_achievements": "Enable the ability to check and collect daily achievements in game.",
     "daily_achievements_check_on_start": "Should daily achievements being checked for when a session is started.",
     "daily_achievements_check_every_x_hours": "Determine how many hours between each daily achievement check.",
+    "enable_raid_notifications": "Should notifications be sent to a user when a clan raid starts or attacks are ready.",
+    "raid_notifications_check_on_start": "Should a raid notifications check take place when a session is started.",
+    "raid_notifications_check_every_x_minutes": "Determine how many minutes between each raid notifications check.",
+    "raid_notifications_twilio_account_sid": "Specify the account sid associated with your twilio account.",
+    "raid_notifications_twilio_auth_token": "Specify the auth token associated with your twilio account.",
+    "raid_notifications_twilio_from_number": "Specify the from number associated with your twilio account",
+    "raid_notifications_twilio_to_number": "Specify the phone number you would like to receieve notifications at (ex: +19991234567)",
     "run_actions_every_x_seconds": "Determine how many seconds between each execution of all in game actions.",
     "run_actions_on_start": "Should all actions be executed when a session is started.",
     "order_level_heroes": "Select the order that heroes will be levelled in game (1, 2, 3).",
@@ -61,7 +74,7 @@ HELP_TEXT = {
 }
 
 
-class Configuration(models.Model):
+class Configuration(ParanoidModel):
     """
     Configuration Model.
 
@@ -89,10 +102,27 @@ class Configuration(models.Model):
     enable_tapping = models.BooleanField(verbose_name="Enable Tapping", default=True, help_text=HELP_TEXT["enable_tapping"])
     enable_tournaments = models.BooleanField(verbose_name="Enable Tournaments", default=True, help_text=HELP_TEXT["enable_tournaments"])
 
+    # BREAKS Settings.
+    enable_breaks = models.BooleanField(verbose_name="Enable Breaks", default=True, help_text=HELP_TEXT["enable_breaks"])
+    breaks_jitter = models.PositiveIntegerField(verbose_name="Breaks Jitter Amount", default=40, help_text=HELP_TEXT["breaks_jitter"])
+    breaks_minutes_required = models.PositiveIntegerField(verbose_name="Minutes Required Before Break Is Activated", default=180, help_text=HELP_TEXT["breaks_minutes_required"])
+    breaks_minutes_max = models.PositiveIntegerField(verbose_name="Max Minutes For Break", default=60, help_text=HELP_TEXT["breaks_minutes_max"])
+    breaks_minutes_min = models.PositiveIntegerField(verbose_name="Min Minutes For Break", default=20, help_text=HELP_TEXT["breaks_minutes_min"])
+
     # DAILY ACHIEVEMENT Settings.
     enable_daily_achievements = models.BooleanField(verbose_name="Enable Daily Achievements", default=True, help_text=HELP_TEXT["enable_daily_achievements"])
     daily_achievements_check_on_start = models.BooleanField(verbose_name="Check Daily Achievements On Session Start", default=False, help_text=HELP_TEXT["daily_achievements_check_on_start"])
     daily_achievements_check_every_x_hours = models.PositiveIntegerField(verbose_name="Check Daily Achievements Every X Hours", default=1, help_text=HELP_TEXT["daily_achievements_check_every_x_hours"])
+
+    # RAID NOTIFICATION Settings.
+    enable_raid_notifications = models.BooleanField(verbose_name="Enable Raid Notifications", default=False, help_text=HELP_TEXT["enable_raid_notifications"])
+    raid_notifications_check_on_start = models.BooleanField(verbose_name="Check For Raid Notification On Session Start", default=False, help_text=HELP_TEXT["raid_notifications_check_on_start"])
+    raid_notifications_check_every_x_minutes = models.PositiveIntegerField(verbose_name="Check For Raid Notification Every X Minutes", default=30, help_text=HELP_TEXT["raid_notifications_check_every_x_minutes"])
+
+    raid_notifications_twilio_account_sid = models.CharField(verbose_name="Raid Notifications Twilio Account SID", blank=True, null=True, max_length=255, help_text=HELP_TEXT["raid_notifications_twilio_account_sid"])
+    raid_notifications_twilio_auth_token = models.CharField(verbose_name="Raid Notifications Twilio Auth Token", blank=True, null=True, max_length=255, help_text=HELP_TEXT["raid_notifications_twilio_auth_token"])
+    raid_notifications_twilio_from_number = models.CharField(verbose_name="Raid Notifications Twilio From Number", blank=True, null=True, max_length=255, help_text=HELP_TEXT["raid_notifications_twilio_from_number"])
+    raid_notifications_twilio_to_number = models.CharField(verbose_name="Raid Notifications Twilio To Number", blank=True, null=True, max_length=255, help_text=HELP_TEXT["raid_notifications_twilio_to_number"])
 
     # GENERAL ACTION Settings.
     run_actions_every_x_seconds = models.PositiveIntegerField(verbose_name="Run Actions Every X Seconds", default=25, help_text=HELP_TEXT["run_actions_every_x_seconds"])

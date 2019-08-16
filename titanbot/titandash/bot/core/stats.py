@@ -14,9 +14,9 @@ from titandash.models.prestige import Prestige
 
 from .maps import (
     STATS_COORDS, STAGE_COORDS, IMAGES, GAME_LOCS, PRESTIGE_COORDS,
-    ARTIFACT_TIER_MAP, ARTIFACT_MAP, CLAN_COORDS
+    ARTIFACT_TIER_MAP, ARTIFACT_MAP, CLAN_COORDS, CLAN_RAID_COORDS
 )
-from .utilities import convert
+from .utilities import convert, delta_from_values
 
 from PIL import Image
 
@@ -378,3 +378,28 @@ class Stats:
         code = pytesseract.image_to_string(image=image_code, config="--psm 7")
 
         return name, code
+
+    def get_raid_attacks_reset(self, test_image=None):
+        """
+        Parse out the current attacks reset value for the current clan raid.
+
+        Assuming that the clan raid panel is currently open.
+        """
+        self.logger.info("attempting to parse out current clan raid attacks reset...")
+        region = CLAN_RAID_COORDS["raid_attack_reset"]
+
+        if test_image:
+            image = self._process(test_image)
+        else:
+            image = self._process(current=True, region=region)
+
+        text = pytesseract.image_to_string(image=image, config="--psm 7")
+        self.logger.info("text parsed: {text}".format(text=text))
+
+        delta = delta_from_values(values=text.split(" ")[3:])
+        self.logger.info("delta generated: {delta}".format(delta=delta))
+
+        if delta:
+            return timezone.now() + delta
+        else:
+            return None

@@ -87,12 +87,16 @@ let BotInstanceConsumer = function() {
             instanceVariablesConfiguration: $("#dashboardBotConfigurationValue"),
             instanceVariablesLogFile: $("#dashboardBotLogFileValue"),
             instanceVariablesCurrentStage: $("#dashboardBotCurrentStageValue"),
+            instanceVariablesRaidAttackReset: $("#dashboardBotRaidAttackResetValue"),
+            instanceVariablesNextBreak: $("#dashboardBotNextBreakValue"),
+            instanceVariablesBreakResume: $("#dashboardBotBreakResumeValue"),
             instanceVariablesNextArtifactUpgrade: $("#dashboardBotNextArtifactUpgradeValue"),
             instanceVariablesNextActionRun: $("#dashboardBotNextActionRunValue"),
             instanceVariablesNextPrestige: $("#dashboardBotNextPrestigeValue"),
             instanceVariablesNextStatsUpdate: $("#dashboardBotNextStatsUpdateValue"),
             instanceVariablesNextRecoveryReset: $("#dashboardBotNextRecoveryResetValue"),
             instanceVariablesNextDailyAchievementCheck: $("#dashboardBotNextDailyAchievementCheckValue"),
+            instanceVariablesNextRaidNotificationsCheck: $("#dashboardBotNextRaidNotificationsCheckValue"),
             instanceVariablesNextClanResultsParse: $("#dashboardBotNextClanResultsParseValue"),
             instanceVariablesNextHeavenlyStrike: $("#dashboardBotNextHeavenlyStrikeValue"),
             instanceVariablesNextDeadlyStrike: $("#dashboardBotNextDeadlyStrikeValue"),
@@ -132,11 +136,15 @@ let BotInstanceConsumer = function() {
      */
     this.configureCountdowns = function() {
         return {
+            raidAttackReset: [null, elements.instanceVariablesRaidAttackReset, "next_raid_attack_reset"],
+            nextBreakCountdown: [null, elements.instanceVariablesNextBreak, "next_break"],
+            breakResumeCountdown: [null, elements.instanceVariablesBreakResume, "resume_from_break"],
             nextActionRunCountdown: [null, elements.instanceVariablesNextActionRun, "next_action_run"],
             nextPrestigeCountdown: [null, elements.instanceVariablesNextPrestige, "next_prestige"],
             nextStatsUpdateCountdown: [null, elements.instanceVariablesNextStatsUpdate, "next_stats_update"],
             nextRecoveryResetCountdown: [null, elements.instanceVariablesNextRecoveryReset, "next_recovery_reset"],
             nextDailyAchievementCheckCountdown: [null, elements.instanceVariablesNextDailyAchievementCheck, "next_daily_achievement_check"],
+            nextRaidNotificationsCheckCountdown: [null, elements.instanceVariablesNextRaidNotificationsCheck, "next_raid_notifications_check"],
             nextClanResultsParseCountdown: [null, elements.instanceVariablesNextClanResultsParse, "next_clan_results_parse"],
             nextHeavenlyStrikeCountdown: [null, elements.instanceVariablesNextHeavenlyStrike, "next_heavenly_strike"],
             nextDeadlyStrikeCountdown: [null, elements.instanceVariablesNextDeadlyStrike, "next_deadly_strike"],
@@ -361,10 +369,14 @@ let BotInstanceConsumer = function() {
     this.setupLastPrestige = function(active, data) {
         if (active) {
             if (data["last_prestige"] === NA) {
-                elements.instanceLastPrestigeTimestamp.text("------");
-                elements.instanceLastPrestigeStage.text("------");
-                elements.instanceLastPrestigeDuration.text("------");
-                elements.instanceLastPrestigeArtifact.text("------");
+                if (lastPrestigeStopwatch !== null) {
+                    lastPrestigeStopwatch.destroy();
+                    lastPrestigeStopwatch = null;
+                    elements.instanceLastPrestigeTimestamp.text("N/A");
+                }
+                elements.instanceLastPrestigeStage.text("N/A");
+                elements.instanceLastPrestigeDuration.text("N/A");
+                elements.instanceLastPrestigeArtifact.text("N/A");
             } else {
                 if (elements.instanceLastPrestigeTimestamp.data("datetime") !== data["last_prestige"]["timestamp"]["datetime"]) {
                     if (lastPrestigeStopwatch !== null) {
@@ -408,8 +420,16 @@ let BotInstanceConsumer = function() {
                             <img height="25" width="25" src="${data["last_prestige"]["artifact"]["path"]}" alt="${data["last_prestige"]["artifact"]["image"]}">
                         `)
                 }
-
             }
+        } else {
+            if (lastPrestigeStopwatch !== null) {
+                lastPrestigeStopwatch.destroy();
+                lastPrestigeStopwatch = null;
+                elements.instanceLastPrestigeTimestamp.text("N/A");
+            }
+            elements.instanceLastPrestigeStage.text("N/A");
+            elements.instanceLastPrestigeDuration.text("N/A");
+            elements.instanceLastPrestigeArtifact.text("N/A");
         }
     };
 

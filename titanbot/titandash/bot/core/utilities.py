@@ -8,11 +8,14 @@ from titandash.bot.external.imagesearch import *
 from .maps import MASTER_LOCS
 from .constants import (
     STATS_DURATION_RE, STATS_LOOKUP_MULTIPLIER, STATS_TIMEDELTA_STR,
-    LOGGER_NAME, LOGGER_FORMAT, LOGGER_FILE_NAME, LOGGER_FILE_NAME_STRFMT
+    LOGGER_NAME, LOGGER_FORMAT, LOGGER_FILE_NAME, LOGGER_FILE_NAME_STRFMT,
+    RAID_NOTIFICATION_MESSAGE
 )
 
 from channels.generic.websocket import async_to_sync
 from channels.layers import get_channel_layer
+
+from twilio.rest import Client
 
 from string import Template, Formatter
 from pyautogui import *
@@ -130,6 +133,46 @@ def diff(old, new):
     return None
 
 
+def delta_from_values(values):
+    """
+    Generate a delta from the given values. The values expected here should contain the number and
+    letter associated with the value being parsed (ie: ["1d", "4h", "32m"])
+    """
+    kwargs = {"days": 0, "hours": 0, "minutes": 0}
+
+    try:
+        for value in values:
+            # DAYS.
+            if value.endswith("d"):
+                kwargs["days"] = int(value[:-1])
+
+            # HOURS.
+            if value.endswith("h"):
+                kwargs["hours"] = int(value[:-1])
+
+            # MINUTES.
+            if value.endswith("m"):
+                kwargs["minutes"] = int(value[:-1])
+
+    except ValueError:
+        return None
+
+    delta = datetime.timedelta(**kwargs)
+    if delta.total_seconds() == 0:
+        return None
+
+    return datetime.timedelta(**kwargs)
+
+
+def send_raid_notification(sid, token, from_num, to_num):
+    """Using the Twilio Rest Client, send a sms message to the specified phone number."""
+    return Client(sid, token).messages.create(
+        to=to_num,
+        from_=from_num,
+        body=RAID_NOTIFICATION_MESSAGE
+    )
+
+
 def gen_offset(point, amount):
     """Add some offset to a given point."""
     if amount == 0:
@@ -193,9 +236,9 @@ def in_transition_func(*args, max_loops):
         # if the game is not in a transition state.
         if _self.grabber.search(_self.images.exit_panel, bool_only=True):
             break
-        if _self.grabber.search(_self.images.clan_no_battle, bool_only=True):
+        if _self.grabber.search(_self.images.clan_no_raid, bool_only=True):
             break
-        if _self.grabber.search(_self.images.clan_battle_ready, bool_only=True):
+        if _self.grabber.search(_self.images.clan_raid_ready, bool_only=True):
             break
 
         # Can a stage be parsed out in the game?
