@@ -39,12 +39,13 @@ def themes(request):
 
     context["THEMES"]["selected"] = cookie
 
+    files = [f.split(".")[0] for f in os.listdir(bot_settings.THEMES_DIR) if len(f.split(".")) == 3]
     # Place default theme as first theme available.
-    for file in [f.split(".")[0] for f in os.listdir(bot_settings.THEMES_DIR)]:
+    for file in files:
         if file == "default":
             context["THEMES"]["available"].append({"theme": file, "selected": cookie and cookie == file})
     # Place other themes after default.
-    for file in [f.split(".")[0] for f in os.listdir(bot_settings.THEMES_DIR)]:
+    for file in files:
         if file != "default":
             context["THEMES"]["available"].append({"theme": file, "selected": cookie and cookie == file})
 
