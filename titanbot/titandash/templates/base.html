@@ -97,7 +97,7 @@
                 <a href="{% url "all_prestiges" %}" class="list-group-item list-group-item-action bg-light">Prestiges</a>
                 <a href="{% url "settings" %}" class="list-group-item list-group-item-action bg-light">Settings</a>
                 <a href="{% url "shortcuts" %}" class="list-group-item list-group-item-action bg-light">Shortcuts</a>
-                <a href="#" data-toggle="modal" data-target="#themesModal" class="list-group-item list-group-item-action bg-light">Theme</a>
+                <a href="#" data-toggle="modal" data-target="#themesModal" class="list-group-item list-group-item-action bg-light">Theme <strong>({{ THEMES.selected | title }})</strong></a>
             </div>
         </div>
 

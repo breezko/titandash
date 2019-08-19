@@ -5,7 +5,7 @@ from django_paranoid.admin import ParanoidAdmin
 
 # from .models.token import Token
 from .models.artifact import Artifact, Tier
-from .models.configuration import Configuration
+from .models.configuration import Configuration, ThemeConfig
 from .models.bot import BotInstance
 from .models.prestige import Prestige
 from .models.queue import Queue
@@ -39,6 +39,11 @@ class TierAdmin(admin.ModelAdmin):
 @register(Artifact)
 class ArtifactAdmin(admin.ModelAdmin):
     list_display = ["__str__", "name", "tier", "key", "image"]
+
+
+@register(ThemeConfig)
+class ThemeConfigAdmin(admin.ModelAdmin):
+    list_display = ["theme"]
 
 
 @register(Configuration)
