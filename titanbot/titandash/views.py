@@ -7,7 +7,7 @@ from titandash.models.bot import BotInstance
 from titandash.models.statistics import Session, Statistics, Log, ArtifactStatistics
 from titandash.models.clan import RaidResult
 from titandash.models.artifact import Artifact
-from titandash.models.configuration import Configuration
+from titandash.models.configuration import Configuration, ThemeConfig
 from titandash.models.prestige import Prestige
 from titandash.models.queue import Queue
 from titandash.bot.core.constants import QUEUEABLE_FUNCTIONS, QUEUEABLE_TOOLTIPS, SHORTCUT_FUNCTIONS
@@ -38,13 +38,7 @@ def dashboard(request):
             "tooltip": QUEUEABLE_TOOLTIPS[queue]
         })
 
-    response = render(request, "dashboard.html", context=ctx)
-
-    theme = request.COOKIES.get("theme")
-    if not theme:
-        response.set_cookie("theme", "default")
-
-    return response
+    return render(request, "dashboard.html", context=ctx)
 
 
 def theme_change(request):
@@ -52,9 +46,11 @@ def theme_change(request):
     if not selected:
         selected = "default"
 
-    response = render(request, "dashboard.html")
-    response.set_cookie("theme", selected)
-    return response
+    theme = ThemeConfig.objects.grab()
+    theme.theme = selected
+    theme.save()
+
+    return JsonResponse(data={"status": "success", "message": "Theme was successfully changed to {theme}".format(theme=theme.theme)})
 
 
 def log(request, pk):

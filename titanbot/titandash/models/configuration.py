@@ -190,3 +190,35 @@ class Configuration(ParanoidModel):
 
     def __str__(self):
         return "{name}".format(name=self.name)
+
+
+THEME_CONFIG_HELP_TEXT = {
+    "theme": "Determine the name of the theme that will be activated on the dashboard."
+}
+
+
+class ThemeConfigManager(models.Manager):
+    """
+    Attempt to grab the current theme config instance. We only ever want one single instance. If one does not exist,
+    we generate a new one with some default values.
+    """
+    def grab(self):
+        if len(self.all()) == 0:
+            self.create()
+
+        # Returning the existing instance.
+        return self.all().first()
+
+
+class ThemeConfig(models.Model):
+    """
+    ThemeConfig Model.
+
+    Use this model to store the currently selected theme used within the dashboard.
+    """
+    class Meta:
+        verbose_name = "Theme Config"
+        verbose_name_plural = "Theme Config's"
+
+    objects = ThemeConfigManager()
+    theme = models.CharField(verbose_name="Theme", default="default", max_length=255, help_text=THEME_CONFIG_HELP_TEXT["theme"])
