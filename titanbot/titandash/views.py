@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http.response import JsonResponse
 
 from titandash.utils import start, pause, stop, resume, title
+from titandash.utils import WindowHandler
 from titandash.constants import RUNNING, PAUSED, STOPPED
 from titandash.models.bot import BotInstance
 from titandash.models.statistics import Session, Statistics, Log, ArtifactStatistics
@@ -10,7 +11,7 @@ from titandash.models.artifact import Artifact
 from titandash.models.configuration import Configuration, ThemeConfig
 from titandash.models.prestige import Prestige
 from titandash.models.queue import Queue
-from titandash.bot.core.constants import QUEUEABLE_FUNCTIONS, QUEUEABLE_TOOLTIPS, SHORTCUT_FUNCTIONS
+from titandash.bot.core.constants import QUEUEABLE_FUNCTIONS, QUEUEABLE_TOOLTIPS, SHORTCUT_FUNCTIONS, WINDOW_FILTER
 
 from io import BytesIO
 
@@ -22,15 +23,23 @@ import json
 def dashboard(request):
     """Main dashboard view."""
     ctx = {
-        "configurations": []
+        "configurations": [],
+        "windows": [],
+        "queueable": []
     }
 
     # Grab all configurations present to send to the dashboard.
     for config in Configuration.objects.all():
         ctx["configurations"].append({"id": config.pk, "name": config.name})
 
+    wh = WindowHandler()
+    wh.enum()
+    for hwnd, window in wh.filter(contains=WINDOW_FILTER).items():
+        ctx["windows"].append(window.json())
+
+    ctx["windows"].reverse()
+
     # Grab all queueable functions.
-    ctx["queueable"] = []
     for queue in QUEUEABLE_FUNCTIONS:
         ctx["queueable"].append({
             "name": title(queue),
@@ -179,12 +188,13 @@ def signal(request):
     bot = BotInstance.objects.grab()
     sig = request.GET.get("signal")
     cfg = request.GET.get("config")
+    win = request.GET.get("window")
 
     if sig == "PLAY":
         if bot.state == RUNNING:
             return JsonResponse(data={"status": "warning", "message": "BotInstance is already running..."})
         if bot.state == STOPPED:
-            start(config=cfg)
+            start(config=cfg, window=win)
             return JsonResponse(data={"status": "success", "message": "BotInstance has been started..."})
         if bot.state == PAUSED:
             resume()
@@ -265,20 +275,17 @@ def screen(request):
     """Grab a screen shot of the current bot in game... Returning it as Base64 Image."""
     # Note: Nox Emulator is the only supported emulator... We can use
     # the expected values for that emulator for our screenshots...
-    from titandash.bot.core.maps import EMULATOR_PADDING_MAP
     from titandash.bot.external.imagesearch import region_grabber
     from PIL.Image import ANTIALIAS
 
-    height = 800
-    width = 480
+    inst = BotInstance.objects.grab()
+    window = inst.window
 
-    x = 0
-    y = 0
-
-    x2 = width + x + EMULATOR_PADDING_MAP["nox"]["x"]
-    y2 = height + y + EMULATOR_PADDING_MAP["nox"]["y"]
-
-    grab = region_grabber((x, y, x2, y2))
+    grab = region_grabber((
+        window["x"], window["y"],
+        window["x"] + window["width"],
+        window["y"] + window["height"]
+    ))
     grab = grab.resize((360, 600), ANTIALIAS)
 
     buffered = BytesIO()

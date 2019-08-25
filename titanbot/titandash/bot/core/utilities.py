@@ -183,8 +183,9 @@ def gen_offset(point, amount):
     return point[0] + rand_x, point[1] + rand_y
 
 
-def click_on_point(point, clicks=1, interval=0, button="left", pause=0.0, offset=5):
+def click_on_point(point, window, clicks=1, interval=0.0, button="left", pause=0.0, offset=5):
     """Click on the specified X, Y value based on the point passed along as a parameter."""
+    point = (point[0] + window.x, point[1] + window.y)
     if offset != 0:
         point = gen_offset(point, offset)
 
@@ -192,8 +193,9 @@ def click_on_point(point, clicks=1, interval=0, button="left", pause=0.0, offset
     click((point[0], point[1]), clicks=clicks, interval=interval, button=button, pause=pause)
 
 
-def move_to_point(point, pause=0.0):
+def move_to_point(point, window, pause=0.0):
     """Move the mouse to the specified X, Y values based on the point passed along as a parameter."""
+    point = (point[0] + window.x, point[1] + window.y)
     moveTo(point[0], point[1], pause=pause)
 
 
@@ -203,9 +205,11 @@ def click_on_image(image=None, pos=None, button="left", pause=0.0):
     click_image(image=image, pos=pos, action=button, timestamp=0, pause=pause)
 
 
-def drag_mouse(start, end, button="left", duration=0.3, pause=0.5, tween=linear, quick_stop=None):
+def drag_mouse(start, end, window, button="left", duration=0.3, pause=0.5, tween=linear, quick_stop=None):
     """Drag the mouse from the starting position, to the end position."""
     logger.debug("{button} clicking and dragging mouse from {start} to {end} over {duration}s with quick stop {quick}".format(button=button, start=start, end=end, duration=duration, quick="enabled" if quick_stop else "disabled"))
+    start = (start[0] + window.x, start[1] + window.y)
+    end = (end[0] + window.x, end[1] + window.y)
     moveTo(start[0], start[1])
 
     # Determine pause amount tween. Tweening may be useful for specific actions
@@ -215,7 +219,7 @@ def drag_mouse(start, end, button="left", duration=0.3, pause=0.5, tween=linear,
     dragTo(end[0], end[1], duration=duration, button=button, pause=pause, tween=tween)
 
     if quick_stop:
-        click_on_point((quick_stop[0], quick_stop[1]), pause=0.5, offset=0)
+        click_on_point((quick_stop[0], quick_stop[1]), window=window, pause=0.5, offset=0)
 
 
 def in_transition_func(*args, max_loops):
@@ -247,7 +251,7 @@ def in_transition_func(*args, max_loops):
 
         # Clicking the top of the screen in case of a transition taking place due to something being
         # present on the screen that requires clicking.
-        click_on_point(MASTER_LOCS["screen_top"], clicks=3, pause=0.5)
+        _self.click(point=MASTER_LOCS["screen_top"], clicks=3, pause=0.5)
         _self.logger.info("in a transition? waiting one second before continuing")
         sleep(1)
 
