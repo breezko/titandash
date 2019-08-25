@@ -40,6 +40,7 @@ let BotInstanceConsumer = function() {
         this.setupInstanceIcon(data);
         this.setupInstance(active, data);
         this.setupConfigChoice(active);
+        this.setupWindowChoice(active);
         this.setupPrestige(active);
         this.setupQueued(active);
         this.setupCurrentFunction(active, data);
@@ -48,12 +49,15 @@ let BotInstanceConsumer = function() {
         // Variables Success.
         this.setupInstanceLogVar(active, data);
         this.setupInstanceConfigVar(active, data);
+        this.setupInstanceWindowVar(active, data);
         this.setupInstanceNextArtifactVar(active, data);
         this.setupInstanceCurrentStageVar(active, data);
         this.setupInstanceCountdownVars(active, data);
         this.setupInstanceGenericVars(active);
         // Actions Success.
         this.setupActions(data);
+        // GameScreen Success.
+        this.setupGameScreen(active);
     }.bind(this);
 
     /**
@@ -63,6 +67,12 @@ let BotInstanceConsumer = function() {
         return {
             /* Alerts */
             alertContainer: $("#alert-container"),
+
+            /* Settings */
+            dashboardSettingsHeader: $("#dashboardSettings"),
+            dashboardSettingsBody: $("#dashboardSettingsBody"),
+            dashboardSettingsLoader: $("#dashboardSettingsLoader"),
+            dashboardSettingsContent: $("#dashboardSettingsContent"),
 
             /* BotInstance */
             instanceLoader: $("#dashboardBotLoader"),
@@ -85,6 +95,7 @@ let BotInstanceConsumer = function() {
             instanceVariablesTable: $("#dashboardBotCurrentVariablesTable"),
             instanceVariablesErrors: $("#dashboardBotErrorsValue"),
             instanceVariablesConfiguration: $("#dashboardBotConfigurationValue"),
+            instanceVariablesWindow: $("#dashboardBotWindowValue"),
             instanceVariablesLogFile: $("#dashboardBotLogFileValue"),
             instanceVariablesCurrentStage: $("#dashboardBotCurrentStageValue"),
             instanceVariablesRaidAttackReset: $("#dashboardBotRaidAttackResetValue"),
@@ -114,6 +125,7 @@ let BotInstanceConsumer = function() {
 
             /* Configuration */
             chooseConfig: $("#dashboardBotConfigurationSelect"),
+            chooseWindow: $("#dashboardBotWindowSelect"),
 
             /* QueuedFunctions */
             queueInitial: $("#dashboardQueueInitial"),
@@ -128,7 +140,11 @@ let BotInstanceConsumer = function() {
             prestigeAvgDuration: $("#dashboardPrestigeAvgDurationValue"),
             prestigeAvgStage: $("#dashboardPrestigeAvgStageValue"),
             prestigeThisSession: $("#dashboardPrestigeThisSessionValue"),
-            prestigeLastArtifactValue: $("#dashboardPrestigeLastArtifactValue")
+            prestigeLastArtifactValue: $("#dashboardPrestigeLastArtifactValue"),
+
+            /* Game Screen */
+            screenStop: $("#dashboardScreenStop"),
+            screenStart: $("#dashboardScreenStart")
         }
     };
     /**
@@ -217,6 +233,13 @@ let BotInstanceConsumer = function() {
             cls += " text-light";
             elem.attr("class", cls).off("click");
         }
+    };
+
+    /**
+     * Setup Bot Settings to either allow modifying values or disabled when one is running.
+     */
+    this.setupWindowChoice = function(active) {
+        elements.chooseWindow.attr("disabled", !!active);
     };
 
     /* Active / Inactive Modification Functions */
@@ -462,6 +485,16 @@ let BotInstanceConsumer = function() {
             }
         }
     };
+    this.setupInstanceWindowVar = function(active, data) {
+        if (active) {
+            if (elements.instanceVariablesWindow.text() !== data["window"]["formatted"])
+                elements.instanceVariablesWindow.text(data["window"]["formatted"])
+            elements.chooseWindow.find("option").each(function () {
+                if ($(this).text() === elements.instanceVariablesWindow.text())
+                    $(this).attr("selected", true);
+            });
+        }
+    };
     /**
      * Setup the next artifact upgrade displayed data.
      */
@@ -605,12 +638,27 @@ let BotInstanceConsumer = function() {
     };
 
     /**
+     * Setup the game screen to be enabled or disabled based on current BotInstance status.
+     */
+    this.setupGameScreen = function(active) {
+        if (active) {
+            elements.screenStart.prop("disabled", false);
+            elements.screenStop.prop("disabled", false);
+        } else {
+            elements.screenStart.prop("disabled", true);
+            elements.screenStop.prop("disabled", true);
+        }
+    };
+
+    /**
      * Sending a signal to the BotInstance. One of either ("start", "pause", "stop").
      */
     this.sendSignal = function(signal) {
         let data = {signal: signal};
-        if (signal === PLAY)
+        if (signal === PLAY) {
             data["config"] = elements.chooseConfig.find(":selected").val();
+            data["window"] = elements.chooseWindow.find(":selected").val();
+        }
 
         $.ajax({
             url: signalsAjaxUrl,
@@ -633,6 +681,11 @@ let BotInstanceConsumer = function() {
         console.log("BotInstance WebSocket Started Now...");
     };
 
+    /* Consumer Elements */
+    let elements = this.configureDashboardElements();
+    /* BotInstance Variable Countdowns */
+    let countdowns = this.configureCountdowns();
+
     // Setting a timeout to retrieve the initial BotInstance...
     setTimeout(function() {
         $.ajax({
@@ -647,9 +700,4 @@ let BotInstanceConsumer = function() {
             }.bind(this)
         });
     }.bind(this), 400);
-
-    /* Consumer Elements */
-    let elements = this.configureDashboardElements();
-    /* BotInstance Variable Countdowns */
-    let countdowns = this.configureCountdowns();
 };

@@ -45,13 +45,33 @@
 
     <!-- Bot Actions Card -->
     <div class="card">
+        <div class="card-header" id="dashboardSettings">
+            <h5 class="mb-0"><small>Settings</small></h5>
+        </div>
+
+        <div class="card-body" id="dashboardSettingsBody">
+            <div id="dashboardSettingsContent" class="container">
+                <label for="dashboardBotConfigurationSelect">Configuration:</label>
+                <select style="width: 100%;" id="dashboardBotConfigurationSelect" class="form-control">
+                    {% for config in configurations %}
+                        <option value="{{ config.id }}">{{ config.name }}</option>
+                    {% endfor %}
+                </select>
+                <br/>
+                <label for="dashboardBotWindowSelect">Window:</label>
+                <select style="width: 100%;" id="dashboardBotWindowSelect" class="form-control">
+                    {% for window in windows %}
+                        <option value="{{ window.hwnd }}">{{ window.formatted }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bot Actions Card -->
+    <div class="card">
         <div class="card-header" id="dashboardActions">
             <h5 class="mb-0" style="line-height: 1.8;"><small>Controls</small>
-            <select style="width: 40%;" id="dashboardBotConfigurationSelect" class="float-right form-control">
-                {% for config in configurations %}
-                    <option value="{{ config.id }}">{{ config.name }}</option>
-                {% endfor %}
-            </select>
             <button data-toggle="modal" data-target="#exampleModal" style="width: 20%; margin-right: 15px;" type="button" class="btn btn-primary float-right">Tools</button>
             </h5>
         </div>
@@ -188,6 +208,10 @@
                                     <tr>
                                         <td><small>Configuration</small></td>
                                         <td><strong><a class="varsItem" href="#" id="dashboardBotConfigurationValue">------</a></strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Window</small></td>
+                                        <td><strong class="varsItem" id="dashboardBotWindowValue">------</strong></td>
                                     </tr>
                                     <tr>
                                         <td><small>Log File</small></td>
@@ -357,8 +381,8 @@
             <div class="card-header" id="dashboardScreenHeader">
                 <h5 class="mb-0">
                     <button class="btn btn-link" id="dashboardScreenHeaderCollapse" data-toggle="collapse" data-target="#collapseScreen">Game Screen</button>
-                    <span id="dashboardScreenStop" class="float-right fa fa-stop text-success" style="margin-top: 7px;" title="Click here to stop game screen updates."></span>
-                    <span id="dashboardScreenStart" class="float-right fa fa-play text-dark" style="margin-top: 7px; margin-right: 15px;" title="Click here to start game screen updates."></span>
+                    <button disabled id="dashboardScreenStop" class="btn float-right fa fa-stop text-success" style="margin-top: 7px;" title="Click here to stop game screen updates."></button>
+                    <button disabled id="dashboardScreenStart" class="btn float-right fa fa-play text-dark" style="margin-top: 7px; margin-right: 15px;" title="Click here to start game screen updates."></button>
                 </h5>
             </div>
 
