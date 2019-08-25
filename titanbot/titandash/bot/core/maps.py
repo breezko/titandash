@@ -6,15 +6,6 @@ and mapping the proper values and coordinates to their respective keys.
 """
 from settings import IMAGE_DIR
 
-# Some emulators apply some padding or wrapping around their window. This can be accounted for by mapping
-# the padding and dealing with it during screenshots.
-EMULATOR_PADDING_MAP = {
-    "nox": {
-        "x": 5,
-        "y": 38,
-    },
-}
-
 EMULATOR_LOCS = {
     "nox": {
         "close_emulator": (469, 17),

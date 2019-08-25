@@ -161,3 +161,8 @@ PROPERTIES = [
 BREAK_NEXT_PROPS = [
     prop for prop in PROPERTIES if prop.split("_")[0] == "next" and prop not in ["next_break", "next_raid_attack_reset"]
 ]
+
+# Specify the filter strings used to find emulator windows.
+WINDOW_FILTER = [
+    "nox", "noxplayer"
+]

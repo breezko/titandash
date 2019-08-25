@@ -30,7 +30,8 @@ import logging
 
 class Stats:
     """Stats class contains all possible stat values and can be updated dynamically."""
-    def __init__(self, grabber, configuration, logger):
+    def __init__(self, window, grabber, configuration, logger):
+        self.window = window
         self.logger = logger
         self.statistics = Statistics.objects.grab()
 
@@ -184,7 +185,7 @@ class Stats:
                 break
 
             # Scroll down slightly and check for artifacts again.
-            drag_mouse(locs["scroll_start"], locs["scroll_bottom_end"], quick_stop=locs["scroll_quick_stop"])
+            drag_mouse(start=locs["scroll_start"], end=locs["scroll_bottom_end"], window=self.window, quick_stop=locs["scroll_quick_stop"])
             sleep(1)
 
             # Checking at the end of the loop to break, one more loop takes place before exit.

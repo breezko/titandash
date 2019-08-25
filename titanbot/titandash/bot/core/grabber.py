@@ -4,7 +4,6 @@ grabber.py
 Encapsulate the functional class used by the bot to take screenshots of the game screen and search
 for specific images present on the screen.
 """
-from .maps import EMULATOR_PADDING_MAP
 from titandash.bot.external.imagesearch import *
 
 
@@ -13,20 +12,20 @@ class Grabber:
     Grabber class provides functionality to capture a portion of the screen, based on the height
     and width that the emulator should be set to.
     """
-    def __init__(self, emulator, logger):
+    def __init__(self, window, logger):
         # Base height and width, resolution of game.
+        self.window = window
         self.logger = logger
-        self.height = 800
-        self.width = 480
 
         # Padding provided by emulator, x1, y1.
-        self.x = 0
-        self.y = 0
+        self.x = window.x
+        self.y = window.y
+        self.width = window.width
+        self.height = window.height
 
-        # x2, y2, represent the width and height of the emulator to an extent.
-        # Padding added here as well.
-        self.x2 = self.width + self.x + EMULATOR_PADDING_MAP[emulator]["x"]
-        self.y2 = self.height + self.y + EMULATOR_PADDING_MAP[emulator]["y"]
+        # x2, y2, represent the width and height of the emulator.
+        self.x2 = self.width + self.x
+        self.y2 = self.height + self.y
 
         # Screen is updated and set to the result of an image grab as needed through the snapshot method.
         self.current = None
@@ -43,6 +42,11 @@ class Grabber:
         else:
             self.logger.debug("taking snapshot of region in game screen (X1: {x}, Y1: {y}, X2: {x2}, Y2: {y2}".format(
                 x=region[0], y=region[1], x2=region[2], y2=region[3]))
+
+            region = (
+                region[0] + self.window.x, region[1] + self.window.y,
+                region[2] + self.window.x, region[3] + self.window.y
+            )
             self.current = region_grabber(region)
 
     def search(self, image, region=None, precision=0.8, bool_only=False, testing=False):
@@ -62,6 +66,10 @@ class Grabber:
         found = False
         try:
             if region:
+                region = (
+                    region[0] + self.window.x, region[1] + self.window.y,
+                    region[2] + self.window.x, region[3] + self.window.y
+                )
                 position = imagesearcharea(image, region[0], region[1], region[2], region[3], precision)
             else:
                 position = imagesearcharea(image, self.x, self.y, self.x2, self.y2, precision, self.current)
@@ -74,4 +82,6 @@ class Grabber:
         if bool_only:
             return found
 
+        # Modify the position to reflect the current window location.
+        position = (position[0] + self.window.x, position[1] + self.window.y)
         return found, position
