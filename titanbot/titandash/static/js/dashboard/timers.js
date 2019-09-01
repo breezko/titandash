@@ -6,7 +6,7 @@
  */
 
 /**
- *Generate a Stopwatch instance that will count up from the specified start date.
+ * Generate a Stopwatch instance that will count up from the specified start date.
  *
  * @param startDate Date the stopwatch will use to start from.
  * @param formattedDate Date being used when rendering countdown output. (Null will not use a prepended date).

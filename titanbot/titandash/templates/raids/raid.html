@@ -7,19 +7,23 @@
             <div class="card-header" id="raidBaseHeader">
                 <h5 class="mb-0">
                     <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne">
-                        Raid: {{ raid.digest }} - {{ raid.parsed.formatted }}
+                        Raid: {{ raid.digest }}
                     </button>
-                    <button id="exportRaidJson" type="button" class="float-right btn btn-primary">Export JSON<span style="margin-left: 8px;" class="fa fa-file-export"></span></button>
+                    <button id="exportRaidJson" type="button" class="float-right btn btn-sm btn-primary">Export JSON<span style="margin-left: 8px;" class="fa fa-file-export"></span></button>
                 </h5>
             </div>
 
             <div id="collapseOne" class="collapse show" data-parent="#accordionOne">
                 <div class="card-body">
-                     <table id="raidTable" class="table table-sm table-borderless table-hover table-striped">
+                     <table id="raidTable" class="table table-sm table-borderless table-hover table-striped titan-responsive">
                         <tbody>
                             <tr>
                                 <td>Digest</td>
-                                <td>{{ raid.digest }}</td>
+                                <td id="raidDigestValue">{{ raid.digest }}</td>
+                            </tr>
+                            <tr>
+                                <td>Instance</td>
+                                <td>{{ raid.instance }}</td>
                             </tr>
                             <tr>
                                 <td>Parsed</td>
@@ -81,7 +85,7 @@
 
             <div id="collapseThree" class="collapse show" data-parent="#accordionTwo">
                 <div class="card-body">
-                    <table id="attacksTable" class="table table-sm table-borderless table-hover table-striped">
+                    <table id="attacksTable" class="table table-sm table-borderless table-hover table-striped titan-responsive">
                         <thead>
                             <tr>
                                 <th>Rank</th>

@@ -16,7 +16,9 @@ class Images:
                 self.logger.debug("images.{attr}: {value}".format(attr=key, value=value))
 
     def _base(self):
-        """Manually set every expected value, allows for easier access later on."""
+        """
+        Manually set every expected value, allows for easier access later on.
+        """
         # ACHIEVEMENTS.
         self.daily_collect = None
 
@@ -134,7 +136,9 @@ class Locs:
                 self.logger.debug("locs.{attr}: {value}".format(attr=key, value=value))
 
     def _base(self):
-        """Manually set every expected value."""
+        """
+        Manually set every expected value.
+        """
         # BOTTOM_BAR.
         self.master = None
         self.heroes = None

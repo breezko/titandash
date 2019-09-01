@@ -12,7 +12,13 @@
 
             <div id="collapseOne" class="collapse show" data-parent="#accordion">
                 <div class="card-body">
-                    <table id="shortcutsTable" class="display table table-sm table-borderless table-hover table-striped" style="width: 100%;">
+                    <table id="shortcutsTable" class="display table table-sm table-borderless table-hover table-striped titan-responsive" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <td>Function</td>
+                                <td>Shortcut</td>
+                            </tr>
+                        </thead>
                         <tbody>
                             {% for key, value in shortcuts.items %}
                                <tr>
@@ -30,4 +36,8 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static "js/botShortcuts.js" %}"></script>
 {% endblock %}

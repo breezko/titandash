@@ -6,15 +6,6 @@ and mapping the proper values and coordinates to their respective keys.
 """
 from settings import IMAGE_DIR
 
-# Some emulators apply some padding or wrapping around their window. This can be accounted for by mapping
-# the padding and dealing with it during screenshots.
-EMULATOR_PADDING_MAP = {
-    "nox": {
-        "x": 5,
-        "y": 38,
-    },
-}
-
 EMULATOR_LOCS = {
     "nox": {
         "close_emulator": (469, 17),
@@ -168,8 +159,8 @@ ARTIFACTS_LOCS = {
     # The amount of pixels to push the mouse over when purchasing any artifact. Since the imagesearch
     # will return the top left of the image, we can add these vales to that to click on the purchase button.
     "artifact_push": {
-        "x": 401,
-        "y": 40,
+        "x": 375,
+        "y": 20,
     },
     "buy_multiplier": (410, 105),
     "buy_max": (50, 105),

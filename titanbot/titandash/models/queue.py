@@ -8,14 +8,17 @@ from titandash.constants import DATETIME_FMT
 
 HELP_TEXT = {
     "function": "Name of the function you would like to execute as soon as possible.",
+    "instance": "The bot instance associated with this queued function.",
     "created": "When was this queue instance generated.",
 }
 
 
 class QueueManager(models.Manager):
-    def add(self, function):
-        """Add the specified function to the function queue."""
-        return self.create(function=function)
+    def add(self, function, instance):
+        """
+        Add the specified function to the function queue.
+        """
+        return self.create(function=function, instance=instance)
 
 
 class Queue(models.Model):
@@ -35,6 +38,7 @@ class Queue(models.Model):
 
     objects = QueueManager()
     function = models.CharField(verbose_name="Function", max_length=255, help_text=HELP_TEXT["function"])
+    instance = models.ForeignKey(verbose_name="Instance", to="BotInstance", null=True, on_delete=models.CASCADE, help_text=HELP_TEXT["instance"])
     created = models.DateTimeField(verbose_name="Created", auto_now_add=True, help_text=HELP_TEXT["created"])
 
     def __str__(self):
@@ -52,12 +56,15 @@ class Queue(models.Model):
         async_to_sync(channel_layer.group_send)(
             group_name, {
                 "type": "saved",
+                'instance_id': self.instance.pk,
                 "queued": queued
             }
         )
 
     def json(self):
-        """Convert the QueuedFunction into a JSON compliant dictionary."""
+        """
+        Convert the QueuedFunction into a JSON compliant dictionary.
+        """
         from titandash.utils import title
         return {
             "id": self.pk,
@@ -67,7 +74,9 @@ class Queue(models.Model):
         }
 
     def latest(self):
-        """Retrieve a list of the latest queued functions."""
+        """
+        Retrieve a list of the latest queued functions.
+        """
         lst = []
         for queue in self.objects.all().order_by("-created"):
             lst.append(queue.json())
@@ -88,6 +97,7 @@ class Queue(models.Model):
         async_to_sync(channel_layer.group_send)(
             group_name, {
                 "type": "finished",
+                'instance_id': self.instance.pk,
                 "queued": queued
             }
         )

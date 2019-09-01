@@ -15,11 +15,15 @@
 
             <div id="collapseSession" class="collapse show" data-parent="#accordion">
                 <div class="card-body">
-                    <table id="sessionTable" class="table table-sm table-borderless table-hover table-striped dash-session-table">
+                    <table id="sessionTable" class="table table-sm table-borderless table-hover table-striped dash-session-table titan-responsive">
                         <tbody>
                             <tr>
                                 <td>UUID</td>
                                 <td><strong id="sessionUuidValue">{{ session.uuid }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Instance</td>
+                                <td><strong>{{ session.instance }}</strong></td>
                             </tr>
                             <tr>
                                 <td>Version</td>
@@ -60,7 +64,7 @@
 
             <div id="collapsePrestiges" class="collapse show" data-parent="#accordion">
                 <div class="card-body">
-                    <table id="sessionPrestigesTable" class="table table-sm table-borderless table-hover table-striped">
+                    <table id="sessionPrestigesTable" class="table table-sm table-borderless table-hover table-striped titan-responsive">
                         <thead>
                             <tr>
                                 <th>Timestamp</th>
@@ -88,5 +92,5 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static "js/session.js" %}"></script>
+    <script src="{% static "js/sessions/session.js" %}"></script>
 {% endblock %}

@@ -21,6 +21,9 @@ let BotInstanceConsumer = function() {
     let instanceStartedStopwatch = null;
     let lastPrestigeStopwatch = null;
 
+    /* Active Instance */
+    let activeInstance = getActiveInstance();
+
     /**
      * Main success function.
      *
@@ -39,7 +42,8 @@ let BotInstanceConsumer = function() {
         // Instance Success.
         this.setupInstanceIcon(data);
         this.setupInstance(active, data);
-        this.setupConfigChoice(active);
+        this.setupConfigChoice(active, data);
+        this.setupWindowChoice(active, data);
         this.setupPrestige(active);
         this.setupQueued(active);
         this.setupCurrentFunction(active, data);
@@ -48,12 +52,15 @@ let BotInstanceConsumer = function() {
         // Variables Success.
         this.setupInstanceLogVar(active, data);
         this.setupInstanceConfigVar(active, data);
+        this.setupInstanceWindowVar(active, data);
         this.setupInstanceNextArtifactVar(active, data);
         this.setupInstanceCurrentStageVar(active, data);
         this.setupInstanceCountdownVars(active, data);
         this.setupInstanceGenericVars(active);
         // Actions Success.
         this.setupActions(data);
+        // GameScreen Success.
+        this.setupGameScreen(active);
     }.bind(this);
 
     /**
@@ -64,10 +71,17 @@ let BotInstanceConsumer = function() {
             /* Alerts */
             alertContainer: $("#alert-container"),
 
+            /* Settings */
+            dashboardSettingsHeader: $("#dashboardSettings"),
+            dashboardSettingsBody: $("#dashboardSettingsBody"),
+            dashboardSettingsLoader: $("#dashboardSettingsLoader"),
+            dashboardSettingsContent: $("#dashboardSettingsContent"),
+
             /* BotInstance */
             instanceLoader: $("#dashboardBotLoader"),
             instanceStatusIcon: $("#dashboardBotStatusIcon"),
             instanceContent: $("#dashboardBotContent"),
+            instanceName: $("#dashboardBotNameValue"),
             instanceState: $("#dashboardBotStateValue"),
             instanceSession: $("#dashboardBotSessionValue"),
             instanceStarted: $("#dashboardBotStartedValue"),
@@ -85,6 +99,7 @@ let BotInstanceConsumer = function() {
             instanceVariablesTable: $("#dashboardBotCurrentVariablesTable"),
             instanceVariablesErrors: $("#dashboardBotErrorsValue"),
             instanceVariablesConfiguration: $("#dashboardBotConfigurationValue"),
+            instanceVariablesWindow: $("#dashboardBotWindowValue"),
             instanceVariablesLogFile: $("#dashboardBotLogFileValue"),
             instanceVariablesCurrentStage: $("#dashboardBotCurrentStageValue"),
             instanceVariablesRaidAttackReset: $("#dashboardBotRaidAttackResetValue"),
@@ -114,6 +129,7 @@ let BotInstanceConsumer = function() {
 
             /* Configuration */
             chooseConfig: $("#dashboardBotConfigurationSelect"),
+            chooseWindow: $("#dashboardBotWindowSelect"),
 
             /* QueuedFunctions */
             queueInitial: $("#dashboardQueueInitial"),
@@ -128,7 +144,11 @@ let BotInstanceConsumer = function() {
             prestigeAvgDuration: $("#dashboardPrestigeAvgDurationValue"),
             prestigeAvgStage: $("#dashboardPrestigeAvgStageValue"),
             prestigeThisSession: $("#dashboardPrestigeThisSessionValue"),
-            prestigeLastArtifactValue: $("#dashboardPrestigeLastArtifactValue")
+            prestigeLastArtifactValue: $("#dashboardPrestigeLastArtifactValue"),
+
+            /* Game Screen */
+            screenStop: $("#dashboardScreenStop"),
+            screenStart: $("#dashboardScreenStart")
         }
     };
     /**
@@ -219,6 +239,15 @@ let BotInstanceConsumer = function() {
         }
     };
 
+    /**
+     * Setup Bot Settings to either allow modifying values or disabled when one is running.
+     */
+    this.setupWindowChoice = function(active, data) {
+        elements.chooseWindow.attr("disabled", !!active);
+        if (active)
+            elements.chooseWindow.val(data["window"]["hwnd"]);
+    };
+
     /* Active / Inactive Modification Functions */
     this.setupInstanceIcon = function(data) {
         switch (data["state"]) {
@@ -241,8 +270,10 @@ let BotInstanceConsumer = function() {
     /**
      * Enable/Disable the configuration choice based on the active state.
      */
-    this.setupConfigChoice = function(active) {
+    this.setupConfigChoice = function(active, data) {
         elements.chooseConfig.attr("disabled", !!active);
+        if (active)
+            elements.chooseConfig.val(data["configuration"]["id"]);
     };
     /**
      * Resetting the prestige values if the active state is false.
@@ -297,6 +328,8 @@ let BotInstanceConsumer = function() {
      */
     this.setupInstance = function(active, data) {
         if (active) {
+            if (elements.instanceName.text() !== data["name"])
+                elements.instanceName.text(data["name"]);
             if (elements.instanceState.text() !== data["state"])
                 elements.instanceState.text(data["state"]);
             if (elements.instanceSession.text() !== data["session"]["uuid"])
@@ -334,6 +367,7 @@ let BotInstanceConsumer = function() {
                 elements.instanceContent.fadeIn(250);
         }
         else {
+            elements.instanceName.text(NA);
             elements.instanceState.text(NA);
             elements.instanceStarted.text(NA);
             elements.instanceSession.attr("href", "#").text(NA);
@@ -460,6 +494,16 @@ let BotInstanceConsumer = function() {
                         $(this).attr("selected", true);
                 });
             }
+        }
+    };
+    this.setupInstanceWindowVar = function(active, data) {
+        if (active) {
+            if (elements.instanceVariablesWindow.text() !== data["window"]["formatted"])
+                elements.instanceVariablesWindow.text(data["window"]["formatted"]);
+            elements.chooseWindow.find("option").each(function () {
+                if ($(this).text() === elements.instanceVariablesWindow.text())
+                    $(this).attr("selected", true);
+            });
         }
     };
     /**
@@ -605,12 +649,27 @@ let BotInstanceConsumer = function() {
     };
 
     /**
+     * Setup the game screen to be enabled or disabled based on current BotInstance status.
+     */
+    this.setupGameScreen = function(active) {
+        if (active) {
+            elements.screenStart.prop("disabled", false);
+            elements.screenStop.prop("disabled", false);
+        } else {
+            elements.screenStart.prop("disabled", true);
+            elements.screenStop.prop("disabled", true);
+        }
+    };
+
+    /**
      * Sending a signal to the BotInstance. One of either ("start", "pause", "stop").
      */
     this.sendSignal = function(signal) {
-        let data = {signal: signal};
-        if (signal === PLAY)
+        let data = {signal: signal, instance: getActiveInstance()};
+        if (signal === PLAY) {
             data["config"] = elements.chooseConfig.find(":selected").val();
+            data["window"] = elements.chooseWindow.find(":selected").val();
+        }
 
         $.ajax({
             url: signalsAjaxUrl,
@@ -625,7 +684,10 @@ let BotInstanceConsumer = function() {
     this.generateWebSocket = function() {
         let socket = new WebSocket(`ws://${window.location.host}/ws/instance/`);
         socket.onmessage = function(e) {
-            this.success(JSON.parse(e.data)["instance"]["instance"])
+            let message = JSON.parse(e.data);
+            if (message["instance"]["instance_id"] === getActiveInstance()) {
+                this.success(message["instance"]["instance"])
+            }
         }.bind(this);
         socket.onclose = function() {
             console.warn("BotInstance WebSocket Closed...")
@@ -633,11 +695,17 @@ let BotInstanceConsumer = function() {
         console.log("BotInstance WebSocket Started Now...");
     };
 
+    /* Consumer Elements */
+    let elements = this.configureDashboardElements();
+    /* BotInstance Variable Countdowns */
+    let countdowns = this.configureCountdowns();
+
     // Setting a timeout to retrieve the initial BotInstance...
     setTimeout(function() {
         $.ajax({
             url: initialAjaxUrl,
             dataType: "json",
+            data: {instance: getActiveInstance()},
             success: this.success,
             complete: function() {
                 elements.instanceLoader.fadeOut(250, function() {
@@ -648,8 +716,17 @@ let BotInstanceConsumer = function() {
         });
     }.bind(this), 400);
 
-    /* Consumer Elements */
-    let elements = this.configureDashboardElements();
-    /* BotInstance Variable Countdowns */
-    let countdowns = this.configureCountdowns();
+    // When the active bot instance is changed, we should perform another bot instance
+    // successful function so that the information is updated.
+    setInterval(function() {
+        if (getActiveInstance() !== activeInstance) {
+            activeInstance = getActiveInstance();
+            $.ajax({
+                url: initialAjaxUrl,
+                dataType: "json",
+                data: {instance: activeInstance},
+                success: this.success,
+            });
+        }
+    }.bind(this), 100);
 };

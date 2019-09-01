@@ -11,41 +11,23 @@
                     </button>
                     <button id="exportSessionsJson" type="button" class="float-right btn btn-primary">Export JSON<span style="margin-left: 8px;" class="fa fa-file-export"></span></button>
                 </h5>
+                <hr/>
+                <select id="sessionsInstanceSelect" class="form-control">
+                        {% for instance in INSTANCES %}
+                            <option value="{{ instance.id }}">{{ instance.name }}</option>
+                        {% endfor %}
+                </select>
             </div>
 
             <div id="collapseOne" class="collapse show" data-parent="#accordion">
-                <div class="card-body">
-                    <table id="allSessionsTable" class="table table-sm table-borderless table-hover table-striped">
-                        <thead>
-                            <tr>
-                                <th>UUID</th>
-                                <th>Started</th>
-                                <th>Ended</th>
-                                <th>Version</th>
-                                <th>Duration</th>
-                                <th>Prestiges</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for session in sessions %}
-                                <tr>
-                                    <td><a href="/sessions/{{ session.uuid }}">{{ session.uuid }}</a></td>
-                                    <td data-order="{{ session.start.epoch }}">{{ session.start.formatted }}</td>
-                                    <td data-order="{{ session.end.epoch }}">{{ session.end.formatted }}</td>
-                                    <td>{{ session.version }}</td>
-                                    <td>{{ session.duration }}</td>
-                                    <td>{{ session.prestiges.count }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div id="sessionsCardBody" class="card-body">
+                    {% include "sessions/sessionsTable.html" %}
                 </div>
             </div>
         </div>
     </div>
-    <div id="jsonData" data-json="{{ SESSIONS_JSON }}" style="display: none;"></div>
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static "js/allSessions.js" %}"></script>
+    <script src="{% static "js/sessions/allSessions.js" %}"></script>
 {% endblock %}

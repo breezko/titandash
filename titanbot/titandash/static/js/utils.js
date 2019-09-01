@@ -5,6 +5,22 @@
  */
 
 /**
+ * Loader template can be used to place loaders on a page dynamically during loads through javascript.
+ */
+let loaderTemplate =
+    `
+    <div class="w-100 d-flex justify-content-center align-items-center loader-template" style="display: none;">
+        <div class="spinner">
+            <div class="rect1"></div>
+            <div class="rect2"></div>
+            <div class="rect3"></div>
+            <div class="rect4"></div>
+            <div class="rect5"></div>
+        </div>      
+    </div>
+    `;
+
+/**
  * Export a JsonObject to a .json file with the specified filename.
  */
 function exportToJsonFile(jsonData, filename) {
@@ -56,4 +72,18 @@ function selectTheme(theme) {
             window.location.reload(true);
         }
     });
+}
+
+/**
+ * Retrieve the active session that is currently selected by the user. This is done to determine
+ * the users currently selected session so that multiple sessions can be started, stopped, paused, etc...
+ */
+function getActiveInstance() {
+    let active = null;
+    $("#dashboardInstancesTableBody").find("tr").each(function(index, value) {
+        if ($(value).find(".instance-select-btn").first().prop("disabled")) {
+            active = $(value).data().id;
+        }
+    });
+    return active;
 }

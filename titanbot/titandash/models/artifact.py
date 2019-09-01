@@ -34,9 +34,13 @@ ARTIFACT_HELP_TEXT = {
 
 
 class ArtifactManager(models.Manager):
-    """Allow for custom QuerySet method when retrieving artifacts."""
+    """
+    Allow for custom QuerySet method when retrieving artifacts.
+    """
     def tier(self, tier, as_list=False, ignore=None):
-        """Retrieve all artifacts of the specified tier."""
+        """
+        Retrieve all artifacts of the specified tier.
+        """
         if ignore is None:
             ignore = []
 
@@ -70,7 +74,9 @@ class Artifact(models.Model):
         return "{name} ({key}) - [{tier}]".format(name=title(self.name), key=self.key, tier=self.tier)
 
     def json(self):
-        """Return Artifact as a JSON Compliant Object."""
+        """
+        Return Artifact as a JSON Compliant Object.
+        """
         from titandash.utils import title
         return {
             "name": self.name,

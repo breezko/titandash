@@ -6,8 +6,10 @@ can properly test functions within.
 """
 from django.test import TestCase
 
+from titandash.models.bot import BotInstance
 from titandash.models.configuration import Configuration
 from titandash.bot.core.bot import Bot
+from titandash.utils import Window
 from titandash.bot.core.maps import IMAGES as BOT_IMAGES
 from titandash.tests.bot.maps import IMAGES as TEST_IMAGES
 
@@ -29,7 +31,13 @@ class BaseBotTest(TestCase):
         # Configuration is handled by our migration signals...
         # A DEFAULT Configuration is generated that may be used here.
         cls.config = Configuration.objects.get(name="DEFAULT")
-        cls.bot = Bot(configuration=cls.config, logger=cls.logger)
+        cls.window = Window(hwnd=1, text="Test Emulator", rectangle=(0, 0, 480, 800))
+        cls.bot = Bot(
+            configuration=cls.config,
+            window=cls.window,
+            instance=BotInstance.objects.grab(),
+            logger=cls.logger
+        )
 
         # All required/needed Bot/Test Images are built here.
         cls.BOT_IMAGES = BOT_IMAGES

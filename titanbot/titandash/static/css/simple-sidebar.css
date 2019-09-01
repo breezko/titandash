@@ -47,3 +47,10 @@ body {
     margin-left: -15rem;
   }
 }
+
+/*
+ Custom table themes here for dealing with responsiveness and card setup.
+ */
+.titan-responsive {
+  width: 100% !important;
+}

@@ -9,7 +9,9 @@ class UnParsableRaidResultLine(Exception):
 
 
 class Clan(models.Model):
-    """Generic clan model. Simply storing the clan name and code."""
+    """
+    Generic clan model. Simply storing the clan name and code.
+    """
     class Meta:
         verbose_name = "Clan"
         verbose_name_plural = "Clans"
@@ -28,7 +30,9 @@ class Clan(models.Model):
 
 
 class Member(models.Model):
-    """Clan member model, store the name and code of each member in a clan."""
+    """
+    Clan member model, store the name and code of each member in a clan.
+    """
     class Meta:
         verbose_name = "Member"
         verbose_name_plural = "Members"
@@ -49,7 +53,9 @@ class Member(models.Model):
 
 
 class RaidResultDamage(models.Model):
-    """Store instances of damage done during a specific instance of a RaidResult."""
+    """
+    Store instances of damage done during a specific instance of a RaidResult.
+    """
     class Meta:
         verbose_name = "Raid Result Damage"
         verbose_name_plural = "Raid Results Damages"
@@ -79,7 +85,7 @@ class RaidResultManager(models.Manager):
     Custom manager to allow the generation of new RaidResult instances
     when a valid set of clipboard data is available.
     """
-    def generate(self, clipboard, clan):
+    def generate(self, clipboard, clan, instance):
         """
         Generate a new RaidResults instance.
 
@@ -139,7 +145,6 @@ class RaidResultManager(models.Manager):
             return str(_atks) + str(_dmg)
 
         digest = generate_digest(clipboard)
-
         if self.filter(digest=digest).count() > 0:
             return False
 
@@ -172,7 +177,7 @@ class RaidResultManager(models.Manager):
 
         # The clan members and attack instances are generated, generating the
         # actual RaidResult that will be used.
-        result = self.create(digest=digest, clan=clan)
+        result = self.create(digest=digest, clan=clan, instance=instance)
         result.attacks.add(*raid_damage_results)
         result.save()
 
@@ -180,7 +185,9 @@ class RaidResultManager(models.Manager):
 
 
 class RaidResult(models.Model):
-    """Main storage for parsed raid results."""
+    """
+    Main storage for parsed raid results.
+    """
     class Meta:
         verbose_name = "Raid Result"
         verbose_name_plural = "Raid Results"
@@ -190,9 +197,10 @@ class RaidResult(models.Model):
     parsed = models.DateTimeField(auto_created=True, auto_now_add=True)
     clan = models.ForeignKey(to=Clan, on_delete=models.CASCADE)
     attacks = models.ManyToManyField(to=RaidResultDamage)
+    instance = models.ForeignKey(verbose_name="Instance", to="BotInstance", null=True, on_delete=models.CASCADE)
 
     def __str__(self):
-        return "RaidResult: {parsed} - {clan}".format(parsed=self.parsed, clan=self.clan)
+        return "{instance} RaidResult: {parsed} - {clan}".format(instance=self.instance.name, parsed=self.parsed, clan=self.clan)
 
     def total_damage(self):
         agg = self.attacks.aggregate(Sum("damage"))
@@ -205,6 +213,7 @@ class RaidResult(models.Model):
         from django.urls import reverse
         return {
             "digest": self.digest,
+            "instance": self.instance.name,
             "parsed": {
                 "datetime": str(self.parsed),
                 "formatted": self.parsed.astimezone().strftime(DATETIME_FMT),

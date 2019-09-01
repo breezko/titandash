@@ -30,17 +30,19 @@ import logging
 
 class Stats:
     """Stats class contains all possible stat values and can be updated dynamically."""
-    def __init__(self, grabber, configuration, logger):
+    def __init__(self, instance, window, grabber, configuration, logger):
+        self.instance = instance
+        self.window = window
         self.logger = logger
-        self.statistics = Statistics.objects.grab()
+        self.statistics = Statistics.objects.grab(instance=self.instance)
 
         # Statistics stored for differential calculations.
         self._old_game_stats = self.statistics.game_statistics
         self._old_bot_stats = self.statistics.bot_statistics
 
         # Prestige Statistics retrieved through database model.
-        self.prestige_statistics = PrestigeStatistics.objects.grab()
-        self.artifact_statistics = ArtifactStatistics.objects.grab()
+        self.prestige_statistics = PrestigeStatistics.objects.grab(instance=instance)
+        self.artifact_statistics = ArtifactStatistics.objects.grab(instance=instance)
 
         # Additionally, create a reference to the log file in question in the database so log files can
         # be retrieved directly from the dashboard and viewed.
@@ -56,14 +58,7 @@ class Stats:
             self.log = None
 
         # Generating a new Session to represent this instance being initialized.
-        self.session = Session.objects.create(
-            uuid=str(uuid.uuid4()),
-            version=BOT_VERSION,
-            start=timezone.now(),
-            end=None,
-            log=self.log,
-            configuration=configuration
-        )
+        self.session = Session.objects.create(uuid=str(uuid.uuid4()), version=BOT_VERSION, start=timezone.now(), end=None, log=self.log, configuration=configuration, instance=self.instance)
         self.statistics.sessions.add(self.session)
 
         # Grabber is used to perform OCR updates when grabbing game statistics.
@@ -76,7 +71,9 @@ class Stats:
 
     @property
     def highest_stage(self):
-        """Retrieve the highest stage reached from game stats, returning None if it is un parsable."""
+        """
+        Retrieve the highest stage reached from game stats, returning None if it is un parsable.
+        """
         stat = self.statistics.game_statistics.highest_stage_reached
         value = convert(stat)
         self.logger.info("highest stage parsed: {before} -> {after}".format(before=stat, after=value))
@@ -85,9 +82,13 @@ class Stats:
             return int(value)
         except ValueError:
             return None
+        except TypeError:
+            return None
 
     def _process(self, scale=3, iterations=1, image=None, current=False, region=None):
-        """Process the grabbers current image before OCR extraction attempt."""
+        """
+        Process the grabbers current image before OCR extraction attempt.
+        """
         if current:
             self.grabber.snapshot(region=region)
         if image:
@@ -184,7 +185,7 @@ class Stats:
                 break
 
             # Scroll down slightly and check for artifacts again.
-            drag_mouse(locs["scroll_start"], locs["scroll_bottom_end"], quick_stop=locs["scroll_quick_stop"])
+            drag_mouse(start=locs["scroll_start"], end=locs["scroll_bottom_end"], window=self.window, quick_stop=locs["scroll_quick_stop"])
             sleep(1)
 
             # Checking at the end of the loop to break, one more loop takes place before exit.
@@ -263,7 +264,9 @@ class Stats:
                 self.logger.error("could not parse {key}: (ocr result: {text})".format(key=key, text=text))
 
     def stage_ocr(self, test_image=None):
-        """Attempt to parse out the current stage in game through an OCR check."""
+        """
+        Attempt to parse out the current stage in game through an OCR check.
+        """
         self.logger.debug("attempting to parse out the current stage from in game")
         region = STAGE_COORDS["region"]
 
@@ -338,13 +341,16 @@ class Stats:
                 delta = datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
 
             self.logger.info("generating new prestige instance")
-            artifact = Artifact.objects.get(name=artifact)
             prestige = Prestige.objects.create(
                 timestamp=timezone.now(),
                 time=delta,
                 stage=current_stage,
-                artifact=artifact,
-                session=self.session)
+                artifact=Artifact.objects.get(
+                    name=artifact
+                ),
+                session=self.session,
+                instance=self.instance
+            )
 
             self.logger.info("prestige generated successfully: {prestige}".format(prestige=str(prestige)))
             self.prestige_statistics.prestiges.add(prestige)

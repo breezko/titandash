@@ -1,5 +1,6 @@
 from django.db import models
 from django.urls import reverse
+from django.utils.timezone import now
 
 from titandash.constants import DATETIME_FMT
 from titandash.bot.core.maps import ARTIFACT_TIER_MAP
@@ -20,7 +21,8 @@ GAME_STATISTICS_HELP_TEXT = {
     "play_time": "How much active play time has been accrued in game overall.",
     "relics_earned": "How many relics have been earned game overall.",
     "fairies_tapped": "How many fairies have been tapped on in game overall.",
-    "daily_achievements": "How many daily achievements have been completed in game overall."
+    "daily_achievements": "How many daily achievements have been completed in game overall.",
+    "instance": "The bot instance associated with these game statistics."
 }
 
 
@@ -49,9 +51,10 @@ class GameStatistics(models.Model):
     relics_earned = models.CharField(verbose_name="Relics Earned", blank=True, null=True, max_length=255, help_text=GAME_STATISTICS_HELP_TEXT["relics_earned"])
     fairies_tapped = models.CharField(verbose_name="Fairies Tapped", blank=True, null=True, max_length=255, help_text=GAME_STATISTICS_HELP_TEXT["fairies_tapped"])
     daily_achievements = models.CharField(verbose_name="Daily Achievements", blank=True, null=True, max_length=255, help_text=GAME_STATISTICS_HELP_TEXT["daily_achievements"])
+    instance = models.ForeignKey(verbose_name="Instance", to="BotInstance", null=True, on_delete=models.CASCADE, help_text=GAME_STATISTICS_HELP_TEXT["instance"])
 
     def __str__(self):
-        return "GameStatistics".format(key=self.pk)
+        return "{instance} GameStatistics".format(instance=self.instance.name)
 
     def highest_stage(self):
         if self.highest_stage_reached is not None and self.highest_stage_reached != "":
@@ -81,7 +84,8 @@ class GameStatistics(models.Model):
 BOT_STATISTICS_HELP_TEXT = {
     "premium_ads": "How many premium ads have been earned and tracked by the bot.",
     "actions": "How many sets of actions have been ran by the bot.",
-    "updates": "How many times has bot statistics been updated."
+    "updates": "How many times has bot statistics been updated.",
+    "instance": "The bot instance associated with these game statistics."
 }
 
 
@@ -98,9 +102,10 @@ class BotStatistics(models.Model):
     premium_ads = models.PositiveIntegerField(verbose_name="Premium Ads", default=0, help_text=BOT_STATISTICS_HELP_TEXT["premium_ads"])
     actions = models.PositiveIntegerField(verbose_name="Actions", default=0, help_text=BOT_STATISTICS_HELP_TEXT["actions"])
     updates = models.PositiveIntegerField(verbose_name="Updates", default=0, help_text=BOT_STATISTICS_HELP_TEXT["updates"])
+    instance = models.ForeignKey(verbose_name="Instance", to="BotInstance", null=True, on_delete=models.CASCADE, help_text=BOT_STATISTICS_HELP_TEXT["instance"])
 
     def __str__(self):
-        return "BotStatistics".format(key=self.pk)
+        return "{instance} BotStatistics".format(instance=self.instance.name)
 
     def json(self):
         return {
@@ -112,7 +117,8 @@ class BotStatistics(models.Model):
 
 ARTIFACT_OWNED_HELP_TEXT = {
     "artifact": "Specify the artifact being used.",
-    "owned": "Specify if this artifact is owned or not."
+    "owned": "Specify if this artifact is owned or not.",
+    "instance": "The bot instance associated with this owned artifact."
 }
 
 
@@ -128,9 +134,10 @@ class ArtifactOwned(models.Model):
 
     artifact = models.ForeignKey(verbose_name="Artifact", to="Artifact", on_delete=models.CASCADE, help_text=ARTIFACT_OWNED_HELP_TEXT["artifact"])
     owned = models.BooleanField(verbose_name="Owned", default=False, help_text=ARTIFACT_OWNED_HELP_TEXT["owned"])
+    instance = models.ForeignKey(verbose_name="Instance", to="BotInstance", null=True, on_delete=models.CASCADE, help_text=ARTIFACT_OWNED_HELP_TEXT["instance"])
 
     def __str__(self):
-        return "{artifact} ({owned})".format(artifact=self.artifact, owned=self.owned)
+        return "{instance} {artifact} ({owned})".format(instance=self.instance.name, artifact=self.artifact, owned=self.owned)
 
     def json(self):
         """Return ArtifactOwned as JSON Compliant Object."""
@@ -141,34 +148,35 @@ class ArtifactOwned(models.Model):
 
 
 class ArtifactStatisticsManager(models.Manager):
-    def grab(self):
+    def grab(self, instance):
         """
         Attempt to grab the current ArtifactStatistics instance. One will be generated with some default values
         if one does not already exist.
         """
         from .artifact import Artifact, Tier
+        if self.filter(instance=instance).count() == 0:
+            arts = self.create(instance=instance)
+            for tier, dct in ARTIFACT_TIER_MAP.items():
+                for key, value in dct.items():
+                    if key not in arts.artifacts.all().values_list("artifact__name", flat=True):
+                        arts.artifacts.add(ArtifactOwned.objects.create(
+                            instance=instance,
+                            artifact=Artifact.objects.get_or_create(
+                                name=key,
+                                tier=Tier.objects.get_or_create(tier=tier, name="Tier {tier}".format(tier=tier))[0],
+                                key=value[1],
+                                image="{name}.png".format(name=key.replace("'", ""))
+                            )[0]))
 
-        if len(self.all()) == 0:
-            arts = self.create()
         else:
-            arts = self.all().first()
-
-        for tier, dct in ARTIFACT_TIER_MAP.items():
-            for key, value in dct.items():
-                if key not in arts.artifacts.all().values_list("artifact__name", flat=True):
-                    arts.artifacts.add(ArtifactOwned.objects.create(
-                        artifact=Artifact.objects.get_or_create(
-                            name=key,
-                            tier=Tier.objects.get_or_create(tier=tier, name="Tier {tier}".format(tier=tier))[0],
-                            key=value[1],
-                            image="{name}.png".format(name=key.replace("'", ""))
-                        )[0]))
+            arts = self.get(instance=instance)
 
         return arts
 
 
 ARTIFACT_STATISTICS_HELP_TEXT = {
-    "artifacts": "Choose the artifacts associated with this artifact statistics instance."
+    "artifacts": "Choose the artifacts associated with this artifact statistics instance.",
+    "instance": "The bot instance associated with these artifact statistics."
 }
 
 
@@ -185,6 +193,7 @@ class ArtifactStatistics(models.Model):
 
     objects = ArtifactStatisticsManager()
     artifacts = models.ManyToManyField(verbose_name="Artifacts", to="ArtifactOwned", help_text=ARTIFACT_STATISTICS_HELP_TEXT["artifacts"])
+    instance = models.ForeignKey(verbose_name="Instance", to="BotInstance", null=True, on_delete=models.CASCADE, help_text=ARTIFACT_STATISTICS_HELP_TEXT["instance"])
 
     def owned(self):
         return self.artifacts.filter(owned=True)
@@ -204,7 +213,8 @@ SESSION_HELP_TEXT = {
     "log": "Specify the file path to the log file associated with this session.",
     "game_statistic_differences": "Game statistic differences associated with session.",
     "bot_statistic_differences": "Bot statistic differences associated with session.",
-    "configuration": "Config instance associated with this session."
+    "configuration": "Config instance associated with this session.",
+    "instance": "The bot instance associated with the session."
 }
 
 
@@ -219,6 +229,16 @@ class Log(models.Model):
         verbose_name_plural = "Logs"
 
     log_file = models.CharField(verbose_name="Log File", max_length=255)
+
+    def exists(self):
+        """
+        Determine whether or not this log file actually exists.
+        """
+        try:
+            with open(self.log_file) as file:
+                return True
+        except FileNotFoundError:
+            return False
 
     def json(self):
         ctx = {
@@ -257,12 +277,15 @@ class Session(models.Model):
     end = models.DateTimeField(verbose_name="End Date", blank=True, null=True, help_text=SESSION_HELP_TEXT["end"])
     log = models.ForeignKey(verbose_name="Log File", to="Log", on_delete=models.CASCADE, blank=True, null=True, max_length=255, help_text=SESSION_HELP_TEXT["log"])
     configuration = models.ForeignKey(verbose_name="Configuration", to="Configuration", on_delete=models.CASCADE, blank=True, null=True, help_text=SESSION_HELP_TEXT["configuration"])
+    instance = models.ForeignKey(verbose_name="Session Instance", to="BotInstance", related_name="session_instance", on_delete=models.CASCADE, blank=True, null=True, help_text=SESSION_HELP_TEXT["instance"])
 
     def __str__(self):
-        return "Session [{uuid}] v{version}".format(uuid=self.uuid, version=self.version)
+        return "{instance} [Session [{uuid}] v{version}]".format(instance=self.instance.name, uuid=self.uuid, version=self.version)
 
     def duration(self):
-        if not self.start or not self.end:
+        if not self.end and self.start:
+            self.end = now()
+        if not self.start and not self.end:
             return "N/A"
 
         s = (self.end - self.start).total_seconds()
@@ -274,10 +297,13 @@ class Session(models.Model):
         return "{:02}:{:02}:{:02}".format(int(hours), int(minutes), int(seconds))
 
     def json(self):
-        """Return Session and Associated Models As JSON Compliant Dictionary."""
+        """
+        Return Session and Associated Models As JSON Compliant Dictionary.
+        """
         from titandash.models.prestige import Prestige
         dct = {
             "uuid": self.uuid,
+            "instance": self.instance.name,
             "version": self.version,
             "start": {
                 "datetime": str(self.start),
@@ -312,23 +338,27 @@ class Session(models.Model):
 STATS_HELP_TEXT = {
     "game_statistics": "Game Statistics associated with this statistics instance.",
     "bot_statistics": "Bot Statistics associated with this statistics instance.",
-    "sessions": "Sessions associated with this statistics instance."
+    "sessions": "Sessions associated with this statistics instance.",
+    "instance": "The bot instance associated with these statistics."
 }
 
 
 class StatisticsManager(models.Manager):
-    def grab(self):
+    def grab(self, instance):
         """
         Attempt to grab the current Statistics instance. One will be generated with some default values
         if one does not already exist.
         """
-        if len(self.all()) == 0:
-            game_statistics = GameStatistics.objects.create()
-            bot_statistics = BotStatistics.objects.create()
-            self.create(game_statistics=game_statistics, bot_statistics=bot_statistics)
+        if self.filter(instance=instance).count() == 0:
+            game_statistics, bot_statistics = GameStatistics.objects.create(instance=instance), BotStatistics.objects.create(instance=instance)
+            return self.create(
+                game_statistics=game_statistics,
+                bot_statistics=bot_statistics,
+                instance=instance
+            )
 
         # Returning the existing instance.
-        return self.all().first()
+        return self.get(instance=instance)
 
 
 class Statistics(models.Model):
@@ -345,26 +375,28 @@ class Statistics(models.Model):
     game_statistics = models.ForeignKey(verbose_name="Game Statistics", to="GameStatistics", on_delete=models.CASCADE, blank=True, null=True, help_text=STATS_HELP_TEXT["game_statistics"])
     bot_statistics = models.ForeignKey(verbose_name="Bot Statistics", to="BotStatistics", on_delete=models.CASCADE, blank=True, null=True, help_text=STATS_HELP_TEXT["bot_statistics"])
     sessions = models.ManyToManyField(verbose_name="Sessions", to="Session", blank=True, help_text=STATS_HELP_TEXT["sessions"])
+    instance = models.ForeignKey(verbose_name="Instance", to="BotInstance", null=True, on_delete=models.CASCADE, help_text=STATS_HELP_TEXT["instance"])
 
     def __str__(self):
-        return "Statistics ({key})".format(key=self.pk)
+        return "{instance} Statistics ({key})".format(instance=self.instance.name, key=self.pk)
 
 
 class PrestigeStatisticsManager(models.Manager):
-    def grab(self):
+    def grab(self, instance):
         """
         Attempt to grab the current PrestigeStatistics instance. One will be generated with some default values
         if one does not already exist.
         """
-        if len(self.all()) == 0:
-            self.create()
+        if len(self.filter(instance=instance)) == 0:
+            self.create(instance=instance)
 
         # Returning the existing instance.
-        return self.all().first()
+        return self.get(instance=instance)
 
 
 PRESTIGE_STATISTICS_HELP_TEXT = {
-    "prestiges": "Choose the prestiges that are associated with this prestige statistics instance."
+    "prestiges": "Choose the prestiges that are associated with this prestige statistics instance.",
+    "instance": "The bot instance associated with these prestige statistics."
 }
 
 
@@ -380,6 +412,7 @@ class PrestigeStatistics(models.Model):
 
     objects = PrestigeStatisticsManager()
     prestiges = models.ManyToManyField(verbose_name="Prestiges", to="Prestige", blank=True, help_text=PRESTIGE_STATISTICS_HELP_TEXT["prestiges"])
+    instance = models.ForeignKey(verbose_name="Instance", to="BotInstance", null=True, on_delete=models.CASCADE, help_text=PRESTIGE_STATISTICS_HELP_TEXT["instance"])
 
     def __str__(self):
-        return "PrestigeStatistics [{count} Prestiges]".format(count=self.prestiges.all().count(), key=self.pk)
+        return "{instance} PrestigeStatistics [{count} Prestiges]".format(instance=self.instance.name, count=self.prestiges.all().count(), key=self.pk)

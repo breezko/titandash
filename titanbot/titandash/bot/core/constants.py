@@ -1,5 +1,5 @@
 """
-constant.py
+constants.py
 
 Store any bot specific values here that should not change at any point.
 """
@@ -32,7 +32,7 @@ STATS_DATE_FMT = "%Y-%m-%d"
 # Logger name used when grabbing logger.
 LOGGER_NAME = "tt2_py"
 # Logging format string.
-LOGGER_FORMAT = "[%(asctime)s] %(levelname)s [%(filename)s:%(lineno)s - %(funcName)s() ] %(message)s"
+LOGGER_FORMAT = "[%(asctime)s] %(levelname)s [{instance}] [%(filename)s:%(lineno)s - %(funcName)s() ] %(message)s"
 # Logging file name format string here.
 LOGGER_FILE_NAME_STRFMT = "%Y-%m-%d_%H-%M-%S"
 INIT_DATE_FMT = datetime.datetime.strftime(datetime.datetime.now(), LOGGER_FILE_NAME_STRFMT)
@@ -160,4 +160,9 @@ PROPERTIES = [
 # their next execution time take place at the proper time when a break finishes.
 BREAK_NEXT_PROPS = [
     prop for prop in PROPERTIES if prop.split("_")[0] == "next" and prop not in ["next_break", "next_raid_attack_reset"]
+]
+
+# Specify the filter strings used to find emulator windows.
+WINDOW_FILTER = [
+    "nox", "noxplayer"
 ]

@@ -32,6 +32,7 @@ let BotScreenManager = function() {
             $.ajax({
                 url: ajaxUrl,
                 dataType: "json",
+                data: {instance: getActiveInstance()},
                 success: function(data) {
                     if (!stopped) {
                         if (elements.screenImage.css("display") === "none")
