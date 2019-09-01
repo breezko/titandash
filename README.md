@@ -12,6 +12,8 @@ Take a look at the [wiki](https://github.com/becurrie/titandash/wiki) for inform
 ## Features
 ### Dashboard
 - Main dashboard screen providing real-time updates and the ability to start, pause or stop the bot and view information about the current session.
+- Choose a specific window (emulator) to target when initializing a bot.
+- Generate multiple instances of a bot and start bots for multiple emulator sessions.
 - View a real time view of the current in game screen.
 - View all log records associated with the current bot session.
 - Countdowns until specific functionality takes place.
