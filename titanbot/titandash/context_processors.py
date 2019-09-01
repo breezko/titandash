@@ -1,3 +1,4 @@
+from titandash.models.bot import BotInstance
 from titandash.models.configuration import ThemeConfig
 
 import settings
@@ -21,6 +22,22 @@ def bot(request):
 
     # Including all settings as a json string.
     context["SETTINGS_JSON"] = json.dumps(context["BOT"])
+
+    return context
+
+
+def instances(request):
+    """
+    Grab all BotInstances that are currently active and available.
+    """
+    context = {
+        "INSTANCES": []
+    }
+
+    for instance in BotInstance.objects.all():
+        context["INSTANCES"].append(instance.json())
+    if len(context["INSTANCES"]) == 0:
+        context["INSTANCES"].append(BotInstance.objects.grab().json())
 
     return context
 
