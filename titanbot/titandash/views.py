@@ -65,18 +65,26 @@ def theme_change(request):
 def log(request, pk):
     """Retrieve a particular log file for viewing."""
     ctx = {
-        "log": Log.objects.get(pk=pk).json()
+        "exists": False,
+        "log": None
     }
+    _log = Log.objects.get(pk=pk)
+
+    if _log.exists():
+        exists = True
+        ctx["log"] = _log.json()
+    else:
+        exists = False
+
+    ctx["exists"] = exists
+    ctx["name"] = _log.log_file.split("\\")[-1]
 
     return render(request, "log.html", context=ctx)
 
 
 def session(request, uuid):
     """Retrieve a particular session."""
-    ctx = {
-        "session": Session.objects.get(uuid=uuid).json(),
-    }
-
+    ctx = {"session": Session.objects.get(uuid=uuid).json(),}
     ctx["SESSION_JSON"] = json.dumps(ctx)
 
     return render(request, "sessions/session.html", context=ctx)
@@ -85,25 +93,44 @@ def session(request, uuid):
 def sessions(request):
     """Retrieve all sessions."""
     ctx = {"sessions": []}
+    if request.GET.get("instance"):
+        _sessions = Session.objects.filter(instance=BotInstance.objects.get(pk=request.GET.get("instance")))
+    else:
+        _sessions = Session.objects.filter(instance=BotInstance.objects.grab())
 
-    for s in Session.objects.all():
-        ctx["sessions"].append(s.json())
-
+    ctx["sessions"] = [s.json() for s in _sessions]
     ctx["SESSIONS_JSON"] = json.dumps(ctx)
+
+    # Return only json context instead of rendered template.
+    if request.GET.get("context"):
+        return JsonResponse(data={
+            "table": render(request, "sessions/sessionsTable.html", context=ctx).content.decode()
+        })
 
     return render(request, 'sessions/sessions.html', context=ctx)
 
 
 def statistics(request):
-    stats = Statistics.objects.grab()
-    ctx = {"game_statistics": {title(key): value for key, value in stats.game_statistics.json().items()},
-           "bot_statistics": {title(key): value for key, value in stats.bot_statistics.json().items()},
-           "STATISTICS_JSON": json.dumps({
-               "game_statistics": stats.game_statistics.json(),
-               "bot_statistics": stats.bot_statistics.json()
-           })}
+    if request.GET.get("instance"):
+        stats = Statistics.objects.grab(instance=BotInstance.objects.get(pk=request.GET.get("instance")))
+    else:
+        stats = Statistics.objects.grab(instance=BotInstance.objects.grab())
 
-    return render(request, "allStatistics.html", context=ctx)
+    ctx = {
+        "game_statistics": {title(key): value for key, value in stats.game_statistics.json().items()},
+        "bot_statistics": {title(key): value for key, value in stats.bot_statistics.json().items()},
+        "STATISTICS_JSON": json.dumps({
+            "game_statistics": stats.game_statistics.json(),
+            "bot_statistics": stats.bot_statistics.json()
+        })
+    }
+
+    if request.GET.get("context"):
+        return JsonResponse(data={
+            "table": render(request, "statistics/statisticsTable.html", context=ctx).content.decode()
+        })
+
+    return render(request, "statistics/allStatistics.html", context=ctx)
 
 
 def project_settings(request):
@@ -120,15 +147,25 @@ def shortcuts(request):
 def artifacts(request):
     """Retrieve all artifacts owned."""
     ctx = {"artifacts": []}
-    for artifact_owned in ArtifactStatistics.objects.grab().artifacts.all():
+
+    if request.GET.get("instance"):
+        _artifacts = ArtifactStatistics.objects.grab(instance=BotInstance.objects.get(pk=request.GET.get("instance"))).artifacts.all()
+    else:
+        _artifacts = ArtifactStatistics.objects.grab(instance=BotInstance.objects.grab()).artifacts.all()
+
+    for artifact_owned in _artifacts:
         ctx["artifacts"].append(artifact_owned.json())
 
     ctx["artifactsTotalValue"] = Artifact.objects.all().count()
-    ctx["artifactsOwnedValue"] = ArtifactStatistics.objects.grab().artifacts.filter(owned=True).count()
-
+    ctx["artifactsOwnedValue"] = _artifacts.filter(owned=True).count()
     ctx["ARTIFACTS_JSON"] = json.dumps(ctx)
 
-    return render(request, "allArtifacts.html", context=ctx)
+    if request.GET.get("context"):
+        return JsonResponse(data={
+            "table": render(request, "artifacts/artifactsTable.html", context=ctx).content.decode()
+        })
+
+    return render(request, "artifacts/allArtifacts.html", context=ctx)
 
 
 def all_prestiges(request):
@@ -136,7 +173,13 @@ def all_prestiges(request):
     total_seconds = 0
     total_stages = 0
     ctx = {"prestiges": [], "avgPrestigeDuration": None, "avgPrestigeStage": None, "totalPrestiges": None}
-    p = Prestige.objects.all().order_by("-timestamp")
+
+    if request.GET.get("instance"):
+        _prestiges = Prestige.objects.filter(instance=BotInstance.objects.get(pk=request.GET.get("instance")))
+    else:
+        _prestiges = Prestige.objects.filter(instance=BotInstance.objects.grab())
+
+    p = _prestiges.order_by("-timestamp")
 
     p_valid_time = p.filter(time__isnull=False)
     p_valid_time_cnt = len(p_valid_time)
@@ -167,17 +210,22 @@ def all_prestiges(request):
     ctx["totalPrestiges"] = p.count()
     ctx["PRESTIGES_JSON"] = json.dumps(ctx)
 
-    return render(request, "allPrestiges.html", context=ctx)
+    if request.GET.get("context"):
+        return JsonResponse(data={
+            "table": render(request, "prestiges/prestigeTable.html", context=ctx).content.decode()
+        })
+
+    return render(request, "prestiges/allPrestiges.html", context=ctx)
 
 
 def instance(request):
-    return JsonResponse(data=BotInstance.objects.grab().json())
+    return JsonResponse(data=BotInstance.objects.get(pk=request.GET.get("instance")).json())
 
 
 def kill_instance(request):
-    bot = BotInstance.objects.grab()
+    bot = BotInstance.objects.get(pk=request.GET.get("instance"))
     if bot.state == RUNNING or bot.state == PAUSED:
-        stop()
+        stop(instance=bot)
         bot.stop()
         return JsonResponse(data={"status": "success", "message": "BotInstance has been stopped..."})
 
@@ -185,7 +233,7 @@ def kill_instance(request):
 
 
 def signal(request):
-    bot = BotInstance.objects.grab()
+    bot = BotInstance.objects.get(pk=request.GET.get("instance"))
     sig = request.GET.get("signal")
     cfg = request.GET.get("config")
     win = request.GET.get("window")
@@ -194,22 +242,22 @@ def signal(request):
         if bot.state == RUNNING:
             return JsonResponse(data={"status": "warning", "message": "BotInstance is already running..."})
         if bot.state == STOPPED:
-            start(config=cfg, window=win)
+            start(config=cfg, window=win, instance=bot)
             return JsonResponse(data={"status": "success", "message": "BotInstance has been started..."})
         if bot.state == PAUSED:
-            resume()
+            resume(instance=bot)
             return JsonResponse(data={"status": "success", "message": "BotInstance has been resumed..."})
 
     if sig == "PAUSE":
         if bot.state == RUNNING:
-            pause()
+            pause(instance=bot)
             return JsonResponse(data={"status": "success", "message": "PAUSE Signal has been received by the bot..."})
         if bot.state == STOPPED or bot.state == PAUSED:
             return JsonResponse(data={"status": "warning", "message": "BotInstance is not currently running..."})
 
     if sig == "STOP":
         if bot.state == RUNNING:
-            stop()
+            stop(instance=bot)
             return JsonResponse(data={"status": "success", "message": "STOP Signal has been received by the bot..."})
         if bot.state == STOPPED or bot.state == PAUSED:
             return JsonResponse(data={"status": "warning", "message": "BotInstance is not currently running..."})
@@ -220,12 +268,13 @@ def prestiges(request):
     # GET.
     typ = request.GET.get("type")
     if typ == "PRESTIGES":
-        _session = request.GET.get("session")
+        _instance = BotInstance.objects.get(pk=request.GET.get("instance"))
+        _session = _instance.session
 
-        if session:
-            p = Prestige.objects.filter(session__uuid=_session)
+        if _session:
+            p = Prestige.objects.filter(session__uuid=_session.uuid)
         else:
-            p = Prestige.objects.all()
+            p = []
 
         # Parse out filtered data...
         # Prestige data as well as averaged out data (average stage prestige, average time per prestige).
@@ -278,7 +327,7 @@ def screen(request):
     from titandash.bot.external.imagesearch import region_grabber
     from PIL.Image import ANTIALIAS
 
-    inst = BotInstance.objects.grab()
+    inst = BotInstance.objects.get(pk=request.GET.get("instance"))
     window = inst.window
 
     grab = region_grabber((
@@ -299,17 +348,29 @@ def screen(request):
 def generate_queued(request):
     """Generate a queued function representing the function specified by the user."""
     func = request.GET.get("function")
-    Queue.objects.create(function=func)
+    inst = BotInstance.objects.get(pk=request.GET.get("instance"))
+    Queue.objects.add(function=func, instance=inst)
 
     return JsonResponse(data={"status": "success", "function": title(func)})
 
 
 def raids(request):
     ctx = {"raids": []}
-    for raid_result in RaidResult.objects.all().order_by("parsed"):
+
+    if request.GET.get("instance"):
+        _raids = RaidResult.objects.filter(instance=BotInstance.objects.get(pk=request.GET.get("instance")))
+    else:
+        _raids = RaidResult.objects.filter(instance=BotInstance.objects.grab())
+
+    for raid_result in _raids.order_by("parsed"):
         ctx["raids"].append(raid_result.json())
 
     ctx["RAIDS_JSON"] = json.dumps(ctx)
+
+    if request.GET.get("context"):
+        return JsonResponse(data={
+            "table": render(request, "raids/raidsTable.html", context=ctx).content.decode()
+        })
 
     return render(request, "raids/raids.html", context=ctx)
 
@@ -322,3 +383,13 @@ def raid(request, digest):
     ctx["RAID_JSON"] = json.dumps(ctx)
 
     return render(request, "raids/raid.html", context=ctx)
+
+
+def create_instance(request):
+    return JsonResponse(data=BotInstance.objects.create().json())
+
+
+def remove_instance(request):
+    BotInstance.objects.filter(pk=request.GET.get("id")).delete()
+
+    return JsonResponse(data={"status": "success"})

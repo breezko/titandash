@@ -21,6 +21,9 @@ let BotInstanceConsumer = function() {
     let instanceStartedStopwatch = null;
     let lastPrestigeStopwatch = null;
 
+    /* Active Instance */
+    let activeInstance = getActiveInstance();
+
     /**
      * Main success function.
      *
@@ -39,8 +42,8 @@ let BotInstanceConsumer = function() {
         // Instance Success.
         this.setupInstanceIcon(data);
         this.setupInstance(active, data);
-        this.setupConfigChoice(active);
-        this.setupWindowChoice(active);
+        this.setupConfigChoice(active, data);
+        this.setupWindowChoice(active, data);
         this.setupPrestige(active);
         this.setupQueued(active);
         this.setupCurrentFunction(active, data);
@@ -78,6 +81,7 @@ let BotInstanceConsumer = function() {
             instanceLoader: $("#dashboardBotLoader"),
             instanceStatusIcon: $("#dashboardBotStatusIcon"),
             instanceContent: $("#dashboardBotContent"),
+            instanceName: $("#dashboardBotNameValue"),
             instanceState: $("#dashboardBotStateValue"),
             instanceSession: $("#dashboardBotSessionValue"),
             instanceStarted: $("#dashboardBotStartedValue"),
@@ -238,8 +242,10 @@ let BotInstanceConsumer = function() {
     /**
      * Setup Bot Settings to either allow modifying values or disabled when one is running.
      */
-    this.setupWindowChoice = function(active) {
+    this.setupWindowChoice = function(active, data) {
         elements.chooseWindow.attr("disabled", !!active);
+        if (active)
+            elements.chooseWindow.val(data["window"]["hwnd"]);
     };
 
     /* Active / Inactive Modification Functions */
@@ -264,8 +270,10 @@ let BotInstanceConsumer = function() {
     /**
      * Enable/Disable the configuration choice based on the active state.
      */
-    this.setupConfigChoice = function(active) {
+    this.setupConfigChoice = function(active, data) {
         elements.chooseConfig.attr("disabled", !!active);
+        if (active)
+            elements.chooseConfig.val(data["configuration"]["id"]);
     };
     /**
      * Resetting the prestige values if the active state is false.
@@ -320,6 +328,8 @@ let BotInstanceConsumer = function() {
      */
     this.setupInstance = function(active, data) {
         if (active) {
+            if (elements.instanceName.text() !== data["name"])
+                elements.instanceName.text(data["name"]);
             if (elements.instanceState.text() !== data["state"])
                 elements.instanceState.text(data["state"]);
             if (elements.instanceSession.text() !== data["session"]["uuid"])
@@ -357,6 +367,7 @@ let BotInstanceConsumer = function() {
                 elements.instanceContent.fadeIn(250);
         }
         else {
+            elements.instanceName.text(NA);
             elements.instanceState.text(NA);
             elements.instanceStarted.text(NA);
             elements.instanceSession.attr("href", "#").text(NA);
@@ -488,7 +499,7 @@ let BotInstanceConsumer = function() {
     this.setupInstanceWindowVar = function(active, data) {
         if (active) {
             if (elements.instanceVariablesWindow.text() !== data["window"]["formatted"])
-                elements.instanceVariablesWindow.text(data["window"]["formatted"])
+                elements.instanceVariablesWindow.text(data["window"]["formatted"]);
             elements.chooseWindow.find("option").each(function () {
                 if ($(this).text() === elements.instanceVariablesWindow.text())
                     $(this).attr("selected", true);
@@ -654,7 +665,7 @@ let BotInstanceConsumer = function() {
      * Sending a signal to the BotInstance. One of either ("start", "pause", "stop").
      */
     this.sendSignal = function(signal) {
-        let data = {signal: signal};
+        let data = {signal: signal, instance: getActiveInstance()};
         if (signal === PLAY) {
             data["config"] = elements.chooseConfig.find(":selected").val();
             data["window"] = elements.chooseWindow.find(":selected").val();
@@ -673,7 +684,10 @@ let BotInstanceConsumer = function() {
     this.generateWebSocket = function() {
         let socket = new WebSocket(`ws://${window.location.host}/ws/instance/`);
         socket.onmessage = function(e) {
-            this.success(JSON.parse(e.data)["instance"]["instance"])
+            let message = JSON.parse(e.data);
+            if (message["instance"]["instance_id"] === getActiveInstance()) {
+                this.success(message["instance"]["instance"])
+            }
         }.bind(this);
         socket.onclose = function() {
             console.warn("BotInstance WebSocket Closed...")
@@ -691,6 +705,7 @@ let BotInstanceConsumer = function() {
         $.ajax({
             url: initialAjaxUrl,
             dataType: "json",
+            data: {instance: getActiveInstance()},
             success: this.success,
             complete: function() {
                 elements.instanceLoader.fadeOut(250, function() {
@@ -700,4 +715,18 @@ let BotInstanceConsumer = function() {
             }.bind(this)
         });
     }.bind(this), 400);
+
+    // When the active bot instance is changed, we should perform another bot instance
+    // successful function so that the information is updated.
+    setInterval(function() {
+        if (getActiveInstance() !== activeInstance) {
+            activeInstance = getActiveInstance();
+            $.ajax({
+                url: initialAjaxUrl,
+                dataType: "json",
+                data: {instance: activeInstance},
+                success: this.success,
+            });
+        }
+    }.bind(this), 100);
 };

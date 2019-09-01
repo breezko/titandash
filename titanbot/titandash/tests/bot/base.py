@@ -6,6 +6,7 @@ can properly test functions within.
 """
 from django.test import TestCase
 
+from titandash.models.bot import BotInstance
 from titandash.models.configuration import Configuration
 from titandash.bot.core.bot import Bot
 from titandash.utils import Window
@@ -34,6 +35,7 @@ class BaseBotTest(TestCase):
         cls.bot = Bot(
             configuration=cls.config,
             window=cls.window,
+            instance=BotInstance.objects.grab(),
             logger=cls.logger
         )
 

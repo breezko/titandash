@@ -7,6 +7,9 @@
 let BotLoggerConsumer = function() {
     let autoScroll = true;
 
+    /* Active Instance. */
+    let activeInstance = getActiveInstance();
+
     /**
      * Configure and allocate all logger elements (jQuery).
      */
@@ -32,7 +35,7 @@ let BotLoggerConsumer = function() {
                 .removeClass("align-items-center")
                 .removeClass("d-flex")
                 .removeClass("justify-content-center");
-            elements.logInitial.remove();
+            elements.logInitial.hide();
         }
 
         let html = $(`
@@ -56,7 +59,10 @@ let BotLoggerConsumer = function() {
     this.generateWebSocket = function() {
         let socket = new WebSocket(`ws://${window.location.host}/ws/log/`);
         socket.onmessage = function(e) {
-            this.success(JSON.parse(e.data)["record"])
+            let message = JSON.parse(e.data);
+            if (message["record"]["instance_id"] === getActiveInstance()) {
+                this.success(message["record"]);
+            }
         }.bind(this);
         socket.onclose = function() {
             console.warn("BotLogger WebSocket Closed...")
@@ -68,6 +74,7 @@ let BotLoggerConsumer = function() {
      * Configure the click events that affect the log container.
      */
     this.configureClickEvents = function() {
+        let _this = this;
          // Setup the trash button to remove all current log records.
         elements.logTrash.hover(function() {
             $(this).css("filter", "brightness(175%)");
@@ -78,13 +85,7 @@ let BotLoggerConsumer = function() {
         }).mouseup(function() {
             $(this).css("filter", "brightness(100%)");
         }).click(function() {
-            if (elements.logInitial.html() === "") {
-                elements.logBody.find(".text-dark").remove().find("br").remove()
-                    .addClass("align-items-center")
-                    .addClass("d-flex")
-                    .addClass("justify-content-center");
-                elements.logInitial.html(`<h5>Log records will appear here as they are emitted...`);
-            }
+            _this.clearLogs();
         });
 
         // Setup the scroll button to enable/disable auto scrolling.
@@ -100,6 +101,17 @@ let BotLoggerConsumer = function() {
         });
     };
 
+    this.clearLogs = function() {
+        if (elements.logInitial.html() === "") {
+            elements.logBody.find("br").remove()
+            elements.logBody.find(".text-dark").remove()
+                .addClass("align-items-center")
+                .addClass("d-flex")
+                .addClass("justify-content-center");
+            elements.logInitial.html(`<h5>Log records will appear here as they are emitted...`).show();
+        }
+    };
+
     /* Consumer Elements */
     let elements = this.configureGameScreenElements();
 
@@ -107,4 +119,13 @@ let BotLoggerConsumer = function() {
     this.configureClickEvents();
     // Generate log web socket.
     this.generateWebSocket();
+
+    // When the active bot instance is changed, we should perform another bot instance
+    // successful function so that the information is updated.
+    setInterval(function() {
+        if (getActiveInstance() !== activeInstance) {
+            activeInstance = getActiveInstance();
+            this.clearLogs();
+        }
+    }.bind(this), 100);
 };

@@ -70,6 +70,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'titandash.context_processors.bot',
                 'titandash.context_processors.themes',
+                'titandash.context_processors.instances',
             ],
         },
     },

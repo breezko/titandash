@@ -8,6 +8,9 @@ let BotQueueConsumer = function() {
     let _this = this;
     let ajaxUrl = "/ajax/generate_queued";
 
+    /* Instance Instance */
+    let activeInstance = getActiveInstance();
+
     /* Consts */
     const SAVED = "saved";
     const FINISHED = "finished";
@@ -17,7 +20,8 @@ let BotQueueConsumer = function() {
      */
     this.generateQueuedFunction = function(func) {
         let data = {
-            "function": func
+            function: func,
+            instance: getActiveInstance()
         };
 
         $.ajax({
@@ -53,6 +57,11 @@ let BotQueueConsumer = function() {
      * 2. Function has been executed... Remove function from queued functions container.
      */
     this.success = function(event) {
+        if (activeInstance !== getActiveInstance()) {
+            activeInstance = getActiveInstance();
+            elements.queueCurrentTableBody.empty();
+        }
+
         let type = event["type"];
         let queued = event["queued"]["queued"];
 
@@ -84,7 +93,10 @@ let BotQueueConsumer = function() {
     this.generateWebSocket = function() {
         let socket = new WebSocket(`ws://${window.location.host}/ws/queued/`);
         socket.onmessage = function (e) {
-            this.success(JSON.parse(e.data));
+            let message = JSON.parse(e.data);
+            if (message["queued"]["instance_id"] === getActiveInstance()) {
+                this.success(message);
+            }
         }.bind(this);
         socket.onclose = function () {
             console.warn("BotQueued WebSocket Closed...")

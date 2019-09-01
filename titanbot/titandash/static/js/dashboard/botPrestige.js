@@ -8,6 +8,9 @@ let BotPrestigeConsumer = function() {
     /* Base Variables */
     let ajaxUrl = "/ajax/prestige";
 
+    /* Active Instance */
+    let activeInstance = getActiveInstance();
+
     /* Consts */
     const RUNNING = "RUNNING";
     const PAUSED = "PAUSED";
@@ -96,6 +99,8 @@ let BotPrestigeConsumer = function() {
      * on whether or not a BotInstance is currently running.
      */
     this.initialSuccess = function(data) {
+        // Emptying the table on every initial request.
+        elements.prestigeTableBody.empty();
         data["prestiges"].forEach(function(item) {
             this.addTableRow(item);
         }.bind(this));
@@ -140,7 +145,10 @@ let BotPrestigeConsumer = function() {
     this.generateWebSocket = function() {
         let socket = new WebSocket(`ws://${window.location.host}/ws/prestige/`);
         socket.onmessage = function(e) {
-            this.socketSuccess(JSON.parse(e.data)["prestige"]["prestige"])
+            let message = JSON.parse(e.data);
+            if (message["prestige"]["instance_id"] === getActiveInstance()) {
+                this.socketSuccess(message["prestige"]["prestige"]);
+            }
         }.bind(this);
         socket.onclose = function() {
             console.warn("Prestige WebSocket Closed...")
@@ -156,7 +164,7 @@ let BotPrestigeConsumer = function() {
                 dataType: "json",
                 data: {
                     type: "PRESTIGES",
-                    session: elements.instanceSession.text()
+                    instance: getActiveInstance()
                 },
                 success: this.initialSuccess,
                 complete: function () {
@@ -172,6 +180,22 @@ let BotPrestigeConsumer = function() {
             });
         }
     }.bind(this), 1000);
+
+    // Setting an interval to check for active session changes.
+    setInterval(function() {
+        if (getActiveInstance() !== activeInstance) {
+            activeInstance = getActiveInstance();
+            $.ajax({
+                url: ajaxUrl,
+                dataType: "json",
+                data: {
+                    type: "PRESTIGES",
+                    instance: getActiveInstance()
+                },
+                success: this.initialSuccess,
+            });
+        }
+    }.bind(this), 250);
 
     /* Consumer Elements */
     let elements = this.configurePrestigeElements();

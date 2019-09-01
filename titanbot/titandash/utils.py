@@ -27,22 +27,20 @@ def title(value):
     return "".join(capped)
 
 
-def start(config, window):
+def start(config, window, instance):
     """
     Start a new Bot Process if one does not already exist. We can check for an existing one by looking at the
     current Bot model and the data present. If one does exist, we can send a termination signal to ensure that
     the old bot has stopped and that a new Bot Session can be initialized.
     """
-    instance = BotInstance.objects.grab()
-
     if instance.state == RUNNING:
-        Queue.objects.add(function="terminate")
+        Queue.objects.add(function="terminate", instance=instance)
     if instance.state == PAUSED:
-        Queue.objects.add(function="resume")
+        Queue.objects.add(function="resume", instance=instance)
 
     while instance.state != STOPPED:
         time.sleep(0.2)
-        instance = BotInstance.objects.grab()
+        instance = instance.refresh_from_db()
         continue
 
     # At this point. The bot is no longer running, and a new instance can be started up
@@ -54,35 +52,33 @@ def start(config, window):
         Thread(target=Bot, kwargs={
             'configuration': configuration,
             'window': win,
+            'instance': instance,
             'start': True
         }).start()
 
 
-def pause():
+def pause(instance):
     """Attempt to pause the current BotInstance if it is currently running."""
-    instance = BotInstance.objects.grab()
     if instance.state == STOPPED:
         return
 
-    Queue.objects.add(function="pause")
+    Queue.objects.add(function="pause", instance=instance)
 
 
-def stop():
+def stop(instance):
     """Attempt to stop the current BotInstance if it is currently running."""
-    instance = BotInstance.objects.grab()
     if instance.state == STOPPED:
         return
 
-    Queue.objects.add(function="terminate")
+    Queue.objects.add(function="terminate", instance=instance)
 
 
-def resume():
+def resume(instance):
     """Attempt to resume the current BotInstance if it is currently running."""
-    instance = BotInstance.objects.grab()
     if instance.state == STOPPED:
         return
 
-    Queue.objects.add(function="resume")
+    Queue.objects.add(function="resume", instance=instance)
 
 
 class Window(object):

@@ -11,7 +11,8 @@ HELP_TEXT = {
     "time": "The time/duration of the prestige.",
     "stage": "The stage that was reached when the prestige took place.",
     "artifact": "The artifact upgraded following this prestige.",
-    "session": "The session associated with this prestige."
+    "session": "The session associated with this prestige.",
+    "instance": "The bot instance associated with this prestige."
 }
 
 
@@ -30,6 +31,7 @@ class Prestige(models.Model):
     stage = models.PositiveIntegerField(verbose_name="Stage", blank=True, null=True, help_text=HELP_TEXT["stage"])
     artifact = models.ForeignKey(verbose_name="Artifact Upgraded", to="Artifact", on_delete=models.CASCADE, help_text=HELP_TEXT["artifact"])
     session = models.ForeignKey(verbose_name="Session", to="Session", on_delete=models.CASCADE, help_text=HELP_TEXT["session"])
+    instance = models.ForeignKey(verbose_name="Instance", to="BotInstance", null=True, on_delete=models.CASCADE, help_text=HELP_TEXT["instance"])
 
     def __str__(self):
         return "Prestige [{stage} - {time}]".format(stage=self.stage, time=self.time)
@@ -37,6 +39,7 @@ class Prestige(models.Model):
     def json(self):
         from django.urls import reverse
         return {
+            "instance": self.instance.name,
             "timestamp": {
                 "datetime": str(self.timestamp),
                 "formatted": self.timestamp.astimezone().strftime(DATETIME_FMT),
@@ -66,6 +69,7 @@ class Prestige(models.Model):
         async_to_sync(channel_layer.group_send)(
             group_name, {
                 "type": "saved",
+                "instance_id": self.instance.pk,
                 "prestige": prestige
             }
         )

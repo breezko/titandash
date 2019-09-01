@@ -15,7 +15,13 @@
 
             <div id="collapseOne" class="collapse show" data-parent="#accordion">
                 <div class="card-body">
-                    <table class="table table-sm table-borderless table-hover table-striped">
+                    <table id="settingsTable" class="table table-sm table-borderless table-hover table-striped titan-responsive">
+                        <thead>
+                            <tr>
+                                <td>Setting</td>
+                                <td>Value</td>
+                            </tr>
+                        </thead>
                         <tbody>
                             {% for key, value in BOT.items %}
                                 <tr>

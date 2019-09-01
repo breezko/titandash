@@ -10,7 +10,9 @@ $(document).ready(function() {
     /**
      * Generate DataTableInstance
      */
-    table.DataTable();
+    table.DataTable({
+        responsive: true
+    });
 
     /**
      * Allow users to export their prestiges data to a JSON file.

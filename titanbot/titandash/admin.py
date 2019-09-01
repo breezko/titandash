@@ -18,17 +18,17 @@ from .models.clan import Clan, Member, RaidResult, RaidResultDamage
 
 @register(BotInstance)
 class BotInstanceAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "state", "started", "session"]
+    list_display = ["__str__", "name", "state", "started", "session"]
 
 
 @register(Prestige)
 class PrestigeAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "timestamp", "stage", "time"]
+    list_display = ["__str__", "instance", "timestamp", "stage", "time"]
 
 
 @register(Queue)
 class QueueAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "created"]
+    list_display = ["__str__", "instance", "created"]
 
 
 @register(Tier)
@@ -140,38 +140,38 @@ class ConfigurationAdmin(ParanoidAdmin):
 @register(Statistics)
 class StatisticsAdmin(admin.ModelAdmin):
     filter_horizontal = ["sessions"]
+    list_display = ["__str__", "instance"]
 
 
 @register(GameStatistics)
 class GameStatisticsAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["__str__", "instance"]
 
 
 @register(BotStatistics)
 class BotStatisticsAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["__str__", "instance"]
 
 
 @register(ArtifactStatistics)
 class ArtifactStatisticsAdmin(admin.ModelAdmin):
+    list_display = ["__str__", "instance"]
     filter_horizontal = ["artifacts"]
-    pass
 
 
 @register(ArtifactOwned)
 class ArtifactOwnedAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "owned"]
+    list_display = ["__str__", "instance", "owned"]
 
 
 @register(PrestigeStatistics)
 class PrestigeStatisticsAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["__str__", "instance"]
 
 
 @register(Session)
 class SessionAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "uuid", "version", "start"]
-    pass
+    list_display = ["__str__", "instance", "uuid", "version", "start"]
 
 
 @register(Clan)
@@ -192,4 +192,4 @@ class RaidResultDamageAdmin(admin.ModelAdmin):
 @register(RaidResult)
 class RaidResultAdmin(admin.ModelAdmin):
     filter_horizontal = ["attacks"]
-    list_display = ["__str__", "digest", "parsed", "clan"]
+    list_display = ["__str__", "instance", "digest", "parsed", "clan"]

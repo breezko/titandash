@@ -3,6 +3,7 @@
 
 {% block extra_js %}
     <script src="{% static "js/dashboard/timers.js" %}"></script>
+    <script src="{% static "js/dashboard/botInstances.js" %}"></script>
     <script src="{% static "js/dashboard/botInstance.js" %}"></script>
     <script src="{% static "js/dashboard/botLogger.js" %}"></script>
     <script src="{% static "js/dashboard/botPrestige.js" %}"></script>
@@ -43,54 +44,113 @@
         </div>
     </div>
 
-    <!-- Bot Actions Card -->
-    <div class="card">
-        <div class="card-header" id="dashboardSettings">
-            <h5 class="mb-0"><small>Settings</small></h5>
-        </div>
+    <!-- Bot Instances Card -->
+    <div id="dashboardInstancesAccordion">
+        <div class="card">
+            <div class="card-header" id="dashboardInstances">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" id="dashboardInstancesHeaderBtn" data-toggle="collapse" data-target="#collapseInstances">Instances</button>
+                    <button id="dashboardInstancesAddButton" type="button" class="btn btn-primary float-right">Add Instance</button>
+                </h5>
+            </div>
 
-        <div class="card-body" id="dashboardSettingsBody">
-            <div id="dashboardSettingsContent" class="container">
-                <label for="dashboardBotConfigurationSelect">Configuration:</label>
-                <select style="width: 100%;" id="dashboardBotConfigurationSelect" class="form-control">
-                    {% for config in configurations %}
-                        <option value="{{ config.id }}">{{ config.name }}</option>
-                    {% endfor %}
-                </select>
-                <br/>
-                <label for="dashboardBotWindowSelect">Window:</label>
-                <select style="width: 100%;" id="dashboardBotWindowSelect" class="form-control">
-                    {% for window in windows %}
-                        <option value="{{ window.hwnd }}">{{ window.formatted }}</option>
-                    {% endfor %}
-                </select>
+            <div id="collapseInstances" class="collapse show" data-parent="#dashboardInstancesAccordion">
+                <div class="card-body" id="dashboardInstancesBody">
+                    <div id="dashboardInstancesContent">
+                        <div>
+                            <table id="dashboardInstancesTable" class="table table-sm table-hover table-borderless dash-table" style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th class="text-center">Select</th>
+                                        <th class="text-center">Remove</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboardInstancesTableBody">
+                                    {% for instance in INSTANCES %}
+                                        <tr data-id="{{ instance.id }}">
+                                            <td>{{ instance.name }}</td>
+                                            {% if forloop.first %}
+                                                <td style="width: 50%;"><button style="width: 100%;" disabled class="btn btn-sm btn-primary instance-select-btn">Selected</button></td>
+                                                <td style="width: 50%;"><button style="width: 100%;" disabled class="btn btn-sm btn-danger instance-remove-btn">Remove</button></td>
+                                            {% else %}
+                                                <td style="width: 50%;"><button style="width: 100%;" class="btn btn-sm btn-primary instance-select-btn">Select</button></td>
+                                                <td style="width: 50%;"><button style="width: 100%;" class="btn btn-sm btn-danger instance-remove-btn">Remove</button></td>
+                                            {% endif %}
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bot Settings Card -->
+    <div id="dashboardSettingsAccordion">
+        <div class="card">
+            <div class="card-header" id="dashboardSettings">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" id="dashboardSettingsHeaderBtn" data-toggle="collapse" data-target="#collapseSettings">Settings</button>
+                </h5>
+            </div>
+
+            <div id="collapseSettings" class="collapse show" data-parent="#dashboardSettingsAccordion">
+                <div class="card-body" id="dashboardSettingsBody">
+                    <div id="dashboardSettingsContent">
+                        <div>
+                            <label for="dashboardBotConfigurationSelect">Configuration:</label>
+                            <select style="width: 100%;" id="dashboardBotConfigurationSelect" class="form-control">
+                                {% for config in configurations %}
+                                    <option value="{{ config.id }}">{{ config.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <br/>
+                        <div>
+                            <label for="dashboardBotWindowSelect">Window:</label>
+                            <select style="width: 100%;" id="dashboardBotWindowSelect" class="form-control">
+                                {% for window in windows %}
+                                    <option value="{{ window.hwnd }}">{{ window.formatted }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Bot Actions Card -->
-    <div class="card">
-        <div class="card-header" id="dashboardActions">
-            <h5 class="mb-0" style="line-height: 1.8;"><small>Controls</small>
-            <button data-toggle="modal" data-target="#exampleModal" style="width: 20%; margin-right: 15px;" type="button" class="btn btn-primary float-right">Tools</button>
-            </h5>
-        </div>
-
-        <div class="card-body" id="dashboardActionsBody">
-            <!-- Initial Loader -->
-            <div class="w-100 d-flex justify-content-center align-items-center" id="dashboardActionsLoader">
-                {% include "spinners/bits.html" %}
+    <div id="dashboardActionsAccordion">
+        <div class="card">
+            <div class="card-header" id="dashboardActions">
+                <h5 class="mb-0" style="line-height: 1.8;">
+                    <button class="btn btn-link" id="dashboardActionsHeaderBtn" data-toggle="collapse" data-target="#collapseActions">Actions</button>
+                    <button data-toggle="modal" data-target="#exampleModal" type="button" class="btn btn-primary float-right">Tools</button>
+                </h5>
             </div>
-            <div id="dashboardActionsContent" style="display: none;" class="container">
-                <div class="row">
-                    <div style="width: 33%;" class="col-sm text-center border-right">
-                        <span id="dashboardActionsPlay" class="fa fa-3x fa-play text-success"></span>
+
+            <div id="collapseActions" class="collapse show" data-parent="#dashboardActionsAccordion">
+                <div class="card-body" id="dashboardActionsBody">
+                    <!-- Initial Loader -->
+                    <div class="w-100 d-flex justify-content-center align-items-center" id="dashboardActionsLoader">
+                        {% include "spinners/bits.html" %}
                     </div>
-                    <div style="width: 33%;" class="col-sm text-center border-right">
-                        <span id="dashboardActionsPause" class="fa fa-3x fa-pause text-warning"></span>
-                    </div>
-                    <div style="width: 33%;" class="col-sm text-center">
-                        <span id="dashboardActionsStop" class="fa fa-3x fa-stop text-danger"></span>
+                    <div id="dashboardActionsContent" style="display: none;" class="container">
+                        <div class="row">
+                            <div style="width: 33%;" class="col-sm text-center border-right">
+                                <span id="dashboardActionsPlay" class="fa fa-3x fa-play text-success"></span>
+                            </div>
+                            <div style="width: 33%;" class="col-sm text-center border-right">
+                                <span id="dashboardActionsPause" class="fa fa-3x fa-pause text-warning"></span>
+                            </div>
+                            <div style="width: 33%;" class="col-sm text-center">
+                                <span id="dashboardActionsStop" class="fa fa-3x fa-stop text-danger"></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -158,6 +218,10 @@
                     <div id="dashboardBotContent" style="display: none;">
                         <table class="table table-sm table-borderless table-hover table-striped dash-table" style="width: 100%;">
                             <tbody>
+                                <tr>
+                                    <td><small>Name</small></td>
+                                    <td><strong id="dashboardBotNameValue">------</strong></td>
+                                </tr>
                                 <tr>
                                     <td><small>State</small></td>
                                     <td><strong id="dashboardBotStateValue">------</strong></td>
