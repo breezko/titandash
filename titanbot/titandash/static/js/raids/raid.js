@@ -47,8 +47,11 @@ $(document).ready(function() {
      * Generate DataTable.
      */
     table.DataTable({
+        responsive: true,
         pageLength: 50,
-        order: [[0, "asc"]]
+        order: [
+            [0, "asc"]
+        ]
     });
 
     /**
@@ -83,5 +86,12 @@ $(document).ready(function() {
     initLoader.fadeOut(200, function() {
         $(this).remove();
         attacksChart.slideToggle("fast");
+    });
+
+    /**
+     * Allow users to export their raid data to a JSON file.
+     */
+    $("#exportRaidJson").off("click").click(function() {
+        exportToJsonFile($("#jsonData").data("json"), $("#raidDigestValue").text());
     });
 });

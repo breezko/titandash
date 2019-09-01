@@ -159,8 +159,8 @@ ARTIFACTS_LOCS = {
     # The amount of pixels to push the mouse over when purchasing any artifact. Since the imagesearch
     # will return the top left of the image, we can add these vales to that to click on the purchase button.
     "artifact_push": {
-        "x": 401,
-        "y": 40,
+        "x": 375,
+        "y": 20,
     },
     "buy_multiplier": (410, 105),
     "buy_max": (50, 105),

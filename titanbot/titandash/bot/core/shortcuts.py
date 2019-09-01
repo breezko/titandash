@@ -21,8 +21,9 @@ ALT = "alt"
 
 
 class ShortcutListener:
-    def __init__(self, logger, cooldown=2):
+    def __init__(self, logger, instance, cooldown=2):
         self.logger = logger
+        self.instance = instance
         self.cooldown = cooldown
 
         # Using timestamp and resume variables to block after a shortcut
@@ -36,7 +37,9 @@ class ShortcutListener:
 
     @staticmethod
     def _fix_event(event):
-        """Fix the event so that any shift, ctrl or alt buttons can be used to initiate a combo."""
+        """
+        Fix the event so that any shift, ctrl or alt buttons can be used to initiate a combo.
+        """
         split = event.name.split(" ")[-1]
         if split in [SHIFT, CTRL, ALT]:
             return split
@@ -68,7 +71,7 @@ class ShortcutListener:
                 combo = "+".join(collections.OrderedDict(sorted(self.current.items(), key=operator.itemgetter(1))).keys())
                 if combo in FUNCTION_SHORTCUTS:
                     if self.timestamp > self.resume:
-                        Queue.objects.add(function=FUNCTION_SHORTCUTS[combo])
+                        Queue.objects.add(function=FUNCTION_SHORTCUTS[combo], instance=self.instance)
                         self.logger.debug("{combo} pressed, executing '{func}'".format(combo=combo, func=SHORTCUT_FUNCTIONS[FUNCTION_SHORTCUTS[combo]]))
                         self.resume = self.resume + datetime.timedelta(seconds=1)
 

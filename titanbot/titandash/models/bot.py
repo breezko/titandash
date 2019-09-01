@@ -20,6 +20,7 @@ BOT_STATE_CHOICES = (
 )
 
 BOT_HELP_TEXT = {
+    "name": "Name of the bot instance.",
     "state": "Current state of the bot.",
     "uuid": "Unique identifier for this bot instance.",
     "session": "Session associated with the current bot instance.",
@@ -58,6 +59,7 @@ class BotInstance(models.Model):
         verbose_name_plural = "Bot Instances"
 
     objects = BotInstanceManager()
+    name = models.CharField(verbose_name="Name", max_length=255, blank=True, null=True, help_text=BOT_HELP_TEXT["name"])
     state = models.CharField(verbose_name="State", choices=BOT_STATE_CHOICES, default=STOPPED, max_length=255, help_text=BOT_HELP_TEXT["state"])
     session = models.ForeignKey(verbose_name="Session", blank=True, null=True, to="Session", on_delete=models.CASCADE, help_text=BOT_HELP_TEXT["session"])
     started = models.DateTimeField(verbose_name="Started", blank=True, null=True, help_text=BOT_HELP_TEXT["started"])
@@ -100,9 +102,20 @@ class BotInstance(models.Model):
     next_artifact_upgrade = models.CharField(verbose_name="Next Artifact Upgrade", max_length=255, blank=True, null=True)
 
     def __str__(self):
-        return "BotInstance [{state}]".format(state=self.state.upper())
+        return "{name} [{state}]".format(name=self.name, state=self.state.upper())
+
+    def key(self):
+        return "{name} [{uuid}] v{version}".format(name=self.name, uuid=self.session.uuid, version=self.session.version)
 
     def save(self, *args, **kwargs):
+        if not self.name:
+            try:
+                max_id = max([int(n.split(" ")[-1]) for n in BotInstance.objects.all().values_list("name", flat=True)])
+            except ValueError:
+                max_id = 0
+
+            self.name = "Titandash Instance {id}".format(id=max_id + 1)
+
         super(BotInstance, self).save(*args, **kwargs)
 
         # Channels send websocket message.
@@ -114,6 +127,7 @@ class BotInstance(models.Model):
         async_to_sync(channel_layer.group_send)(
             group_name, {
                 'type': 'saved',
+                'instance_id': instance["id"],
                 'instance': instance
             }
         )
@@ -122,8 +136,7 @@ class BotInstance(models.Model):
         if self.current_stage is None or self.current_stage == "":
             return None
 
-        stats = Statistics.objects.grab()
-
+        stats = Statistics.objects.grab(instance=self)
         try:
             stage = int(self.current_stage)
         except ValueError:
@@ -142,11 +155,15 @@ class BotInstance(models.Model):
         return "{:.2%}".format(float(stage) / max_stage)
 
     def json(self):
-        """Convert the BotInstance into a JSON compliant dictionary."""
+        """
+        Convert the BotInstance into a JSON compliant dictionary.
+        """
         from django.urls import reverse
         from titandash.utils import title
         from titandash.models.artifact import Artifact
         dct = {
+            "id": self.pk,
+            "name": self.name,
             "state": self.state.upper(),
             "started": {
                 "datetime": str(self.started) if self.started else None,
@@ -240,6 +257,7 @@ class BotInstance(models.Model):
             }
         if self.configuration:
             dct["configuration"] = {
+                "id": self.configuration.pk,
                 "url": reverse("admin:titandash_configuration_change", kwargs={"object_id": self.configuration.pk}),
                 "name": self.configuration.name
             }
@@ -273,19 +291,25 @@ class BotInstance(models.Model):
         self.next_artifact_upgrade = None
 
     def start(self, session):
-        """Start the BotInstance. Should be called when the Bot is first initialized."""
+        """
+        Start the BotInstance. Should be called when the Bot is first initialized.
+        """
         self.state = RUNNING
         self.session = session
         self.started = timezone.now()
         self.save()
 
     def pause(self):
-        """Pause the BotInstance. Called when signal is sent from user."""
+        """
+        Pause the BotInstance. Called when signal is sent from user.
+        """
         self.state = PAUSED
         self.save()
 
     def stop(self):
-        """Stop and kill the BotInstance. Called when exception is raised or manual termination by user."""
+        """
+        Stop and kill the BotInstance. Called when exception is raised or manual termination by user.
+        """
         self.state = STOPPED
         self.session = None
         self.started = None
@@ -297,6 +321,8 @@ class BotInstance(models.Model):
         Queue.flush()
 
     def resume(self):
-        """Resume the BotInstance. Called when resumed from a paused state."""
+        """
+        Resume the BotInstance. Called when resumed from a paused state.
+        """
         self.state = RUNNING
         self.save()

@@ -52,6 +52,9 @@ let ToolHandler = function() {
             $.ajax({
                 url: ajaxUrls.killInstance,
                 dataType: "json",
+                data: {
+                    instance: getActiveInstance()
+                },
                 success: function (data) {
                     clearInterval(loadInterval);
                     elements.killInstanceButton.text("Kill Instance").prop("disabled", false);

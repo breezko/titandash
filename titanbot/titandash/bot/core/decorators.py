@@ -38,7 +38,9 @@ def not_in_transition(function, max_loops=30):
 
 
 def wait_afterwards(function, floor, ceiling):
-    """Delay a function after it's been called for a random amount of seconds between the specified floor and ceiling."""
+    """
+    Delay a function after it's been called for a random amount of seconds between the specified floor and ceiling.
+    """
     def wrapped(*args, **kwargs):
         function(*args, **kwargs)
         sleep(randint(floor, ceiling))
@@ -46,6 +48,11 @@ def wait_afterwards(function, floor, ceiling):
 
 
 def wrap_current_function(function):
+    """
+    Wrap the decorated function to allow for property updates used with the live dashboard.
+
+    This allows the current function display to change based on the function being executed.
+    """
     def current_function(*args, **kwargs):
         args[0].props.current_function = function.__name__
         return function(*args, **kwargs)

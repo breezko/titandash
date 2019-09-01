@@ -29,7 +29,9 @@ logger = logging.getLogger(LOGGER_NAME)
 
 
 def sleep(seconds):
-    """Wrap the time.sleep method to allow for logging the time to sleep for."""
+    """
+    Wrap the time.sleep method to allow for logging the time to sleep for.
+    """
     logger.debug("sleeping for {seconds} second(s)".format(seconds=seconds))
     time.sleep(seconds)
 
@@ -39,7 +41,9 @@ class DeltaTemplate(Template):
 
 
 def strfdelta(timedelta, fmt=STATS_TIMEDELTA_STR):
-    """Format a timedelta object in the given format."""
+    """
+    Format a timedelta object in the given format.
+    """
     f = Formatter()
     d = {}
     lst = {"D": 86400, "H": 3600, "M": 60, "S": 1}
@@ -69,7 +73,9 @@ def strfnumber(number):
 
 
 def convert(value):
-    """Attempt to convert a given value into its appropriate integer value."""
+    """
+    Attempt to convert a given value into its appropriate integer value.
+    """
     try:
         return float(value)
     except ValueError:
@@ -165,7 +171,9 @@ def delta_from_values(values):
 
 
 def send_raid_notification(sid, token, from_num, to_num):
-    """Using the Twilio Rest Client, send a sms message to the specified phone number."""
+    """
+    Using the Twilio Rest Client, send a sms message to the specified phone number.
+    """
     return Client(sid, token).messages.create(
         to=to_num,
         from_=from_num,
@@ -174,7 +182,9 @@ def send_raid_notification(sid, token, from_num, to_num):
 
 
 def gen_offset(point, amount):
-    """Add some offset to a given point."""
+    """
+    Add some offset to a given point.
+    """
     if amount == 0:
         return point
 
@@ -184,7 +194,9 @@ def gen_offset(point, amount):
 
 
 def click_on_point(point, window, clicks=1, interval=0.0, button="left", pause=0.0, offset=5):
-    """Click on the specified X, Y value based on the point passed along as a parameter."""
+    """
+    Click on the specified X, Y value based on the point passed along as a parameter.
+    """
     point = (point[0] + window.x, point[1] + window.y)
     if offset != 0:
         point = gen_offset(point, offset)
@@ -194,19 +206,25 @@ def click_on_point(point, window, clicks=1, interval=0.0, button="left", pause=0
 
 
 def move_to_point(point, window, pause=0.0):
-    """Move the mouse to the specified X, Y values based on the point passed along as a parameter."""
+    """
+    Move the mouse to the specified X, Y values based on the point passed along as a parameter.
+    """
     point = (point[0] + window.x, point[1] + window.y)
     moveTo(point[0], point[1], pause=pause)
 
 
 def click_on_image(image=None, pos=None, button="left", pause=0.0):
-    """Click on the specified image on the screen."""
+    """
+    Click on the specified image on the screen.
+    """
     logger.debug("{button} clicking on {image} located at {pos} with {pause}s pause".format(button=button, image=image, pos=pos, pause=pause))
     click_image(image=image, pos=pos, action=button, timestamp=0, pause=pause)
 
 
 def drag_mouse(start, end, window, button="left", duration=0.3, pause=0.5, tween=linear, quick_stop=None):
-    """Drag the mouse from the starting position, to the end position."""
+    """
+    Drag the mouse from the starting position, to the end position.
+    """
     logger.debug("{button} clicking and dragging mouse from {start} to {end} over {duration}s with quick stop {quick}".format(button=button, start=start, end=end, duration=duration, quick="enabled" if quick_stop else "disabled"))
     start = (start[0] + window.x, start[1] + window.y)
     end = (end[0] + window.x, end[1] + window.y)
@@ -223,7 +241,9 @@ def drag_mouse(start, end, window, button="left", duration=0.3, pause=0.5, tween
 
 
 def in_transition_func(*args, max_loops):
-    """Directly call this function to perform the transition state check."""
+    """
+    Directly call this function to perform the transition state check.
+    """
     _self = args[0]
     loops = 0
     while True:
@@ -264,21 +284,22 @@ def in_transition_func(*args, max_loops):
 
 
 class TitanBotHandler(logging.StreamHandler):
-    def __init__(self, stream=None):
-        super(TitanBotHandler, self).__init__(stream=stream)
+    def __init__(self, instance, stream=None):
+        super(TitanBotHandler, self).__init__()
+        self.instance = instance
         self.channel_layer = get_channel_layer()
         self.group_name = 'titan_log'
 
-    @staticmethod
-    def format_record(record):
-        return "[{asctime}] {levelname} [{filename} - {funcName} ] {message}".format(
-            asctime=record.asctime, levelname=record.levelname, filename=record.filename, funcName=record.funcName, message=record.message
+    def format_record(self, record):
+        return "[{asctime}] {levelname} [{instance}] [{filename} - {funcName} ] {message}".format(
+            asctime=record.asctime, levelname=record.levelname, instance=self.instance.name, filename=record.filename, funcName=record.funcName, message=record.message
         )
 
     def emit(self, record):
         async_to_sync(self.channel_layer.group_send)(
             self.group_name, {
                 'type': 'emitted',
+                'instance_id': self.instance.pk,
                 'record': {
                     "message": self.format_record(record)
                 }
@@ -286,26 +307,31 @@ class TitanBotHandler(logging.StreamHandler):
         )
 
 
-def generate_log_file_name():
-    """Generate a log file name with the current date."""
+def generate_log_file_name(instance):
+    """
+    Generate a log file name with the current date.
+    """
     init_date_fmt = datetime.datetime.strftime(datetime.datetime.now(), LOGGER_FILE_NAME_STRFMT)
+    init_date_fmt = instance.name.replace(" ", "_").lower() + "_" + init_date_fmt
     return "{log_dir}/{name}.log".format(log_dir=LOG_DIR, name=init_date_fmt)
 
 
-def make_logger(log_level="INFO", log_format=LOGGER_FORMAT, log_name=LOGGER_NAME, log_file=LOGGER_FILE_NAME):
-    """Grab the logging instance that will be used throughout bot runtime."""
-    log_formatter = logging.Formatter(log_format)
-    _logger = logging.getLogger(log_name)
+def make_logger(instance, log_level="INFO", log_format=LOGGER_FORMAT, log_name=LOGGER_NAME, log_file=LOGGER_FILE_NAME):
+    """
+    Grab the logging instance that will be used throughout bot runtime.
+    """
+    log_formatter = logging.Formatter(log_format.format(instance=instance.name))
+    _logger = logging.getLogger("{log_name}.{instance}".format(log_name=log_name, instance=instance.pk))
 
     if not len(logger.handlers):
         if not log_file:
-            log_file = generate_log_file_name()
+            log_file = generate_log_file_name(instance=instance)
 
         file_handler = logging.FileHandler(log_file)
         file_handler.setFormatter(log_formatter)
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(log_formatter)
-        socket_handler = TitanBotHandler()
+        socket_handler = TitanBotHandler(instance=instance)
         socket_handler.setFormatter(log_formatter)
 
         _logger.addHandler(file_handler)

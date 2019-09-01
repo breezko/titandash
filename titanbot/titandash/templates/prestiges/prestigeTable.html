@@ -1,0 +1,46 @@
+{% load static %}
+<div id="allPrestigeContent" style="width: 100%;">
+    <div class="row">
+        <div style="width: 33%;" class="col-sm text-center border-right">
+            <small>Total Prestiges</small>
+            <br/>
+            <strong id="allPrestigeAvgStageValue">{{ totalPrestiges }}</strong>
+        </div>
+        <div style="width: 33%;" class="col-sm text-center border-right">
+            <small>Average Duration</small>
+            <br/>
+            <strong id="allPrestigeAvgDurationValue">{{ avgPrestigeDuration }}</strong>
+        </div>
+        <div style="width: 33%;" class="col-sm text-center">
+            <small>Average Stage</small>
+            <br/>
+            <strong id="allPrestigeAvgStageValue">{{ avgPrestigeStage }}</strong>
+        </div>
+    </div>
+    <hr/>
+    <table id="allPrestigeTable" class="display table table-sm table-borderless table-hover table-striped titan-responsive"
+           style="width: 100%;">
+        <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>Duration</th>
+            <th>Stage</th>
+            <th>Artifact</th>
+            <th>Session</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for prestige in prestiges %}
+            <tr>
+                <td data-order="{{ prestige.timestamp.epoch }}">{{ prestige.timestamp.formatted }}</td>
+                <td>{{ prestige.duration.formatted }}</td>
+                <td>{{ prestige.stage|default_if_none:"N/A" }}</td>
+                <td><img height="20" width="20" src="{% static prestige.artifact.image %}"
+                         alt="{{ prestige.artifact.name }}"> {{ prestige.artifact.title }}</td>
+                <td><a href="{{ prestige.session.url }}">{{ prestige.session.uuid_short }}</a></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div id="jsonData" data-json="{{ PRESTIGES_JSON }}" style="display: none;"></div>
