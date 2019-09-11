@@ -39,22 +39,33 @@ function exportToJsonFile(jsonData, filename) {
  *
  * The alert will automatically fade out after 5 seconds.
  */
-function sendAlert(message, container, style, type="success") {
+function sendAlert(message, container, style, type="success", fade=true, dismissible=false) {
     let alert = $(`
-        <div style="${style}" class="alert alert-${type} dashboard-alert">
+        <div style="${style}" class="alert fade show alert-${type} dashboard-alert">
             ${message}
         </div>
     `);
 
+    if (dismissible) {
+        alert.append(`
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        `)
+    }
+
     // Appending the alert to our specified container.
     container.append(alert);
-    alert.fadeIn(250);
-    // Fadeout after five full seconds.
-    setTimeout(function() {
-        alert.fadeOut(500, function() {
-            $(this).remove()
-        });
-    }, 2000);
+
+    if (fade) {
+        alert.fadeIn(250);
+        // Fadeout after five full seconds.
+        setTimeout(function () {
+            alert.fadeOut(500, function () {
+                $(this).remove()
+            });
+        }, 2000);
+    }
 }
 
 /**

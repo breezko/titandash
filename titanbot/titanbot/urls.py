@@ -21,7 +21,9 @@ from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('titandash.urls'))
+    path('auth/', include('titanauth.urls')),
+
+    path('', include('titandash.urls')),
 ]
 
 urlpatterns += static(settings.STATIC_ROOT)
