@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.http.response import JsonResponse
 
+from titanauth.authentication.wrapper import AuthWrapper
+
 from titandash.utils import start, pause, stop, resume, title
 from titandash.utils import WindowHandler
 from titandash.constants import RUNNING, PAUSED, STOPPED
@@ -227,6 +229,10 @@ def kill_instance(request):
     if bot.state == RUNNING or bot.state == PAUSED:
         stop(instance=bot)
         bot.stop()
+
+        # Instance is being killed (or attempted). Whether or not it works, we should explicitly
+        # set the authentication reference to an offline state.
+        AuthWrapper().offline()
         return JsonResponse(data={"status": "success", "message": "BotInstance has been stopped..."})
 
     return JsonResponse(data={"status": "success", "message": "No BotInstance is active to be stopped..."})
