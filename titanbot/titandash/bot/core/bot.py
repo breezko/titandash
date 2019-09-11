@@ -11,6 +11,8 @@ from django.utils import timezone
 from titandash.models.queue import Queue
 from titandash.models.clan import Clan, RaidResult
 
+from titanauth.authentication.wrapper import AuthWrapper
+
 from .maps import *
 from .constants import (
     STAGE_PARSE_THRESHOLD, FUNCTION_LOOP_TIMEOUT, BOSS_LOOP_TIMEOUT,
@@ -90,6 +92,9 @@ class Bot(object):
         self.logger.info("bot (v{version}) (v{game_version}) [{commit}] has been initialized.".format(version=BOT_VERSION, game_version=GAME_VERSION, commit=GIT_COMMIT[:10]))
         self.logger.info("{session}".format(session=self.stats.session))
         self.logger.info("==========================================================================================")
+
+        # Set authentication reference to an online state.
+        AuthWrapper().online()
 
         # Create a list of the functions called in there proper order
         # when actions are performed by the bot.
@@ -1739,3 +1744,6 @@ class Bot(object):
 
             # Remove logging handles.
             self.logger.handlers = []
+
+            # Update the users authentication reference to no longer be online.
+            AuthWrapper().offline()

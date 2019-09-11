@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django_paranoid',
     'channels',
     'titandash.apps.TitandashConfig',
+    'titanauth',
 ]
 
 MIDDLEWARE = [
@@ -53,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'titandash.middleware.AutoAuthenticationMiddleware',
+    'titanauth.middleware.TitandashAuthenticationMiddleware',
 ]
 
 ROOT_URLCONF = 'titanbot.urls'
@@ -71,6 +73,7 @@ TEMPLATES = [
                 'titandash.context_processors.bot',
                 'titandash.context_processors.themes',
                 'titandash.context_processors.instances',
+                'titanauth.context_processors.login',
             ],
         },
     },
