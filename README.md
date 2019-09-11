@@ -1,4 +1,4 @@
-# Titandash [![GitHub version](https://badge.fury.io/gh/becurrie%2Ftitandash.svg)](https://badge.fury.io/gh/becurrie%2Ftitandash)
+# [Titandash](https://titanda.sh) [![GitHub version](https://badge.fury.io/gh/becurrie%2Ftitandash.svg)](https://badge.fury.io/gh/becurrie%2Ftitandash)
 
 ![BOS](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/book_of_shadows.png) ![SOTV](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/stone_of_the_valrunes.png) ![FOTS](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/flute_of_the_soloist.png) ![HOS](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/heart_of_storms.png) ![ROC](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/ring_of_calisto.png) ![IG](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/invaders_gjalarhorn.png) ![BOH](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/boots_of_hermes.png)
 
@@ -8,6 +8,8 @@
 
 ## Getting Started
 Take a look at the [wiki](https://github.com/becurrie/titandash/wiki) for information about setting up and configuring the dependencies and requirements needed to start the dashboard and initiate a new bot instance.
+
+You can also visit our homepage, [here](https://titanda.sh) for more information and register now!
 
 ## Features
 ### Dashboard
