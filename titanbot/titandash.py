@@ -30,7 +30,7 @@ class TitandashTrayApp(object):
     Encapsulate all system tray application functionality into a class instance.
     """
     # Generic
-    TITANDASH = "Titandash 1.4.1"
+    TITANDASH = "Titandash 1.5.0"
     START_SERVER = "Start"
     STOP_SERVER = "Stop"
     STATIC = "Collect"
