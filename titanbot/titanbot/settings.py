@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 
-from settings import ROOT_DIR, IMAGE_DIR
+from settings import ROOT_DIR, IMAGE_DIR, TITAN_DB
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -89,7 +89,7 @@ ASGI_APPLICATION = 'titanbot.routing.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'titan.sqlite3'),
+        'NAME': os.path.join(BASE_DIR, TITAN_DB),
     }
 }
 

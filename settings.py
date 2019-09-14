@@ -6,7 +6,8 @@ Store all project specific settings here.
 import os
 import git
 
-BOT_VERSION = "1.4.1"
+BOT_VERSION = "1.5.0"
+TITAN_DB = "titan.sqlite3"
 
 # Store the root directory of the project. May be used and appended to files in other directories without
 # the need for relative urls being generated to travel to the file.
@@ -45,5 +46,7 @@ GIT_COMMIT = git.Repo(ROOT_DIR).head.commit.hexsha
 
 # In game specific settings should be stored here. As the game is updated, these will change
 # and reflect the new constants that may be used by the bot.
+# Note: This reflect what the project is currently setup to support. Newer versions may be
+# released and be fine, but this is a good way to derive whether or not features may be missing.
 GAME_VERSION = "3.2.2"
 STAGE_CAP = 75000

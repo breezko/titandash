@@ -1,3 +1,6 @@
+wxPython
+PySide2
+PySimpleGUIWx
 requests
 Pillow
 opencv-python

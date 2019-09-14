@@ -41,6 +41,11 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 - Collect daily achievements when they are completed.
 - Collect daily rewards when they are available.
 
+### Quickstart
+- Ensure you've installed and configured dependencies present in the [wiki](https://github.com/becurrie/titandash/wiki/Dependencies).
+- Run the `setup.bat` file to setup your virtual environment, python requirements, database migrations and static files.
+- Run `titandash.bat` to start the server and application.
+
 ## Requirements
 - Windows 10
 - [Python 3.7](https://www.python.org/downloads/release/python-370/)
