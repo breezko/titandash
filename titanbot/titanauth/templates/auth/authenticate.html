@@ -9,6 +9,8 @@
     <meta name="description" content="TitanDash Dashboard for TapTitans2 Bot.">
     <meta name="author" content="Votum">
 
+    <link rel="shortcut icon" type="image/png" href="{% static "favicon.ico" %}"/>
+
     <title>Login</title>
 
     <!-- Bootstrap core CSS -->
@@ -30,7 +32,7 @@
         <form class="form-signin">
             {% csrf_token %}
             <fieldset>
-                <img src="{% static "favicon.ico" %}" alt="" width="50" height="50">
+                <img style="padding: 10px;" src="{% static "favicon.ico" %}" alt="" width="80px" height="80px">
                 <h1 class="h3 mb-3 font-weight-normal">Titandash Authentication</h1>
 
                 <!-- Email Address -->
