@@ -7,6 +7,7 @@ import os
 import git
 
 BOT_VERSION = "1.4.1"
+TITAN_DB = "titan.sqlite3"
 
 # Store the root directory of the project. May be used and appended to files in other directories without
 # the need for relative urls being generated to travel to the file.
