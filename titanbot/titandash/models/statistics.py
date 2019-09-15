@@ -340,9 +340,7 @@ class Session(models.Model):
         return "{instance} [Session [{uuid}] v{version}]".format(instance=self.instance.name, uuid=self.uuid, version=self.version)
 
     def duration(self):
-        if not self.end and self.start:
-            self.end = now()
-        if not self.start and not self.end:
+        if not self.start or not self.end:
             return "N/A"
 
         s = (self.end - self.start).total_seconds()
