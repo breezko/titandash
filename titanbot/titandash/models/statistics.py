@@ -1,6 +1,5 @@
 from django.db import models
 from django.urls import reverse
-from django.utils.timezone import now
 
 from titandash.constants import DATETIME_FMT
 from titandash.bot.core.maps import ARTIFACT_TIER_MAP
@@ -62,6 +61,45 @@ class GameStatistics(models.Model):
         else:
             return None
 
+    def time_played_average(self):
+        """
+        Given the days since install, and time played by a user, convert this into
+        an average amount of time played per day.
+        """
+        installed = int(self.days_since_install) if self.days_since_install else 0
+        played = self.play_time if self.play_time else None
+
+        if played:
+            played = int(played.split("d")[0])
+        else:
+            return 0
+
+        played_hours = played * 24
+        return round(played_hours / installed, 2)
+
+    @property
+    def progress(self):
+        """
+        Return current max stage progress.
+        """
+        from settings import STAGE_CAP
+
+        stage = int(convert(self.highest_stage_reached)) if self.highest_stage_reached else 0
+
+        return {
+            "stage": stage,
+            "max_stage": STAGE_CAP,
+            "percent": stage / STAGE_CAP * 100
+        }
+
+    @property
+    def played(self):
+        return {
+            "days_since_install": self.days_since_install if self.days_since_install else 0,
+            "play_time": self.play_time if self.play_time else "no",
+            "average": self.time_played_average
+        }
+
     def json(self):
         return {
             "highest_stage_reached": self.highest_stage_reached,
@@ -99,19 +137,37 @@ class BotStatistics(models.Model):
         verbose_name = "Bot Statistics"
         verbose_name_plural = "Bot Statistics"
 
+    # Game actions.
     premium_ads = models.PositiveIntegerField(verbose_name="Premium Ads", default=0, help_text=BOT_STATISTICS_HELP_TEXT["premium_ads"])
     actions = models.PositiveIntegerField(verbose_name="Actions", default=0, help_text=BOT_STATISTICS_HELP_TEXT["actions"])
     updates = models.PositiveIntegerField(verbose_name="Updates", default=0, help_text=BOT_STATISTICS_HELP_TEXT["updates"])
+
     instance = models.ForeignKey(verbose_name="Instance", to="BotInstance", null=True, on_delete=models.CASCADE, help_text=BOT_STATISTICS_HELP_TEXT["instance"])
 
     def __str__(self):
         return "{instance} BotStatistics".format(instance=self.instance.name)
 
+    @property
+    def prestiges(self):
+        """
+        Retrieve total amount of prestiges for this set BotStatistics instance.
+        """
+        return PrestigeStatistics.objects.grab(instance=self.instance).prestiges.all().count()
+
+    @property
+    def sessions(self):
+        """
+        Retrieve the total amount of sessions for this BotStatistics instance.
+        """
+        return Session.objects.filter(instance=self.instance).count()
+
     def json(self):
         return {
             "premium_ads": self.premium_ads,
             "actions": self.actions,
-            "updates": self.updates
+            "updates": self.updates,
+            "prestiges": self.prestiges,
+            "sessions": self.sessions
         }
 
 
@@ -283,9 +339,7 @@ class Session(models.Model):
         return "{instance} [Session [{uuid}] v{version}]".format(instance=self.instance.name, uuid=self.uuid, version=self.version)
 
     def duration(self):
-        if not self.end and self.start:
-            self.end = now()
-        if not self.start and not self.end:
+        if not self.start or not self.end:
             return "N/A"
 
         s = (self.end - self.start).total_seconds()

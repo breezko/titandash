@@ -121,6 +121,8 @@ def statistics(request):
     ctx = {
         "game_statistics": {title(key): value for key, value in stats.game_statistics.json().items()},
         "bot_statistics": {title(key): value for key, value in stats.bot_statistics.json().items()},
+        "progress": stats.game_statistics.progress,
+        "played": stats.game_statistics.played,
         "STATISTICS_JSON": json.dumps({
             "game_statistics": stats.game_statistics.json(),
             "bot_statistics": stats.bot_statistics.json()
@@ -129,7 +131,9 @@ def statistics(request):
 
     if request.GET.get("context"):
         return JsonResponse(data={
-            "table": render(request, "statistics/statisticsTable.html", context=ctx).content.decode()
+            "allStatistics": render(request, "statistics/statisticsTable.html", context=ctx).content.decode(),
+            "progress": render(request, "statistics/statisticsProgress.html", context=ctx).content.decode(),
+            "played": render(request, "statistics/statisticsPlayed.html", context=ctx).content.decode()
         })
 
     return render(request, "statistics/allStatistics.html", context=ctx)
