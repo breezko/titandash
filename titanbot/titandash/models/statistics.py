@@ -1,6 +1,5 @@
 from django.db import models
 from django.urls import reverse
-from django.utils.timezone import now
 
 from titandash.constants import DATETIME_FMT
 from titandash.bot.core.maps import ARTIFACT_TIER_MAP
