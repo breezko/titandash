@@ -27,6 +27,14 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 - View all artifact statistics and whether or not you currently own each one.
 - Choose different themes for the dashboard (including dark theme).
 
+### System Tray
+- Use a system tray application instead of the web application to perform minimal functionality.
+- Start/Stop Bot Instances.
+- Start/Stop Titandash server.
+- Migrate/Open database.
+- Collect static files.
+- Open Github repository.
+
 ### Bot
 - Activate chosen in game skills on a specified cooldown, with the option to wait for a specific skill before activating others.
 - Activate specific functions using keyboard shortcuts.
