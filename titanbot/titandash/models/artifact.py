@@ -24,6 +24,12 @@ class Tier(models.Model):
     def __str__(self):
         return "{name}".format(name=self.name)
 
+    def json(self):
+        return {
+            "tier": self.tier,
+            "name": self.name
+        }
+
 
 ARTIFACT_HELP_TEXT = {
     "name": "Specify the name of this artifact.",

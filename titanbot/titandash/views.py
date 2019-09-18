@@ -86,7 +86,7 @@ def log(request, pk):
 
 def session(request, uuid):
     """Retrieve a particular session."""
-    ctx = {"session": Session.objects.get(uuid=uuid).json(),}
+    ctx = {"session": Session.objects.get(uuid=uuid).json()}
     ctx["SESSION_JSON"] = json.dumps(ctx)
 
     return render(request, "sessions/session.html", context=ctx)
