@@ -8,6 +8,12 @@ $(document).ready(function() {
     let ajaxStatisticsUrl = "/statistics";
     let instanceSelector = $("#statisticsInstanceSelect");
 
+    let elements = {
+        allStatistics: $("#allStatisticsContent"),
+        progress: $("#infoProgressContainer"),
+        played: $("#infoPlayedContainer")
+    };
+
     instanceSelector.off("change").change(function() {
         $.ajax({
             url: ajaxStatisticsUrl,
@@ -17,14 +23,16 @@ $(document).ready(function() {
                 context: true
             },
             beforeSend: function() {
-                $("#allStatisticsContent").empty().append(loaderTemplate);
-                $(".loader-template").fadeIn();
+                $.each(elements, function(index, value) {
+                    value.empty().append(loaderTemplate);
+                });
             },
             success: function(data) {
-                let body = $("#allStatisticsContent");
-                body.find(".loader-template").fadeOut(100, function() {
-                    $(this).remove();
-                    body.empty().append(data["table"]);
+                $.each(elements, function(index, value) {
+                    value.find(".loader-template").fadeOut(100, function() {
+                        $(this).remove();
+                        value.empty().append(data[index]);
+                    });
                 });
             }
         })

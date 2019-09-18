@@ -1,10 +1,13 @@
 from django.db import models
 from django.urls import reverse
-from django.utils.timezone import now
 
 from titandash.constants import DATETIME_FMT
 from titandash.bot.core.maps import ARTIFACT_TIER_MAP
 from titandash.bot.core.utilities import convert
+
+from jsonfield.fields import JSONField
+
+from decimal import Decimal
 
 
 GAME_STATISTICS_HELP_TEXT = {
@@ -62,6 +65,45 @@ class GameStatistics(models.Model):
         else:
             return None
 
+    def time_played_average(self):
+        """
+        Given the days since install, and time played by a user, convert this into
+        an average amount of time played per day.
+        """
+        installed = int(self.days_since_install) if self.days_since_install else 0
+        played = self.play_time if self.play_time else None
+
+        if played:
+            played = int(played.split("d")[0])
+        else:
+            return 0
+
+        played_hours = played * 24
+        return round(played_hours / installed, 2)
+
+    @property
+    def progress(self):
+        """
+        Return current max stage progress.
+        """
+        from settings import STAGE_CAP
+
+        stage = int(convert(self.highest_stage_reached)) if self.highest_stage_reached else 0
+
+        return {
+            "stage": stage,
+            "max_stage": STAGE_CAP,
+            "percent": round(stage / STAGE_CAP * 100, 2)
+        }
+
+    @property
+    def played(self):
+        return {
+            "days_since_install": self.days_since_install if self.days_since_install else 0,
+            "play_time": self.play_time if self.play_time else "no",
+            "average": self.time_played_average
+        }
+
     def json(self):
         return {
             "highest_stage_reached": self.highest_stage_reached,
@@ -99,19 +141,37 @@ class BotStatistics(models.Model):
         verbose_name = "Bot Statistics"
         verbose_name_plural = "Bot Statistics"
 
+    # Game actions.
     premium_ads = models.PositiveIntegerField(verbose_name="Premium Ads", default=0, help_text=BOT_STATISTICS_HELP_TEXT["premium_ads"])
     actions = models.PositiveIntegerField(verbose_name="Actions", default=0, help_text=BOT_STATISTICS_HELP_TEXT["actions"])
     updates = models.PositiveIntegerField(verbose_name="Updates", default=0, help_text=BOT_STATISTICS_HELP_TEXT["updates"])
+
     instance = models.ForeignKey(verbose_name="Instance", to="BotInstance", null=True, on_delete=models.CASCADE, help_text=BOT_STATISTICS_HELP_TEXT["instance"])
 
     def __str__(self):
         return "{instance} BotStatistics".format(instance=self.instance.name)
 
+    @property
+    def prestiges(self):
+        """
+        Retrieve total amount of prestiges for this set BotStatistics instance.
+        """
+        return PrestigeStatistics.objects.grab(instance=self.instance).prestiges.all().count()
+
+    @property
+    def sessions(self):
+        """
+        Retrieve the total amount of sessions for this BotStatistics instance.
+        """
+        return Session.objects.filter(instance=self.instance).count()
+
     def json(self):
         return {
             "premium_ads": self.premium_ads,
             "actions": self.actions,
-            "updates": self.updates
+            "updates": self.updates,
+            "prestiges": self.prestiges,
+            "sessions": self.sessions
         }
 
 
@@ -214,6 +274,7 @@ SESSION_HELP_TEXT = {
     "game_statistic_differences": "Game statistic differences associated with session.",
     "bot_statistic_differences": "Bot statistic differences associated with session.",
     "configuration": "Config instance associated with this session.",
+    "configuration_snapshot": "Config snapshot used when session was started.",
     "instance": "The bot instance associated with the session."
 }
 
@@ -277,15 +338,26 @@ class Session(models.Model):
     end = models.DateTimeField(verbose_name="End Date", blank=True, null=True, help_text=SESSION_HELP_TEXT["end"])
     log = models.ForeignKey(verbose_name="Log File", to="Log", on_delete=models.CASCADE, blank=True, null=True, max_length=255, help_text=SESSION_HELP_TEXT["log"])
     configuration = models.ForeignKey(verbose_name="Configuration", to="Configuration", on_delete=models.CASCADE, blank=True, null=True, help_text=SESSION_HELP_TEXT["configuration"])
+    configuration_snapshot = JSONField(verbose_name="Configuration Snapshot", blank=True, null=True, help_text=SESSION_HELP_TEXT["configuration_snapshot"])
     instance = models.ForeignKey(verbose_name="Session Instance", to="BotInstance", related_name="session_instance", on_delete=models.CASCADE, blank=True, null=True, help_text=SESSION_HELP_TEXT["instance"])
 
     def __str__(self):
         return "{instance} [Session [{uuid}] v{version}]".format(instance=self.instance.name, uuid=self.uuid, version=self.version)
 
+    def save(self, *args, **kwargs):
+        snapshot = self.configuration.json(condense=True)
+
+        # JSONField will not allow decimal object, coerce to string decimals.
+        for group in snapshot:
+            for key in snapshot[group]:
+                if isinstance(snapshot[group][key], Decimal):
+                    snapshot[group][key] = str(snapshot[group][key])
+
+        self.configuration_snapshot = snapshot
+        super(Session, self).save(*args, **kwargs)
+
     def duration(self):
-        if not self.end and self.start:
-            self.end = now()
-        if not self.start and not self.end:
+        if not self.start or not self.end:
             return "N/A"
 
         s = (self.end - self.start).total_seconds()
@@ -316,6 +388,7 @@ class Session(models.Model):
                 "epoch": int(self.end.astimezone().timestamp()) if self.end else 0
             },
             "log": reverse('log', kwargs={'pk': self.log.pk}) if self.log else "N/A",
+            "configuration": self.configuration_snapshot,
             "duration": str(self.duration()),
         }
 

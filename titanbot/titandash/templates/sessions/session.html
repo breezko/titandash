@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load staticfiles %}
+{% load replace %}
 
 {% block content %}
     <div id="accordion">
@@ -52,7 +53,7 @@
         </div>
     </div>
 
-     <div id="accordion">
+     <div id="accordion2">
         <div class="card">
             <div class="card-header" id="prestigesHeader">
                 <h5 class="mb-0">
@@ -62,7 +63,7 @@
                 </h5>
             </div>
 
-            <div id="collapsePrestiges" class="collapse show" data-parent="#accordion">
+            <div id="collapsePrestiges" class="collapse show" data-parent="#accordion2">
                 <div class="card-body">
                     <table id="sessionPrestigesTable" class="table table-sm table-borderless table-hover table-striped titan-responsive">
                         <thead>
@@ -84,6 +85,37 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="accordion3">
+        <div class="card">
+            <div class="card-header" id="prestigesHeader">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseConfiguration">
+                        Configuration
+                    </button>
+                </h5>
+            </div>
+
+            <div id="collapseConfiguration" class="collapse show" data-parent="#accordion3">
+                <div class="card-body">
+                    {% for group, dct in session.configuration.items %}
+                        <h5>{{ group | title }}</h5>
+                        <table class="table table-sm table-borderless table-hover table-striped titan-responsive">
+                            <tbody>
+                                {% for key, setting in dct.items %}
+                                    <tr>
+                                        <td>{{ key | title | replace_underscore:" " }}</td>
+                                        <td style="width: 50%;">{{ setting }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <hr/>
+                    {% endfor %}
                 </div>
             </div>
         </div>

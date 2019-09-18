@@ -191,6 +191,126 @@ class Configuration(ParanoidModel):
     def __str__(self):
         return "{name}".format(name=self.name)
 
+    def json(self, condense=False):
+        """
+        Return a JSON compliant dictionary for current configuration.
+
+        Use the condense flag to ensure that foreign key or many to many fields are condensed into simple values.
+        """
+        from titandash.utils import title
+        dct = {
+            # RUNTIME.
+            "Runtime": {
+                "name": self.name,
+                "soft_shutdown_on_critical_error": self.soft_shutdown_on_critical_error,
+                "soft_shutdown_update_stats": self.soft_shutdown_update_stats,
+                "post_action_min_wait_time": self.post_action_min_wait_time,
+                "post_action_max_wait_time": self.post_action_max_wait_time
+            },
+            "Device": {
+                "emulator": self.emulator
+            },
+            "Generic": {
+                "enable_premium_ad_collect": self.enable_premium_ad_collect,
+                "enable_egg_collection": self.enable_egg_collection,
+                "enable_tapping": self.enable_tapping,
+                "enable_tournaments": self.enable_tournaments
+            },
+            "Breaks": {
+                "enable_breaks": self.enable_breaks,
+                "breaks_jitter": self.breaks_jitter,
+                "breaks_minutes_required": self.breaks_minutes_required,
+                "breaks_minutes_max": self.breaks_minutes_max,
+                "breaks_minutes_min": self.breaks_minutes_min
+            },
+            "Daily Achievement": {
+                "enable_daily_achievements": self.enable_daily_achievements,
+                "daily_achievements_check_on_start": self.daily_achievements_check_on_start,
+                "daily_achievements_check_every_x_hours": self.daily_achievements_check_every_x_hours
+            },
+            "Raid Notifications": {
+                "enable_raid_notifications": self.enable_raid_notifications,
+                "raid_notifications_check_on_start": self.raid_notifications_check_on_start,
+                "raid_notifications_check_every_x_minutes": self.raid_notifications_check_every_x_minutes,
+                "raid_notifications_twilio_account_sid": self.raid_notifications_twilio_account_sid,
+                "raid_notifications_twilio_auth_token": self.raid_notifications_twilio_auth_token,
+                "raid_notifications_twilio_from_number": self.raid_notifications_twilio_from_number,
+                "raid_notifications_twilio_to_number": self.raid_notifications_twilio_to_number
+            },
+            "General Actions": {
+                "run_actions_every_x_seconds": self.run_actions_every_x_seconds,
+                "run_actions_on_start": self.run_actions_on_start,
+                "order_level_heroes": self.order_level_heroes,
+                "order_level_master": self.order_level_master,
+                "order_level_skills": self.order_level_skills
+            },
+            "Master Actions": {
+                "enable_master": self.enable_master,
+                "master_level_intensity": self.master_level_intensity
+            },
+            "Heroes": {
+                "enable_heroes": self.enable_heroes,
+                "hero_level_intensity": self.hero_level_intensity
+            },
+            "Skills": {
+                "enable_skills": self.enable_skills,
+                "activate_skills_on_start": self.activate_skills_on_start,
+                "interval_heavenly_strike": self.interval_heavenly_strike,
+                "interval_deadly_strike": self.interval_deadly_strike,
+                "interval_hand_of_midas": self.interval_hand_of_midas,
+                "interval_fire_sword": self.interval_fire_sword,
+                "interval_war_cry": self.interval_war_cry,
+                "interval_shadow_clone": self.interval_shadow_clone,
+                "force_enabled_skills_wait": self.force_enabled_skills_wait,
+                "max_skill_if_possible": self.max_skill_if_possible,
+                "skill_level_intensity": self.skill_level_intensity
+            },
+            "Prestige Action": {
+                "enable_auto_prestige": self.enable_auto_prestige,
+                "prestige_x_minutes": self.prestige_x_minutes,
+                "prestige_at_stage": self.prestige_at_stage,
+                "prestige_at_max_stage": self.prestige_at_max_stage,
+                "prestige_at_max_stage_percent": self.prestige_at_max_stage_percent
+            },
+            "Artifacts Action": {
+                "enable_artifact_purchase": self.enable_artifact_purchase,
+                "upgrade_owned_artifacts": self.upgrade_owned_artifacts,
+                "upgrade_owned_tier": [tier.json() for tier in self.upgrade_owned_tier.all()],
+                "shuffle_artifacts": self.shuffle_artifacts,
+                "ignore_artifacts": [art.json() for art in self.ignore_artifacts.all()],
+                "upgrade_artifacts": [art.json() for art in self.upgrade_artifacts.all()]
+            },
+            "Stats": {
+                "enable_stats": self.enable_stats,
+                "update_stats_on_start": self.update_stats_on_start,
+                "update_stats_every_x_minutes": self.update_stats_every_x_minutes
+            },
+            "Raid Parsing": {
+                "enable_clan_results_parse": self.enable_clan_results_parse,
+                "parse_clan_results_on_start": self.parse_clan_results_on_start,
+                "parse_clan_results_every_x_minutes": self.parse_clan_results_every_x_minutes
+            },
+            "Artifacts": {
+                "bottom_artifact": self.bottom_artifact.json()
+            },
+            "Recovery": {
+                "recovery_check_interval_minutes": self.recovery_check_interval_minutes,
+                "recovery_allowed_failures": self.recovery_allowed_failures
+            },
+            "Logging": {
+                "enable_logging": self.enable_logging,
+                "logging_level": self.logging_level
+            }
+        }
+
+        if condense:
+            dct["Artifacts Action"]["upgrade_owned_tier"] = ", ".join([title(t.name) for t in self.upgrade_owned_tier.all()])
+            dct["Artifacts Action"]["ignore_artifacts"] = ", ".join([title(a.name) for a in self.ignore_artifacts.all()])
+            dct["Artifacts Action"]["upgrade_artifacts"] = ", ".join([title(a.name) for a in self.upgrade_artifacts.all()])
+            dct["Artifacts"]["bottom_artifact"] = title(self.bottom_artifact.name)
+
+        return dct
+
 
 THEME_CONFIG_HELP_TEXT = {
     "theme": "Determine the name of the theme that will be activated on the dashboard."

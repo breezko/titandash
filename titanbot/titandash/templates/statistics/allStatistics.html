@@ -26,6 +26,40 @@
             </div>
         </div>
     </div>
+
+    <div id="accordion2">
+        <div class="card">
+            <div class="card-header" id="infoStatistics">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseTwo">Stage Progress</button>
+                </h5>
+            </div>
+            <div id="collapseTwo" class="collapse show" data-parent="#accordion2">
+                <div class="card-body">
+                    <div id="infoProgressContainer" style="width: 100%;">
+                        {% include "statistics/statisticsProgress.html" %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="accordion3">
+        <div class="card">
+            <div class="card-header" id="infoStatistics">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseThree">Time Played</button>
+                </h5>
+            </div>
+            <div id="collapseThree" class="collapse show" data-parent="#accordion3">
+                <div class="card-body">
+                    <div id="infoPlayedContainer" style="width: 100%;">
+                        {% include "statistics/statisticsPlayed.html" %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block extra_js %}

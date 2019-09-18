@@ -6,7 +6,7 @@ Store all project specific settings here.
 import os
 import git
 
-BOT_VERSION = "1.5.0"
+BOT_VERSION = "1.5.1"
 TITAN_DB = "titan.sqlite3"
 
 # Store the root directory of the project. May be used and appended to files in other directories without
