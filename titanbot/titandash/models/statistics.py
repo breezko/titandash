@@ -93,7 +93,7 @@ class GameStatistics(models.Model):
         return {
             "stage": stage,
             "max_stage": STAGE_CAP,
-            "percent": stage / STAGE_CAP * 100
+            "percent": round(stage / STAGE_CAP * 100, 2)
         }
 
     @property
