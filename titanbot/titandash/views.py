@@ -237,9 +237,9 @@ def kill_instance(request):
         # Instance is being killed (or attempted). Whether or not it works, we should explicitly
         # set the authentication reference to an offline state.
         AuthWrapper().offline()
-        return JsonResponse(data={"status": "success", "message": "BotInstance has been stopped..."})
+        return JsonResponse(data={"killed": True, "status": "success", "message": "BotInstance has been stopped..."})
 
-    return JsonResponse(data={"status": "success", "message": "No BotInstance is active to be stopped..."})
+    return JsonResponse(data={"killed": False, "status": "success", "message": "No BotInstance is active to be stopped..."})
 
 
 def signal(request):
