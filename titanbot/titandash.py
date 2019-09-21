@@ -250,7 +250,7 @@ class TitandashTrayApp(object):
         window.Close()
 
         # Are we going to start a new instance? Or cancel the operation.
-        if event in ["Cancel", "Exit"]:
+        if event in ["Cancel", "Exit"] or "" in values:
             return
 
         # Data chosen, let's start a new instance now.
@@ -293,7 +293,7 @@ class TitandashTrayApp(object):
         window.Close()
 
         # Are we going to kill a instance? Or cancel the operation.
-        if event in ["Cancel", "Exit"]:
+        if event in ["Cancel", "Exit"] or "" in values:
             return
 
         # Data selected, kill chosen instances.
