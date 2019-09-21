@@ -130,9 +130,17 @@
 
     <footer id="sticky-footer" class="py-4 bg-light border-top">
     <div class="container text-center">
-        <a class="text-dark align-items-center justify-content-center" style="text-decoration: none;" href="https://github.com/becurrie/titandash/commit/{{ BOT.GIT_COMMIT }}">
+        <a class="text-dark align-items-center justify-content-center" style="text-decoration: none;" href="https://github.com/becurrie/titandash{% if BOT.GIT_COMMIT %}/commit/{{ BOT.GIT_COMMIT }}{% endif %}">
             <span class="fab fa-github text-primary"></span>
-            <code class="text-dark"><small class="text-primary">{{ BOT.GIT_COMMIT }} ({{ BOT.TITANBOT_VERSION }})</small></code>
+            <code class="text-dark">
+                <small class="text-primary">
+                    {% if BOT.GIT_COMMIT %}
+                        {{ BOT.GIT_COMMIT }} ({{ BOT.TITANBOT_VERSION }})
+                    {% else %}
+                        TITANDASH {{ BOT.TITANBOT_VERSION }}
+                    {% endif %}
+                </small>
+            </code>
         </a>
     </div>
     </footer>
