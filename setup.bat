@@ -12,4 +12,4 @@ call npm install
 :: Collect static files.
 call %WORKON_HOME%/Scripts/python titanbot/manage.py collectstatic --noinput
 
-exit
+PAUSE
