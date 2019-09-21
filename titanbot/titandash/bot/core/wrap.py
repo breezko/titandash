@@ -21,9 +21,11 @@ class Images:
         """
         # ACHIEVEMENTS.
         self.daily_collect = None
+        self.daily_watch = None
 
         # ADS.
         self.collect_ad = None
+        self.watch_ad = None
         self.no_thanks = None
 
         # ARTIFACTS.
@@ -200,11 +202,13 @@ class Locs:
 
         # AD.
         self.collect_ad = None
+        self.collect_ad_after_watch = None
         self.no_thanks = None
 
         # EMULATOR.
         self.exit_emulator = None
         self.restart_emulator = None
+        self.back_emulator = None
 
 
 class Colors:
