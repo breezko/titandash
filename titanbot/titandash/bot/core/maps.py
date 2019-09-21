@@ -93,6 +93,7 @@ GAME_LOCS = {
     },
     "AD": {
         "collect_ad": (365, 650),
+        "collect_ad_after_watch": (256, 635),
         "no_thanks": (135, 650),
     },
     "ARTIFACTS": {
@@ -101,6 +102,7 @@ GAME_LOCS = {
     "EMULATOR": {
         "exit_emulator": (468, 16),
         "restart_emulator": (300, 473),
+        "back_emulator": (504, 733),
     },
 }
 
@@ -176,9 +178,11 @@ GAME_COLORS = {
 IMAGES = {
     "ACHIEVEMENTS": {
         "daily_collect": IMAGE_DIR + "/achievements/daily_collect.png",
+        "daily_watch": IMAGE_DIR + "/achievements/daily_watch.png",
     },
     "ADS": {
         "collect_ad": IMAGE_DIR + "/ads/collect.png",
+        "watch_ad": IMAGE_DIR + "/ads/watch.png",
         "no_thanks": IMAGE_DIR + "/ads/no_thanks.png",
     },
     "ARTIFACTS": {

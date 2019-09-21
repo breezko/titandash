@@ -1057,10 +1057,24 @@ class Bot(object):
                     if found:
                         # Collect the achievement reward here.
                         self.logger.info("completed daily achievement found, collecting now.")
-                        self.click(point=pos, pause=2)
-                        self.click(point=GAME_LOCS["GAME_SCREEN"]["game_middle"], clicks=5, pause=1)
-                        sleep(5)
-                        self.click(point=GAME_LOCS["GAME_SCREEN"]["game_middle"], clicks=5, pause=2)
+                        click_on_image(image=self.images.daily_collect, pos=pos)
+
+                # Check for the single ad watching daily achievement.
+                found, pos = self.grabber.search(self.images.daily_watch)
+                if found:
+                    self.logger.info("watching daily achievement ad.")
+                    click_on_image(image=self.images.daily_watch, pos=pos)
+                    sleep(30)
+
+                    # Ad likely finished at this point, attempt to close the ad now by using the
+                    # back button within the emulator.
+                    self.logger.info("attempting to close watched ad.")
+                    self.click(self.locs.back_emulator, pause=3)
+
+                    # Attempt to collect the ad.
+                    found, pos = self.grabber.search(self.images.daily_collect)
+                    if found:
+                        click_on_image(image=self.images.daily_collect, pos=pos)
 
                 # Exiting achievements screen now.
                 self.calculate_next_daily_achievement_check()
@@ -1223,36 +1237,44 @@ class Bot(object):
 
                 self.calculate_next_clan_result_parse()
 
-    @wrap_current_function
-    @not_in_transition
-    def collect_ad(self):
+    def ad(self):
         """
         Collect ad if one is available on the screen.
 
         Note: This function does not require a max loop (FUNCTION_LOOP_TIMEOUT) since it only ever loops
               while the collect panel is on screen, this provides only two possible options.
+
+        This is the main ad function. Used in two places:
+           - One instance is used by the transition functionality and decorator.
+           - The other one allows the function to be called directly without decorators added.
         """
-        while self.grabber.search(self.images.collect_ad, bool_only=True):
+        while self.grabber.search(self.images.collect_ad, bool_only=True) or self.grabber.search(self.images.watch_ad, bool_only=True):
             if self.configuration.enable_premium_ad_collect:
                 self.logger.info("collecting premium ad!")
                 self.click(point=self.locs.collect_ad, pause=1, offset=1)
-                self.stats.statistics.bot_statistics.premium_ads += 1
-                self.stats.statistics.bot_statistics.save()
             else:
-                self.logger.info("declining premium ad!")
-                self.click(point=self.locs.no_thanks, pause=1, offset=1)
+                self.logger.info("watching normal ad!")
+                self.click(point=self.locs.collect_ad, offset=1)
+
+                # An ad has been launched... Let's wait a while before attempting to close it.
+                sleep(30)
+
+                # Ad likely finished at this point, attempt to close the ad now by using the
+                # back button within the emulator.
+                self.logger.info("attempting to close watched ad.")
+                self.click(point=self.locs.back_emulator, pause=3)
+                self.click(point=self.locs.collect_ad_after_watch, pause=2)
+
+            self.stats.statistics.bot_statistics.premium_ads += 1
+            self.stats.statistics.bot_statistics.save()
+
+    @wrap_current_function
+    @not_in_transition
+    def collect_ad(self):
+        self.ad()
 
     def collect_ad_no_transition(self):
-        """Collect ad if one is available on the screen. No transition wrapper is included here."""
-        while self.grabber.search(self.images.collect_ad, bool_only=True):
-            if self.configuration.enable_premium_ad_collect:
-                self.logger.info("collecting premium ad!")
-                self.click(point=self.locs.collect_ad, pause=1, offset=1)
-                self.stats.statistics.bot_statistics.premium_ads += 1
-                self.stats.statistics.bot_statistics.save()
-            else:
-                self.logger.info("declining premium ad!")
-                self.click(point=self.locs.no_thanks, pause=1, offset=1)
+        self.ad()
 
     @not_in_transition
     def fight_boss(self):
