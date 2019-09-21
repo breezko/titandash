@@ -4,10 +4,15 @@ settings.py
 Store all project specific settings here.
 """
 import os
-import git
+import logging
+import datetime
+
 
 BOT_VERSION = "1.5.2"
 TITAN_DB = "titan.sqlite3"
+
+# Name of titandash application logger.
+TITANDASH_LOGGER_NAME = "TITANDASH.LOGGER"
 
 # Store the root directory of the project. May be used and appended to files in other directories without
 # the need for relative urls being generated to travel to the file.
@@ -24,6 +29,8 @@ CORE_DIR = os.path.join(BOT_DIR, "core")
 EXT_DIR = os.path.join(BOT_DIR, "external")
 # Log files should be placed here.
 LOG_DIR = os.path.join(BOT_DIR, "logs")
+# Log files used by main titandash application should be placed here.
+TITANDASH_LOG_DIR = os.path.join(ROOT_DIR, "logs")
 # Any data files used directly by the bot should be placed in here.
 DATA_DIR = os.path.join(BOT_DIR, "data")
 # Additional data directories.
@@ -41,8 +48,30 @@ THEMES_DIR = os.path.join(TITANDASH_DIR, "static/css/theme")
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
 
+# Make sur e along directory actually exists for titandash application.
+if not os.path.exists(TITANDASH_LOG_DIR):
+    os.makedirs(TITANDASH_LOG_DIR)
+
+logger = logging.getLogger(TITANDASH_LOGGER_NAME)
+logger.setLevel(logging.ERROR)
+
+fileHandler = logging.FileHandler(os.path.join(TITANDASH_LOG_DIR, datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")) + ".txt")
+fileHandler.setLevel(logging.DEBUG)
+
+logger.addHandler(fileHandler)
+
+
+try:
+    import git
+except Exception as exc:
+    logger.error(exc, exc_info=True)
+
 # Create a variable that represents the current git commit (sha) of project.
-GIT_COMMIT = git.Repo(ROOT_DIR).head.commit.hexsha
+try:
+    GIT_COMMIT = git.Repo(ROOT_DIR).head.commit.hexsha
+except Exception as exc:
+    logger.error(exc, exc_info=True)
+    GIT_COMMIT = None
 
 # In game specific settings should be stored here. As the game is updated, these will change
 # and reflect the new constants that may be used by the bot.
