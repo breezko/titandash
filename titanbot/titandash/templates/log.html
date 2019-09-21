@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 
+{% block extra_js %}
+    <script src="{% static "js/log/log.js" %}"></script>
+{% endblock %}
+
 {% block content %}
     <div id="accordion">
         <div class="card">
