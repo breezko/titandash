@@ -1,10 +1,13 @@
-# [Titandash](https://titanda.sh) [![GitHub version](https://badge.fury.io/gh/becurrie%2Ftitandash.svg)](https://badge.fury.io/gh/becurrie%2Ftitandash)
-
-![BOS](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/book_of_shadows.png) ![SOTV](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/stone_of_the_valrunes.png) ![FOTS](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/flute_of_the_soloist.png) ![HOS](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/heart_of_storms.png) ![ROC](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/ring_of_calisto.png) ![IG](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/invaders_gjalarhorn.png) ![BOH](https://github.com/becurrie/titandash/blob/master/titanbot/titandash/bot/data/images/artifacts/boots_of_hermes.png)
-
-**Automate TapTitans2 using a web application built in Django.**
-
-![dashboard](https://github.com/becurrie/titandash/blob/master/img/dashboard.png)
+<p align="center">
+  <img height="226px" width="151px" src="https://github.com/becurrie/titandash/blob/master/img/flame.png"/>
+</p>
+<h1 align="center">Titandash</h1>
+<h3 align="center">TapTitans 2 Bot/Progression Application</h3>
+<p align="center">
+  <img src="https://badge.fury.io/gh/becurrie%2Ftitandash.svg">
+  <a href="https://titanda.sh"><img src="https://img.shields.io/badge/site-titanda.sh-lightgrey"></a>
+  <a href="https://github.com/becurrie/titandash/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/becurrie/titandash"></a>
+</p>
 
 ## Getting Started
 Take a look at the [wiki](https://github.com/becurrie/titandash/wiki) for information about setting up and configuring the dependencies and requirements needed to start the dashboard and initiate a new bot instance.
@@ -46,7 +49,8 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 - Upgrade or ignore specific artifacts or tiers after a prestige.
 - Participate in tournaments when they are available (enter/collect rewards).
 - Hatch and collect any eggs when they become available.
-- Collect daily achievements when they are completed.
+- Collect in game ads (VIP/Watch).
+- Collect daily achievements when they are completed (Watch daily ad).
 - Collect daily rewards when they are available.
 
 ### Quickstart
