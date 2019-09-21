@@ -15,11 +15,37 @@ import webbrowser
 import win32gui
 import win32con
 import json
+import logging
+
+from datetime import datetime
+
+TITANDASH_LOGGER = "titandash.app"
+TITANDASH_LOG_DIR = "logs/"
+
+logging.basicConfig()
+
+if not os.path.exists(TITANDASH_LOG_DIR):
+    os.makedirs(TITANDASH_LOG_DIR)
+
+# Grab logger used by main application. For use throughout application
+# as well as setup functions.
+logger = logging.getLogger(TITANDASH_LOGGER)
+logger.setLevel(logging.DEBUG)
+
+fh_name = "{name}.log".format(name=datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+fh = logging.FileHandler(os.path.join(TITANDASH_LOG_DIR, fh_name))
+fh.setLevel(logging.DEBUG)
+
+# Add file handler to main entry point logger.
+logger.addHandler(fh)
+
 
 # Hiding the python window if specified.
 if '--hide' in sys.argv:
-    program = win32gui.GetForegroundWindow()
-    win32gui.ShowWindow(program, win32con.SW_HIDE)
+    win32gui.ShowWindow(
+        win32gui.GetForegroundWindow(),
+        win32con.SW_HIDE
+    )
 
 
 # Default environment variable to ensure proper settings are used.
@@ -93,6 +119,7 @@ class TitandashTrayApp(object):
         """
         Send a message through the system tray icon with some information.
         """
+        logger.info("message sent to application: {message}".format(message=message))
         self.tray.ShowMessage(
             title=title,
             message=message,
@@ -382,8 +409,18 @@ class TitandashTrayApp(object):
 
 # Initialize the TitandashTrayApp, this will attempt a server restart.
 # If this fails, our conditional below will catch it and event loop does not run.
-app = TitandashTrayApp()
+try:
+    app = TitandashTrayApp()
 
-# Check app status and start/stop event loop.
-if app.status:
-    app.start()
+    # Check app status and start/stop event loop.
+    if app.status:
+        app.start()
+except Exception as exc:
+    logger.error(exc, exc_info=True)
+
+    # User must press a button before the window is closed and ended. This is only
+    # needed when the user has chosen the application that is not hidden.
+    if '--hide' not in sys.argv:
+        logger.info("check additional log information here: {log}".format(
+            log=logger.handlers[0].baseFilename
+        ))
