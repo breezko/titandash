@@ -34,5 +34,6 @@ urlpatterns = [
     path('ajax/generate_queued', views.generate_queued, name='generate_queued'),
     path('ajax/theme_change', views.theme_change, name='theme_change'),
     path('ajax/instances/create', views.create_instance, name='create_instance'),
-    path('ajax/instances/remove', views.remove_instance, name='remove_instance')
+    path('ajax/instances/remove', views.remove_instance, name='remove_instance'),
+    path('ajax/open_log', views.open_log, name='open_log'),
 ]

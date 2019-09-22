@@ -17,6 +17,7 @@ from titandash.bot.core.constants import QUEUEABLE_FUNCTIONS, QUEUEABLE_TOOLTIPS
 
 from io import BytesIO
 
+import os
 import datetime
 import base64
 import json
@@ -74,7 +75,7 @@ def log(request, pk):
 
     if _log.exists():
         exists = True
-        ctx["log"] = _log.json()
+        ctx["log"] = _log.json(truncate=True)
     else:
         exists = False
 
@@ -403,3 +404,14 @@ def remove_instance(request):
     BotInstance.objects.filter(pk=request.GET.get("id")).delete()
 
     return JsonResponse(data={"status": "success"})
+
+
+def open_log(request):
+    log_name = request.GET.get("log")
+
+    # Open the log through the os module.
+    os.startfile(log_name)
+
+    return JsonResponse(data={
+        "status": "success"
+    })

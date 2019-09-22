@@ -87,9 +87,14 @@ class Bot(object):
         self.colors = Colors(GAME_COLORS, self.logger)
 
         self.instance.start(session=self.stats.session)
+        self.instance_string = "bot (v{version}) (v{game_version}){git} has been initialized".format(
+            version=BOT_VERSION,
+            game_version=GAME_VERSION,
+            git=" [{commit}]".format(commit=GIT_COMMIT[:10]) if GIT_COMMIT else " "
+        )
 
         self.logger.info("==========================================================================================")
-        self.logger.info("bot (v{version}) (v{game_version}) [{commit}] has been initialized.".format(version=BOT_VERSION, game_version=GAME_VERSION, commit=GIT_COMMIT[:10]))
+        self.logger.info(self.instance_string)
         self.logger.info("{session}".format(session=self.stats.session))
         self.logger.info("==========================================================================================")
 

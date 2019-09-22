@@ -4,9 +4,12 @@ settings.py
 Store all project specific settings here.
 """
 import os
-import git
+import logging
 
-BOT_VERSION = "1.5.2"
+logger = logging.getLogger(__name__)
+
+
+BOT_VERSION = "1.5.3"
 TITAN_DB = "titan.sqlite3"
 
 # Store the root directory of the project. May be used and appended to files in other directories without
@@ -41,8 +44,18 @@ THEMES_DIR = os.path.join(TITANDASH_DIR, "static/css/theme")
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
 
+try:
+    import git
+except Exception as exc:
+    logger.error(exc, exc_info=True)
+    pass
+
 # Create a variable that represents the current git commit (sha) of project.
-GIT_COMMIT = git.Repo(ROOT_DIR).head.commit.hexsha
+try:
+    GIT_COMMIT = git.Repo(ROOT_DIR).head.commit.hexsha
+except Exception as exc:
+    logger.error(exc, exc_info=True)
+    GIT_COMMIT = None
 
 # In game specific settings should be stored here. As the game is updated, these will change
 # and reflect the new constants that may be used by the bot.
