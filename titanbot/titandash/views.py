@@ -75,7 +75,7 @@ def log(request, pk):
 
     if _log.exists():
         exists = True
-        ctx["log"] = _log.json()
+        ctx["log"] = _log.json(truncate=True)
     else:
         exists = False
 
