@@ -372,7 +372,7 @@ class Session(models.Model):
 
         return "{:02}:{:02}:{:02}".format(int(hours), int(minutes), int(seconds))
 
-    def json(self):
+    def json(self, prestige_count_only=False):
         """
         Return Session and Associated Models As JSON Compliant Dictionary.
         """
@@ -396,13 +396,17 @@ class Session(models.Model):
             "duration": str(self.duration()),
         }
 
-        prestiges = Prestige.objects.filter(session=self)
-        if len(prestiges) > 0:
-            prestiges = [p.json() for p in prestiges]
-            count = len(prestiges)
+        if prestige_count_only:
+            prestiges = Prestige.objects.filter(session=self).count()
+            count = prestiges
         else:
-            prestiges = []
-            count = 0
+            prestiges = Prestige.objects.filter(session=self)
+            if len(prestiges) > 0:
+                prestiges = [p.json() for p in prestiges]
+                count = len(prestiges)
+            else:
+                prestiges = []
+                count = 0
 
         dct["prestiges"] = {
             "prestiges": prestiges,
