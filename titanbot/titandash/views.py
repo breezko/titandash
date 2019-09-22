@@ -101,7 +101,7 @@ def sessions(request):
     else:
         _sessions = Session.objects.filter(instance=BotInstance.objects.grab())
 
-    ctx["sessions"] = [s.json() for s in _sessions]
+    ctx["sessions"] = [s.json(prestige_count_only=True) for s in _sessions]
     ctx["SESSIONS_JSON"] = json.dumps(ctx)
 
     # Return only json context instead of rendered template.
