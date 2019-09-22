@@ -88,7 +88,7 @@ class TitandashTrayApp(object):
         The current bot version is grabbed through a management command so imports remain minimal.
         """
         # Dynamic
-        self.TITANDASH = "Titandash %s" % subprocess.check_output(["python", "manage.py", "version_info"]).decode().replace("\r", "").replace("\n", "")
+        self.TITANDASH = "Titandash %s" % subprocess.check_output(["python", "manage.py", "version_info"], universal_newlines=True).replace("\r", "").replace("\n", "")
 
         # Known
         self.START_INSTANCE = "Start Instance"
@@ -132,7 +132,7 @@ class TitandashTrayApp(object):
             [
                 self.TITANDASH,
                 "---",
-                "Bot", [self.START_INSTANCE, self.KILL_INSTANCE],
+                "Bot", ["!" + self.START_INSTANCE if not server_online else self.START_INSTANCE, "!" + self.KILL_INSTANCE if not server_online else self.KILL_INSTANCE],
                 "Server", ["!" + self.START_SERVER if server_online else self.START_SERVER, "!" + self.STOP_SERVER if not server_online else self.STOP_SERVER],
                 "Database", [self.OPEN_DATABASE, self.MIGRATE],
                 "Static", [self.STATIC],
@@ -144,9 +144,9 @@ class TitandashTrayApp(object):
 
     @staticmethod
     def get_server_procs():
-        netstat = subprocess.Popen(["netstat", "-a", "-n", "-o"], stdout=subprocess.PIPE)
+        netstat = subprocess.Popen(["netstat", "-a", "-n", "-o"], stdout=subprocess.PIPE, universal_newlines=True)
         try:
-            output = subprocess.check_output(["findstr", ":8000"], stdin=netstat.stdout)
+            output = subprocess.check_output(["findstr", ":8000"], stdin=netstat.stdout, universal_newlines=True)
 
         # If no output is returned from server procs call.
         # Safe to assume server has been terminated.
@@ -154,7 +154,7 @@ class TitandashTrayApp(object):
             return []
 
         # Parse output.
-        output = output.decode().replace("\r", "").split("\n")
+        output = output.replace("\r", "").split("\n")
 
         parsed = []
         for line in output:
@@ -226,8 +226,8 @@ class TitandashTrayApp(object):
         """
         Run a migrate command in Django.
         """
-        output = subprocess.check_output(["python", "manage.py", "migrate"])
-        output = output.decode().replace("\r", "").split("\n")
+        output = subprocess.check_output(["python", "manage.py", "migrate"], universal_newlines=True)
+        output = output.replace("\r", "").split("\n")
 
         none = False
         for line in output:
@@ -245,15 +245,15 @@ class TitandashTrayApp(object):
         """
         Run a collect static command and return the amount of files collected.
         """
-        output = subprocess.check_output(["python", "manage.py", "collectstatic", "--noinput"])
-        return output.decode().replace("\r", "").replace("\n", "").split(" ")[0]
+        output = subprocess.check_output(["python", "manage.py", "collectstatic", "--noinput"], universal_newlines=True)
+        return output.replace("\r", "").replace("\n", "").split(" ")[0]
 
     def start_instance_popup(self):
         """
         Generate an instance popup with options for initializing a bot instance without accessing the web app.
         """
         self.message(self.START_INSTANCE, "Loading Bot Information")
-        info = json.loads(subprocess.check_output(["python", "manage.py", "instance_info"]).decode())
+        info = json.loads(subprocess.check_output(["python", "manage.py", "instance_info"], universal_newlines=True))
 
         # No window being displayed currently?
         if not info["windows"]:
@@ -291,7 +291,7 @@ class TitandashTrayApp(object):
         ))
 
         # Execute process to start a new bot instance.
-        output = subprocess.check_output(["python", "manage.py", "start_instance", values[0], values[1], values[2]]).decode().replace("\n", "").replace("\r", "")
+        output = subprocess.check_output(["python", "manage.py", "start_instance", values[0], values[1], values[2]], universal_newlines=True).replace("\n", "").replace("\r", "")
         self.message(self.START_INSTANCE, output)
 
     def kill_instance_popup(self):
@@ -327,7 +327,7 @@ class TitandashTrayApp(object):
         self.message(self.KILL_INSTANCE, "Killing {instance} Now".format(instance=values[0]))
 
         # Execute process to kill bot instance.
-        output = subprocess.check_output(["python", "manage.py", "kill_instance", values[0]]).decode().replace("\n", "").replace("\r", "")
+        output = subprocess.check_output(["python", "manage.py", "kill_instance", values[0]], universal_newlines=True).replace("\n", "").replace("\r", "")
         self.message(self.KILL_INSTANCE, output)
 
     def start(self):
