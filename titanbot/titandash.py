@@ -132,7 +132,7 @@ class TitandashTrayApp(object):
             [
                 self.TITANDASH,
                 "---",
-                "Bot", [self.START_INSTANCE, self.KILL_INSTANCE],
+                "Bot", ["!" + self.START_INSTANCE if not server_online else self.START_INSTANCE, "!" + self.KILL_INSTANCE if not server_online else self.KILL_INSTANCE],
                 "Server", ["!" + self.START_SERVER if server_online else self.START_SERVER, "!" + self.STOP_SERVER if not server_online else self.STOP_SERVER],
                 "Database", [self.OPEN_DATABASE, self.MIGRATE],
                 "Static", [self.STATIC],
