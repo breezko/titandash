@@ -296,12 +296,12 @@ class Log(models.Model):
         Determine whether or not this log file actually exists.
         """
         try:
-            with open(self.log_file) as file:
+            with open(self.log_file):
                 return True
         except FileNotFoundError:
             return False
 
-    def json(self):
+    def json(self, truncate=False):
         ctx = {
             "id": self.pk,
             "filename": self.log_file,
@@ -315,7 +315,11 @@ class Log(models.Model):
                     "num": index,
                     "line": line
                 })
+                if index > 3000:
+                    if truncate:
+                        break
 
+        ctx["length"] = len(ctx["data"])
         return ctx
 
 
