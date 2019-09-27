@@ -115,7 +115,7 @@ class ConfigurationAdmin(ParanoidAdmin):
         }),
         ("Artifacts Action Settings", {
             "classes": ("expanded",),
-            "fields": ("enable_artifact_purchase", "upgrade_owned_artifacts", "upgrade_owned_tier", "shuffle_artifacts",
+            "fields": ("enable_artifact_purchase", "upgrade_owned_tier", "shuffle_artifacts",
                        "ignore_artifacts", "upgrade_artifacts",),
         }),
         ("Stats Settings", {

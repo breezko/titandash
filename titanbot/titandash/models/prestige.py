@@ -29,7 +29,7 @@ class Prestige(models.Model):
     timestamp = models.DateTimeField(verbose_name="Timestamp", auto_now_add=True, help_text=HELP_TEXT["timestamp"])
     time = models.DurationField(verbose_name="Duration", blank=True, null=True, help_text=HELP_TEXT["time"])
     stage = models.PositiveIntegerField(verbose_name="Stage", blank=True, null=True, help_text=HELP_TEXT["stage"])
-    artifact = models.ForeignKey(verbose_name="Artifact Upgraded", to="Artifact", on_delete=models.CASCADE, help_text=HELP_TEXT["artifact"])
+    artifact = models.ForeignKey(verbose_name="Artifact Upgraded", blank=True, null=True, to="Artifact", on_delete=models.CASCADE, help_text=HELP_TEXT["artifact"])
     session = models.ForeignKey(verbose_name="Session", to="Session", on_delete=models.CASCADE, help_text=HELP_TEXT["session"])
     instance = models.ForeignKey(verbose_name="Instance", to="BotInstance", null=True, on_delete=models.CASCADE, help_text=HELP_TEXT["instance"])
 
@@ -49,7 +49,7 @@ class Prestige(models.Model):
                 "formatted": str(self.time) if self.time else "N/A",
                 "seconds": self.time.total_seconds() if self.time else "N/A"
             },
-            "artifact": self.artifact.json(),
+            "artifact": self.artifact.json() if self.artifact else "N/A",
             "stage": self.stage if self.stage else "N/A",
             "session": {
                 "uuid": self.session.uuid,

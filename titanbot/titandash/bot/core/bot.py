@@ -149,6 +149,10 @@ class Bot(object):
         """
         lst = []
 
+        if not self.configuration.enable_artifact_purchase:
+            self.logger.info("artifact purchase is disabled, artifact parsing is not required and will be skipped.")
+            return lst
+
         # Grabbing all configuration values used to determine which artifacts are
         # upgraded when called.
         upgrade_tiers = self.configuration.upgrade_owned_tier.all()
@@ -810,14 +814,11 @@ class Bot(object):
             if not self.goto_artifacts(collapsed=False):
                 return False
 
-            if self.configuration.upgrade_owned_artifacts:
-                artifact = self.next_artifact_upgrade
-                self.update_next_artifact_upgrade()
+            artifact = self.next_artifact_upgrade
 
-            # Fallback to the users first artifact. This shouldn't happen, better safe than sorry.
-            else:
-                artifact = self.owned_artifacts[0]
-
+            # Access to current upgrade is present above,
+            # go ahead and update the next artifact to purchase.
+            self.update_next_artifact_upgrade()
             self.logger.info("attempting to upgrade {artifact} now.".format(artifact=artifact))
 
             # Make sure that the proper spend max multiplier is used to fully upgrade an artifact.
@@ -1690,7 +1691,7 @@ class Bot(object):
             # artifacts in game. This is handled after stats have been updated.
             self.owned_artifacts = self.get_upgrade_artifacts()
 
-            if self.configuration.upgrade_owned_artifacts:
+            if self.configuration.enable_artifact_purchase:
                 self.next_artifact_index = 0
                 self.update_next_artifact_upgrade()
 
