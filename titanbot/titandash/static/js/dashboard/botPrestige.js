@@ -19,14 +19,11 @@ let BotPrestigeConsumer = function() {
      * Add a single row to the list of the most recent prestiges.
      */
     this.addTableRow = function(data) {
-        if (data["artifact"] === "N/A") {
-            data["artifact"] = "<td>N/A</td>";
-        } else {
-             data["artifact"] = `
-                <td>
-                    <img height="25" width="25" src="${data["artifact"]["path"]}" alt="${data["artifact"]["path"]}">
-                    ${data["artifact"]["title"]}
-                </td>
+        let artifact = data["artifact"];
+        if (data["artifact"] !== "N/A") {
+            artifact = `
+                <img height="25" width="25" src="${data["artifact"]["path"]}" alt="${data["artifact"]["path"]}">
+                ${data["artifact"]["title"]}
             `;
         }
 
@@ -35,7 +32,7 @@ let BotPrestigeConsumer = function() {
                 <td>${data["timestamp"]["formatted"]}</td>
                 <td>${data["duration"]["formatted"]}</td>
                 <td>${data["stage"]}</td>
-                ${data["artifact"]}
+                <td>${artifact}</td>
             </tr>
         `);
         row.prependTo(elements.prestigeTableBody).fadeIn(250);
@@ -92,7 +89,7 @@ let BotPrestigeConsumer = function() {
                 });
                 elements.prestigeLastArtifactValue.fadeOut(150, function() {
                     if (_data["artifact"] === "N/A") {
-                        $(this).html("N/A");
+                        $(this).text("N/A").fadeIn(150);
                     } else {
                         $(this).html(`
                             <img style="margin-right: 5px;" height="25" width="25" src="${_data["artifact"]["path"]}" alt="${_data["artifact"]["image"]}">
