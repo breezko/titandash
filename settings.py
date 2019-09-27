@@ -53,6 +53,14 @@ except Exception as exc:
 # Create a variable that represents the current git commit (sha) of project.
 try:
     GIT_COMMIT = git.Repo(ROOT_DIR).head.commit.hexsha
+
+# Catch the error where git is installed by the user
+# but they have not cloned the repository, likely
+# happens if they download the package directly.
+except git.InvalidGitRepositoryError:
+    GIT_COMMIT = None
+
+# Broad case exception to log the error.
 except Exception as exc:
     logger.error(exc, exc_info=True)
     GIT_COMMIT = None
