@@ -310,7 +310,11 @@ def prestiges(request):
             dct["avgPrestigeTime"] = str(datetime.timedelta(seconds=int(total_times / len(p))))
             dct["avgPrestigeStage"] = int(total_stages / len(p))
             dct["prestiges"] = lst
-            dct["lastArtifact"] = p.last().artifact.json()
+
+            if p.last().artifact:
+                dct["lastArtifact"] = p.last().artifact.json()
+            else:
+                dct["lastArtifact"] = None
 
         return JsonResponse(data=dct)
 
