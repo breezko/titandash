@@ -340,14 +340,21 @@ class Stats:
             if hours or minutes or seconds:
                 delta = datetime.timedelta(hours=hours, minutes=minutes, seconds=seconds)
 
+            if artifact:
+                try:
+                    artifact = Artifact.objects.get(name=artifact)
+
+                # Just in case...
+                except Artifact.DoesNotExist:
+                    self.logger.warning("artifact: '{artifact}' does not exist... Falling back to no artifact and continuing.")
+                    artifact = None
+
             self.logger.info("generating new prestige instance")
             prestige = Prestige.objects.create(
                 timestamp=timezone.now(),
                 time=delta,
                 stage=current_stage,
-                artifact=Artifact.objects.get(
-                    name=artifact
-                ),
+                artifact=artifact,
                 session=self.session,
                 instance=self.instance
             )
