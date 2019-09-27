@@ -80,7 +80,14 @@
                                     <td>{{ prestige.timestamp.formatted }}</td>
                                     <td>{{ prestige.duration.formatted }}</td>
                                     <td>{{ prestige.stage|default_if_none:"N/A" }}</td>
-                                    <td> <img height="20" width="20" src="{% static prestige.artifact.image %}" alt="{{ prestige.artifact.name }}"> {{ prestige.artifact.title }}</td>
+                                    <td>
+                                        {% if prestige.artifact == "N/A" %}
+                                            {{ prestige.artifact }}
+                                        {% else %}
+                                            <img height="20" width="20" src="{% static prestige.artifact.image %}" alt="{{ prestige.artifact.name }}">
+                                            {{ prestige.artifact.title }}
+                                        {% endif %}
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>

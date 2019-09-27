@@ -19,15 +19,23 @@ let BotPrestigeConsumer = function() {
      * Add a single row to the list of the most recent prestiges.
      */
     this.addTableRow = function(data) {
+        if (data["artifact"] === "N/A") {
+            data["artifact"] = "<td>N/A</td>";
+        } else {
+             data["artifact"] = `
+                <td>
+                    <img height="25" width="25" src="${data["artifact"]["path"]}" alt="${data["artifact"]["path"]}">
+                    ${data["artifact"]["title"]}
+                </td>
+            `;
+        }
+
         let row = $(`
             <tr data-duration="${data["duration"]["seconds"]}" data-stage="${data["stage"]}" style="display: none;">
                 <td>${data["timestamp"]["formatted"]}</td>
                 <td>${data["duration"]["formatted"]}</td>
                 <td>${data["stage"]}</td>
-                <td>
-                    <img height="25" width="25" src="${data["artifact"]["path"]}" alt="${data["artifact"]["path"]}">
-                    ${data["artifact"]["title"]}
-                </td>
+                ${data["artifact"]}
             </tr>
         `);
         row.prependTo(elements.prestigeTableBody).fadeIn(250);
@@ -83,10 +91,14 @@ let BotPrestigeConsumer = function() {
                     $(this).text(totalPrestiges).fadeIn(150);
                 });
                 elements.prestigeLastArtifactValue.fadeOut(150, function() {
-                    $(this).html(`
-                        <img style="margin-right: 5px;" height="25" width="25" src="${_data["artifact"]["path"]}" alt="${_data["artifact"]["image"]}">
-                        ${_data["artifact"]["title"]}
-                    `).fadeIn(150);
+                    if (_data["artifact"] === "N/A") {
+                        $(this).html("N/A");
+                    } else {
+                        $(this).html(`
+                            <img style="margin-right: 5px;" height="25" width="25" src="${_data["artifact"]["path"]}" alt="${_data["artifact"]["image"]}">
+                            ${_data["artifact"]["title"]}
+                        `).fadeIn(150);
+                    }
                 });
             }
         });
@@ -109,10 +121,15 @@ let BotPrestigeConsumer = function() {
             elements.prestigeAvgDuration.text(data["avgPrestigeTime"]);
             elements.prestigeAvgStage.text(data["avgPrestigeStage"]);
             elements.prestigeThisSession.text(data["totalPrestiges"]);
-            elements.prestigeLastArtifactValue.html(`
-            <img height="25" width="25" src="${data["lastArtifact"]["path"]}" alt="${data["lastArtifact"]["image"]}">
-            ${data["lastArtifact"]["title"]}
-        `);
+
+            if (data["lastArtifact"] === null) {
+                elements.prestigeLastArtifactValue.html("N/A");
+            } else {
+                elements.prestigeLastArtifactValue.html(`
+                    <img height="25" width="25" src="${data["lastArtifact"]["path"]}" alt="${data["lastArtifact"]["image"]}">
+                    ${data["lastArtifact"]["title"]}
+                `);
+            }
         }
     }.bind(this);
 
