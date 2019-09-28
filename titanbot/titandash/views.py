@@ -1,11 +1,14 @@
 from django.shortcuts import render
 from django.http.response import JsonResponse
+from django.core.cache import cache
+
+from django.db.models import Sum, Avg
 
 from titanauth.authentication.wrapper import AuthWrapper
 
 from titandash.utils import start, pause, stop, resume, title
 from titandash.utils import WindowHandler
-from titandash.constants import RUNNING, PAUSED, STOPPED
+from titandash.constants import RUNNING, PAUSED, STOPPED, CACHE_TIMEOUT
 from titandash.models.bot import BotInstance
 from titandash.models.statistics import Session, Statistics, Log, ArtifactStatistics
 from titandash.models.clan import RaidResult
@@ -177,52 +180,69 @@ def artifacts(request):
 
 def all_prestiges(request):
     """Retrieve all prestiges present."""
-    total_seconds = 0
-    total_stages = 0
-    ctx = {"prestiges": [], "avgPrestigeDuration": None, "avgPrestigeStage": None, "totalPrestiges": None}
+    # ctx = {"prestiges": [], "avgPrestigeDuration": None, "avgPrestigeStage": None, "totalPrestiges": None}
 
-    if request.GET.get("instance"):
-        _prestiges = Prestige.objects.filter(instance=BotInstance.objects.get(pk=request.GET.get("instance")))
+    # Grab the instance being specified, if none is set, grabbing the base
+    # bot instance (default) throughout the grab method below.
+    _instance = request.GET.get("instance")
+
+    def __values(qs):
+        ctx = {
+            "prestiges": [
+                cache.get_or_set(
+                    key="prestige.pk".format(pk=prestige.pk),
+                    default=prestige.json,
+                    timeout=CACHE_TIMEOUT
+                ) for prestige in qs
+            ],
+            "totalPrestiges": qs.count(),
+            "avgPrestigeStage":  qs.aggregate(average_stage=Avg("stage"))["average_stage"],
+            "avgPrestigeDuration": qs.aggregate(average_time=Avg("time"))["average_time"],
+        }
+
+        if qs.count() == 0:
+            ctx["avgPrestigeDuration"] = "00:00:00"
+            ctx["avgPrestigeStage"] = 0
+        else:
+            ctx["avgPrestigeDuration"] = str(ctx["avgPrestigeDuration"]).split(".")[0]
+            ctx["avgPrestigeStage"] = int(ctx["avgPrestigeStage"])
+
+        ctx["PRESTIGES_JSON"] = json.dumps(ctx)
+        return ctx
+
+    def __prestige_instance():
+        """
+        Callable used when caching to grab prestiges with a specific instance.
+        """
+        return __values(qs=Prestige.objects.filter(instance=BotInstance.objects.get(pk=_instance)).order_by("-timestamp"))
+
+    def __prestige_no_instance():
+        """
+        Callable used when caching to grab prestiges without a specific instance.
+        """
+        return __values(qs=Prestige.objects.filter(instance=BotInstance.objects.grab()).order_by("-timestamp"))
+
+    if _instance:
+        count = Prestige.objects.filter(instance=BotInstance.objects.get(pk=_instance)).count()
+        _prestiges = cache.get_or_set(
+            key="titan_instance_prestiges.{instance}.{count}".format(instance=instance, count=count),
+            default=__prestige_instance,
+            timeout=CACHE_TIMEOUT
+        )
     else:
-        _prestiges = Prestige.objects.filter(instance=BotInstance.objects.grab())
-
-    p = _prestiges.order_by("-timestamp")
-
-    p_valid_time = p.filter(time__isnull=False)
-    p_valid_time_cnt = len(p_valid_time)
-
-    p_valid_stage = p.filter(stage__isnull=False)
-    p_valid_stage_cnt = len(p_valid_stage)
-
-    if len(p_valid_time) == 0:
-        p_valid_time_cnt = 1
-    if len(p_valid_stage) == 0:
-        p_valid_stage_cnt = 1
-
-    for prestige in p:
-        ctx["prestiges"].append(prestige.json())
-
-    for prestige in p_valid_time:
-        total_seconds += prestige.time.total_seconds()
-    for prestige in p_valid_stage:
-        total_stages += prestige.stage
-
-    if len(p) == 0:
-        ctx["avgPrestigeDuration"] = "00:00:00"
-        ctx["avgPrestigeStage"] = 0
-    else:
-        ctx["avgPrestigeDuration"] = str(datetime.timedelta(seconds=int(total_seconds / p_valid_time_cnt)))
-        ctx["avgPrestigeStage"] = int(total_stages / p_valid_stage_cnt)
-
-    ctx["totalPrestiges"] = p.count()
-    ctx["PRESTIGES_JSON"] = json.dumps(ctx)
+        count = Prestige.objects.filter(instance=BotInstance.objects.grab()).count()
+        _prestiges = cache.get_or_set(
+            key="titan_no_instance_prestiges.{count}".format(count=count),
+            default=__prestige_no_instance,
+            timeout=CACHE_TIMEOUT
+        )
 
     if request.GET.get("context"):
         return JsonResponse(data={
-            "table": render(request, "prestiges/prestigeTable.html", context=ctx).content.decode()
+            "table": render(request, "prestiges/prestigeTable.html", context=_prestiges).content.decode()
         })
 
-    return render(request, "prestiges/allPrestiges.html", context=ctx)
+    return render(request, "prestiges/allPrestiges.html", context=_prestiges)
 
 
 def instance(request):

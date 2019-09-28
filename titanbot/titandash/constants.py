@@ -29,3 +29,7 @@ EMULATOR_CHOICES = (
 
 # Convert datetimes into human readable strings...
 DATETIME_FMT = "%m/%d/%Y %I:%M:%S %p"
+
+# Caching settings.
+# Clear cached data after an hour of use...
+CACHE_TIMEOUT = 3600
