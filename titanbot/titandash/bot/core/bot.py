@@ -14,20 +14,20 @@ from titandash.models.clan import Clan, RaidResult
 from titanauth.authentication.wrapper import AuthWrapper
 
 from .maps import *
-from .constants import (
-    STAGE_PARSE_THRESHOLD, FUNCTION_LOOP_TIMEOUT, BOSS_LOOP_TIMEOUT,
-    QUEUEABLE_FUNCTIONS, FORCEABLE_FUNCTIONS, PROPERTIES, BREAK_NEXT_PROPS
-)
 from .props import Props
 from .grabber import Grabber
 from .stats import Stats
 from .wrap import Images, Locs, Colors
+from .decorators import not_in_transition, wait_afterwards, wrap_current_function
+from .shortcuts import ShortcutListener
 from .utilities import (
     click_on_point, click_on_image, drag_mouse, make_logger, strfdelta,
     strfnumber, sleep, send_raid_notification
 )
-from .decorators import not_in_transition, wait_afterwards, wrap_current_function
-from .shortcuts import ShortcutListener
+from .constants import (
+    STAGE_PARSE_THRESHOLD, FUNCTION_LOOP_TIMEOUT, BOSS_LOOP_TIMEOUT,
+    QUEUEABLE_FUNCTIONS, FORCEABLE_FUNCTIONS, PROPERTIES, BREAK_NEXT_PROPS
+)
 
 from pyautogui import easeOutQuad, FailSafeException, linear
 
@@ -77,10 +77,8 @@ class Bot(object):
         # Bot utilities.
         self.grabber = Grabber(window=self.window, logger=self.logger)
         self.stats = Stats(instance=self.instance, window=self.window, grabber=self.grabber, configuration=self.configuration, logger=self.logger)
-
         # Statistics handles Log instance creation... Set BotInstance now.
         self.instance.log = self.stats.session.log
-
         # Data containers.
         self.images = Images(IMAGES, self.logger)
         self.locs = Locs(GAME_LOCS, self.logger)
@@ -95,7 +93,9 @@ class Bot(object):
 
         self.logger.info("==========================================================================================")
         self.logger.info(self.instance_string)
-        self.logger.info("{session}".format(session=self.stats.session))
+        self.logger.info("s: {session}".format(session=self.stats.session))
+        self.logger.info("w: {window}".format(window=self.window))
+        self.logger.info("c: {configuration}".format(configuration=self.configuration))
         self.logger.info("==========================================================================================")
 
         # Set authentication reference to an online state.
@@ -113,7 +113,7 @@ class Bot(object):
 
         # Setup the datetime objects used initially to determine when the bot
         # will perform specific actions in game.
-        self.calculate_skill_execution()
+        self.calculate_next_skill_execution()
         self.calculate_next_prestige()
         self.calculate_next_stats_update()
         self.calculate_next_action_run()
@@ -126,11 +126,11 @@ class Bot(object):
         if start:
             self.run()
 
-    def click(self, point, clicks=1, interval=0.0, button="left", pause=0.0, offset=5):
+    def click(self, point, clicks=1, interval=0.0, button="left", pause=0.0, offset=5, disable_padding=False):
         """
         Local click method for use with the bot, ensuring we pass the window being used into the click function.
         """
-        click_on_point(point=point, window=self.window, clicks=clicks, interval=interval, button=button, pause=pause, offset=offset)
+        click_on_point(point=point, window=self.window, clicks=clicks, interval=interval, button=button, pause=pause, offset=offset, disable_padding=disable_padding)
 
     def drag(self, start, end, button="left", duration=0.3, pause=0.5, tween=linear, quick_stop=None):
         """
@@ -297,7 +297,7 @@ class Bot(object):
             (self.configuration.order_level_skills, self.level_skills, "level_skills"),
         ], key=lambda x: x[0])
 
-        self.logger.info("actions in game have been ordered successfully...")
+        self.logger.info("actions in game have been ordered successfully.")
         for action in sort:
             self.logger.info("{order} : {action_key}.".format(order=action[0], action_key=action[2]))
 
@@ -359,7 +359,7 @@ class Bot(object):
         return not_maxed
 
     @wrap_current_function
-    def calculate_skill_execution(self):
+    def calculate_next_skill_execution(self):
         """
         Calculate the datetimes that are attached to each skill in game and when they should be activated.
         """
@@ -570,6 +570,11 @@ class Bot(object):
             self.props.next_break = next_break_dt
             self.props.resume_from_break = next_break_res
 
+            self.logger.info("the next in game break will take place in {time_1} and resume in {time_2}".format(
+                time_1=strfdelta(next_break_dt - now),
+                time_2=strfdelta(next_break_res - now)
+            ))
+
     @wrap_current_function
     @not_in_transition
     def level_heroes(self):
@@ -651,10 +656,8 @@ class Bot(object):
                     color_point = MASTER_LOCS["skill_level_max"].get(skill)
                     self.click(point=point, pause=1)
 
-                    # Take a snapshot right after, and check for the point being the proper color.
-                    self.grabber.snapshot()
-                    if self.grabber.current.getpixel(color_point) == self.colors.WHITE:
-                        self.logger.info("levelling max amount of available upgrades for skill: {skill}.".format(skill=skill))
+                    # Determine if after our click, the ability to max the skills is available.
+                    if self.grabber.point_is_color(point=color_point, color=self.colors.WHITE):
                         self.click(point=color_point, pause=0.5)
 
                 # Otherwise, just level up the skills normally using the intensity setting.
@@ -858,12 +861,12 @@ class Bot(object):
 
             # Making it here means the artifact in question has been found.
             found, position = self.grabber.search(ARTIFACT_MAP.get(artifact))
-            new_x = position[0] + ARTIFACTS_LOCS["artifact_push"]["x"] + self.window.x
-            new_y = position[1] + ARTIFACTS_LOCS["artifact_push"]["y"] + self.window.y
+            new_x = position[0] + ARTIFACTS_LOCS["artifact_push"]["x"]
+            new_y = position[1] + ARTIFACTS_LOCS["artifact_push"]["y"]
 
             # Currently just upgrading the artifact to it's max level. Future updates may include the ability
             # to determine how much to upgrade an artifact by.
-            self.click(point=(new_x, new_y), pause=1)
+            self.click(point=(new_x, new_y), pause=1, disable_padding=True)
 
     @not_in_transition
     def check_tournament(self):
@@ -976,7 +979,7 @@ class Bot(object):
         found, pos = self.grabber.search(self.images.okay)
         if found:
             self.logger.info("clan crate is available, collecting!")
-            click_on_image(self.images.okay, pos, pause=1)
+            click_on_image(image=self.images.okay, pos=pos, pause=1)
 
         return found
 
@@ -1066,6 +1069,8 @@ class Bot(object):
                         click_on_image(image=self.images.daily_collect, pos=pos)
 
                 # Check for the single ad watching daily achievement.
+                # This only is ever present when a user does not have the
+                # vip ad collection feature unlocked.
                 found, pos = self.grabber.search(self.images.daily_watch)
                 if found:
                     self.logger.info("watching daily achievement ad.")
@@ -1385,7 +1390,7 @@ class Bot(object):
                 self.click(point=getattr(self.locs, skill[1]), pause=0.2)
 
             # Recalculate all skill execution times.
-            self.calculate_skill_execution()
+            self.calculate_next_skill_execution()
             return True
 
     @not_in_transition
@@ -1625,7 +1630,7 @@ class Bot(object):
             found, pos = self.grabber.search(self.images.restart)
             if found:
                 self.logger.info("restarting emulator now...")
-                click_on_image(self.images.restart, pos)
+                click_on_image(image=self.images.restart, pos=pos)
                 sleep(wait)
                 return True
 
@@ -1653,7 +1658,7 @@ class Bot(object):
         found, pos = self.grabber.search(self.images.tap_titans_2)
         if found:
             self.logger.info("game launcher was found, starting game...")
-            click_on_image(self.images.tap_titans_2, pos)
+            click_on_image(image=self.images.tap_titans_2, pos=pos)
             sleep(wait)
             return True
 

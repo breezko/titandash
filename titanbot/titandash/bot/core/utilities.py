@@ -193,11 +193,14 @@ def gen_offset(point, amount):
     return point[0] + rand_x, point[1] + rand_y
 
 
-def click_on_point(point, window, clicks=1, interval=0.0, button="left", pause=0.0, offset=5):
+def click_on_point(point, window, clicks=1, interval=0.0, button="left", pause=0.0, offset=5, disable_padding=False):
     """
     Click on the specified X, Y value based on the point passed along as a parameter.
     """
-    point = (point[0] + window.x, point[1] + window.y)
+    if not disable_padding:
+        padded = window.y + window.y_padding
+        point = (point[0] + window.x, point[1] + padded)
+
     if offset != 0:
         point = gen_offset(point, offset)
 
@@ -209,7 +212,9 @@ def move_to_point(point, window, pause=0.0):
     """
     Move the mouse to the specified X, Y values based on the point passed along as a parameter.
     """
-    point = (point[0] + window.x, point[1] + window.y)
+    padded = window.y + window.y_padding
+    point = (point[0] + window.x, point[1] + padded)
+
     moveTo(point[0], point[1], pause=pause)
 
 
@@ -226,8 +231,10 @@ def drag_mouse(start, end, window, button="left", duration=0.3, pause=0.5, tween
     Drag the mouse from the starting position, to the end position.
     """
     logger.debug("{button} clicking and dragging mouse from {start} to {end} over {duration}s with quick stop {quick}".format(button=button, start=start, end=end, duration=duration, quick="enabled" if quick_stop else "disabled"))
-    start = (start[0] + window.x, start[1] + window.y)
-    end = (end[0] + window.x, end[1] + window.y)
+
+    padded = window.y + window.y_padding
+    start = (start[0] + window.x, start[1] + padded)
+    end = (end[0] + window.x, end[1] + padded)
     moveTo(start[0], start[1])
 
     # Determine pause amount tween. Tweening may be useful for specific actions
@@ -251,7 +258,7 @@ def in_transition_func(*args, max_loops):
         # panels that may of been opened on accident.
         found, pos = _self.grabber.search(_self.images.large_exit_panel)
         if found:
-            click_on_image(_self.images.large_exit_panel, pos, pause=0.5)
+            click_on_image(image=_self.images.large_exit_panel, pos=pos, pause=0.5)
 
         # Is an ad panel open that should be accepted/declined?
         _self.collect_ad_no_transition()

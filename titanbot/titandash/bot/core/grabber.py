@@ -19,9 +19,9 @@ class Grabber:
 
         # Padding provided by emulator, x1, y1.
         self.x = window.x
-        self.y = window.y
+        self.y = window.y + window.y_padding
         self.width = window.width
-        self.height = window.height
+        self.height = window.height - window.y_padding
 
         # x2, y2, represent the width and height of the emulator.
         self.x2 = self.width + self.x
@@ -43,9 +43,10 @@ class Grabber:
             self.logger.debug("taking snapshot of region in game screen (X1: {x}, Y1: {y}, X2: {x2}, Y2: {y2}".format(
                 x=region[0], y=region[1], x2=region[2], y2=region[3]))
 
+            padded = self.window.y + self.window.y_padding
             region = (
-                region[0] + self.window.x, region[1] + self.window.y,
-                region[2] + self.window.x, region[3] + self.window.y
+                region[0] + self.window.x, region[1] + padded,
+                region[2] + self.window.x, region[3] + padded
             )
             self.current = region_grabber(region)
 
@@ -64,11 +65,12 @@ class Grabber:
             self.snapshot()
 
         found = False
+        padded = self.window.y + self.window.y_padding
         try:
             if region:
                 region = (
-                    region[0] + self.window.x, region[1] + self.window.y,
-                    region[2] + self.window.x, region[3] + self.window.y
+                    region[0] + self.window.x, region[1] + padded,
+                    region[2] + self.window.x, region[3] + padded
                 )
                 position = imagesearcharea(image, region[0], region[1], region[2], region[3], precision)
             else:
@@ -83,5 +85,19 @@ class Grabber:
             return found
 
         # Modify the position to reflect the current window location.
-        position = (position[0] + self.window.x, position[1] + self.window.y)
+        if position[0] != -1:
+            position = (position[0] + self.window.x, position[1] + padded)
+
         return found, position
+
+    def point_is_color(self, point, color):
+        """
+        Given a specified point, determine if that point is currently a specific color.
+        """
+        self.snapshot()
+
+        # No padding or modification is required for our color check.
+        # Since we are using the snapshot functionality, which takes into
+        # account our emulator position and title bar height. The point being used
+        # is in relation to the "current" image which already is padded properly.
+        return self.current.getpixel(point) == color

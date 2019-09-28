@@ -91,6 +91,14 @@ class Window(object):
         self.width = rectangle[2] - self.x
         self.height = rectangle[3] - self.y
 
+        # Additionally, based on the size of the emulator, we want
+        # to ensure we can pad the x, y value so the title bar is taken
+        # into account when things are clicked or searched for...
+        # We expect the emulator size to be 480x800, so we can get
+        # the padding from this value.
+        self.x_padding = self.width - 480
+        self.y_padding = self.height - 800
+
     def __str__(self):
         return "{text} ({x}, {y}, {w}, {h})".format(
             text=self.text, x=self.x, y=self.y, w=self.width, h=self.height)
