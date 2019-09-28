@@ -1370,7 +1370,7 @@ class Bot(object):
             next_key = "next_"
 
             if self.configuration.force_enabled_skills_wait and not force:
-                attr = getattr(self, next_key + skills[0][1])
+                attr = getattr(self.props, next_key + skills[0][1])
                 if not now > attr:
                     self.logger.info("skills will only be activated once {key} is ready.".format(key=skills[0][1]))
                     self.logger.info("{key} will be ready in {time}.".format(key=skills[0][1], time=strfdelta(attr - now)))
