@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-BOT_VERSION = "1.5.4"
+BOT_VERSION = "1.5.4.01"
 TITAN_DB = "titan.sqlite3"
 
 # Store the root directory of the project. May be used and appended to files in other directories without
