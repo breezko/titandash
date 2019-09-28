@@ -14,20 +14,20 @@ from titandash.models.clan import Clan, RaidResult
 from titanauth.authentication.wrapper import AuthWrapper
 
 from .maps import *
-from .constants import (
-    STAGE_PARSE_THRESHOLD, FUNCTION_LOOP_TIMEOUT, BOSS_LOOP_TIMEOUT,
-    QUEUEABLE_FUNCTIONS, FORCEABLE_FUNCTIONS, PROPERTIES, BREAK_NEXT_PROPS
-)
 from .props import Props
 from .grabber import Grabber
 from .stats import Stats
 from .wrap import Images, Locs, Colors
+from .decorators import not_in_transition, wait_afterwards, wrap_current_function
+from .shortcuts import ShortcutListener
 from .utilities import (
     click_on_point, click_on_image, drag_mouse, make_logger, strfdelta,
     strfnumber, sleep, send_raid_notification
 )
-from .decorators import not_in_transition, wait_afterwards, wrap_current_function
-from .shortcuts import ShortcutListener
+from .constants import (
+    STAGE_PARSE_THRESHOLD, FUNCTION_LOOP_TIMEOUT, BOSS_LOOP_TIMEOUT,
+    QUEUEABLE_FUNCTIONS, FORCEABLE_FUNCTIONS, PROPERTIES, BREAK_NEXT_PROPS
+)
 
 from pyautogui import easeOutQuad, FailSafeException, linear
 
