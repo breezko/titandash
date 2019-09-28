@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-BOT_VERSION = "1.5.4"
+BOT_VERSION = "1.5.4.01"
 TITAN_DB = "titan.sqlite3"
 
 # Store the root directory of the project. May be used and appended to files in other directories without
@@ -44,26 +44,25 @@ THEMES_DIR = os.path.join(TITANDASH_DIR, "static/css/theme")
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
 
-try:
-    import git
-except Exception as exc:
-    logger.error(exc, exc_info=True)
-    pass
 
-# Create a variable that represents the current git commit (sha) of project.
-try:
-    GIT_COMMIT = git.Repo(ROOT_DIR).head.commit.hexsha
+def git_info():
+    """
+    Attempt to grab the git information so we can use a proper git commit.
 
-# Catch the error where git is installed by the user
-# but they have not cloned the repository, likely
-# happens if they download the package directly.
-except git.InvalidGitRepositoryError:
-    GIT_COMMIT = None
+    If git is not present or no repository is being used, we can fallback onto
+    not using a git commit anywhere instead.
+    """
+    try:
+        import git
+        try:
+            return git.Repo(ROOT_DIR).head.commit.hexsha
+        except git.InvalidGitRepositoryError:
+            return None
+    except ImportError:
+        return None
 
-# Broad case exception to log the error.
-except Exception as exc:
-    logger.error(exc, exc_info=True)
-    GIT_COMMIT = None
+
+GIT_COMMIT = git_info()
 
 # In game specific settings should be stored here. As the game is updated, these will change
 # and reflect the new constants that may be used by the bot.
