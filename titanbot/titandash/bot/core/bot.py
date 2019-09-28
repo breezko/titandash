@@ -656,10 +656,8 @@ class Bot(object):
                     color_point = MASTER_LOCS["skill_level_max"].get(skill)
                     self.click(point=point, pause=1)
 
-                    # Take a snapshot right after, and check for the point being the proper color.
-                    self.grabber.snapshot()
-                    if self.grabber.current.getpixel(color_point) == self.colors.WHITE:
-                        self.logger.info("levelling max amount of available upgrades for skill: {skill}.".format(skill=skill))
+                    # Determine if after our click, the ability to max the skills is available.
+                    if self.grabber.point_is_color(point=color_point, color=self.colors.WHITE):
                         self.click(point=color_point, pause=0.5)
 
                 # Otherwise, just level up the skills normally using the intensity setting.

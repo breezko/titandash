@@ -89,3 +89,15 @@ class Grabber:
             position = (position[0] + self.window.x, position[1] + padded)
 
         return found, position
+
+    def point_is_color(self, point, color):
+        """
+        Given a specified point, determine if that point is currently a specific color.
+        """
+        self.snapshot()
+
+        # No padding or modification is required for our color check.
+        # Since we are using the snapshot functionality, which takes into
+        # account our emulator position and title bar height. The point being used
+        # is in relation to the "current" image which already is padded properly.
+        return self.current.getpixel(point) == color
