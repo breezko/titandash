@@ -113,7 +113,7 @@ class Bot(object):
 
         # Setup the datetime objects used initially to determine when the bot
         # will perform specific actions in game.
-        self.calculate_skill_execution()
+        self.calculate_next_skill_execution()
         self.calculate_next_prestige()
         self.calculate_next_stats_update()
         self.calculate_next_action_run()
@@ -297,7 +297,7 @@ class Bot(object):
             (self.configuration.order_level_skills, self.level_skills, "level_skills"),
         ], key=lambda x: x[0])
 
-        self.logger.info("actions in game have been ordered successfully...")
+        self.logger.info("actions in game have been ordered successfully.")
         for action in sort:
             self.logger.info("{order} : {action_key}.".format(order=action[0], action_key=action[2]))
 
@@ -359,7 +359,7 @@ class Bot(object):
         return not_maxed
 
     @wrap_current_function
-    def calculate_skill_execution(self):
+    def calculate_next_skill_execution(self):
         """
         Calculate the datetimes that are attached to each skill in game and when they should be activated.
         """
@@ -569,6 +569,11 @@ class Bot(object):
 
             self.props.next_break = next_break_dt
             self.props.resume_from_break = next_break_res
+
+            self.logger.info("the next in game break will take place in {time_1} and resume in {time_2}".format(
+                time_1=strfdelta(next_break_dt - now),
+                time_2=strfdelta(next_break_res - now)
+            ))
 
     @wrap_current_function
     @not_in_transition
@@ -976,7 +981,7 @@ class Bot(object):
         found, pos = self.grabber.search(self.images.okay)
         if found:
             self.logger.info("clan crate is available, collecting!")
-            click_on_image(self.images.okay, pos, pause=1)
+            click_on_image(image=self.images.okay, pos=pos, pause=1)
 
         return found
 
@@ -1066,6 +1071,8 @@ class Bot(object):
                         click_on_image(image=self.images.daily_collect, pos=pos)
 
                 # Check for the single ad watching daily achievement.
+                # This only is ever present when a user does not have the
+                # vip ad collection feature unlocked.
                 found, pos = self.grabber.search(self.images.daily_watch)
                 if found:
                     self.logger.info("watching daily achievement ad.")
@@ -1385,7 +1392,7 @@ class Bot(object):
                 self.click(point=getattr(self.locs, skill[1]), pause=0.2)
 
             # Recalculate all skill execution times.
-            self.calculate_skill_execution()
+            self.calculate_next_skill_execution()
             return True
 
     @not_in_transition
@@ -1625,7 +1632,7 @@ class Bot(object):
             found, pos = self.grabber.search(self.images.restart)
             if found:
                 self.logger.info("restarting emulator now...")
-                click_on_image(self.images.restart, pos)
+                click_on_image(image=self.images.restart, pos=pos)
                 sleep(wait)
                 return True
 
@@ -1653,7 +1660,7 @@ class Bot(object):
         found, pos = self.grabber.search(self.images.tap_titans_2)
         if found:
             self.logger.info("game launcher was found, starting game...")
-            click_on_image(self.images.tap_titans_2, pos)
+            click_on_image(image=self.images.tap_titans_2, pos=pos)
             sleep(wait)
             return True
 
