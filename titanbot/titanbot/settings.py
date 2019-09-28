@@ -102,6 +102,15 @@ CHANNEL_LAYERS = {
     }
 }
 
+# Cache
+# https://docs.djangoproject.com/en/2.2/topics/cache/
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'titan_cache',
+    }
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
