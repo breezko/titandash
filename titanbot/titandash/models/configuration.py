@@ -55,7 +55,6 @@ HELP_TEXT = {
     "prestige_at_max_stage": "Should a prestige take place once your max stage has been reached? (Stats must be up to date).",
     "prestige_at_max_stage_percent": "Determine if you would like to perform an automatic prestige once a certain percent of your max stage has been reached. You may use values larger than 100 here to push your max stage. (0 = off).",
     "enable_artifact_purchase": "Enable the ability to purchase artifacts in game after a prestige has taken place.",
-    "upgrade_owned_artifacts": "Enable the ability to iterate through currently owned artifacts and upgrade them iteratively.",
     "upgrade_owned_tier": "Upgrade a specific tier (or tiers) of artifacts only.",
     "shuffle_artifacts": "Should owned artifacts be shuffled once calculated.",
     "ignore_artifacts": "Should any specific artifacts be ignored regardless of them being owned or not.",
@@ -161,7 +160,6 @@ class Configuration(ParanoidModel):
 
     # ARTIFACTS ACTION Settings.
     enable_artifact_purchase = models.BooleanField(verbose_name="Enable Artifact Purchase", default=True, help_text=HELP_TEXT["enable_artifact_purchase"])
-    upgrade_owned_artifacts = models.BooleanField(verbose_name="Upgrade Owned Artifacts", default=True, help_text=HELP_TEXT["upgrade_owned_artifacts"])
     upgrade_owned_tier = models.ManyToManyField(verbose_name="Upgrade Owned Tier", to="Tier", blank=True, related_name='upgrade_tiers', help_text=HELP_TEXT["upgrade_owned_tier"])
     shuffle_artifacts = models.BooleanField(verbose_name="Shuffle Artifacts", default=True, help_text=HELP_TEXT["shuffle_artifacts"])
     ignore_artifacts = models.ManyToManyField(verbose_name="Ignore Artifacts", to="Artifact", blank=True, related_name='ignore_artifacts', help_text=HELP_TEXT["ignore_artifacts"])
@@ -274,7 +272,6 @@ class Configuration(ParanoidModel):
             },
             "Artifacts Action": {
                 "enable_artifact_purchase": self.enable_artifact_purchase,
-                "upgrade_owned_artifacts": self.upgrade_owned_artifacts,
                 "upgrade_owned_tier": [tier.json() for tier in self.upgrade_owned_tier.all()],
                 "shuffle_artifacts": self.shuffle_artifacts,
                 "ignore_artifacts": [art.json() for art in self.ignore_artifacts.all()],

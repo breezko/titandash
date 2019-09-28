@@ -8,8 +8,8 @@ from settings import IMAGE_DIR
 
 EMULATOR_LOCS = {
     "nox": {
-        "close_emulator": (469, 17),
-        "restart": (296, 472),
+        "close_emulator": (465, -17),
+        "restart": (296, 438),
     },
 }
 
@@ -18,143 +18,143 @@ EMULATOR_LOCS = {
 # more of an issue trying to click on after looking for a different image.
 GAME_LOCS = {
     "BOTTOM_BAR": {
-        "master": (39, 815),
-        "heroes": (120, 815),
-        "equipment": (200, 815),
-        "pets": (281, 815),
-        "artifacts": (362, 815),
-        "shop": (442, 815),
+        "master": (39, 781),
+        "heroes": (120, 781),
+        "equipment": (200, 781),
+        "pets": (281, 781),
+        "artifacts": (362, 781),
+        "shop": (442, 781),
     },
     "DAILY_REWARD": {
-        "open_rewards": (34, 210),
-        "close_rewards": (430, 260),
-        "collect_rewards": (240, 560),
+        "open_rewards": (34, 176),
+        "close_rewards": (430, 226),
+        "collect_rewards": (240, 526),
     },
     "CLAN": {
-        "clan": (82, 59),
-        "clan_info": (392, 158),
-        "clan_info_close": (408, 97),
-        "clan_results": (267, 153),
-        "clan_results_copy": (80, 262),
-        "clan_raid": (109, 750),
+        "clan": (82, 25),
+        "clan_info": (392, 124),
+        "clan_info_close": (408, 63),
+        "clan_results": (267, 119),
+        "clan_results_copy": (80, 228),
+        "clan_raid": (109, 716),
     },
     "SKILL_BAR": {
-        "heavenly_strike": (43, 744),
-        "deadly_strike": (123, 744),
-        "hand_of_midas": (200, 744),
-        "fire_sword": (283, 744),
-        "war_cry": (363, 744),
-        "shadow_clone": (444, 744),
+        "heavenly_strike": (43, 710),
+        "deadly_strike": (123, 710),
+        "hand_of_midas": (200, 710),
+        "fire_sword": (283, 710),
+        "war_cry": (363, 710),
+        "shadow_clone": (444, 710),
     },
     "GAME_SCREEN": {
-        "fight_boss": (425, 65),
-        "game_middle": (250, 320),
-        "player": (235, 421),
-        "pet_gold": (287, 411),
-        "pet_attack": (235, 377),
-        "clan_ship": (60, 188),
+        "fight_boss": (425, 31),
+        "game_middle": (250, 286),
+        "player": (235, 387),
+        "pet_gold": (287, 377),
+        "pet_attack": (235, 343),
+        "clan_ship": (60, 154),
         # Start any scroll functions from this point.
-        "scroll_start": (328, 530),
-        "scroll_top_end": (328, 765),
-        "scroll_bottom_end": (328, 80),
-        "scroll_quick_stop": (328, 780),
+        "scroll_start": (328, 496),
+        "scroll_top_end": (328, 731),
+        "scroll_bottom_end": (328, 46),
+        "scroll_quick_stop": (328, 746),
         # The fairies map is looped through and each point is pressed
         # sequentially, this will ensure that fairies are pressed if present.
         "fairies_map": (
-            (75, 125), (100, 125), (140, 125), (200, 125), (260, 125), (320, 125), (380, 125), (440, 125),
-            (75, 160), (100, 160), (140, 160), (200, 160), (260, 160), (320, 160), (380, 160), (440, 160),
-            (75, 230), (100, 230), (140, 230), (200, 230), (260, 230), (320, 230), (380, 230), (440, 230),
-            (75, 300), (100, 300), (140, 300), (200, 300), (260, 300), (320, 300), (380, 300), (440, 300),
-            (75, 370), (100, 370), (140, 370), (200, 370), (260, 370), (320, 370), (380, 370), (440, 370),
-            (75, 440), (100, 440), (140, 440), (200, 440), (260, 440), (320, 440), (380, 440), (440, 440),
+            (75, 91), (100, 91), (140, 91), (200, 91), (260, 91), (320, 91), (380, 91), (440, 91),
+            (75, 126), (100, 126), (140, 126), (200, 126), (260, 126), (320, 126), (380, 126), (440, 126),
+            (75, 196), (100, 196), (140, 196), (200, 196), (260, 196), (320, 196), (380, 196), (440, 196),
+            (75, 266), (100, 266), (140, 266), (200, 266), (260, 266), (320, 266), (380, 266), (440, 266),
+            (75, 336), (100, 336), (140, 336), (200, 336), (260, 336), (320, 336), (380, 336), (440, 336),
+            (75, 406), (100, 406), (140, 406), (200, 406), (260, 406), (320, 406), (380, 406), (406, 406),
             # Click on pet for gold bonus.
-            (285, 400),
+            (285, 366),
             # Click on spot where skill points appear.
-            (110, 445),
+            (110, 411),
             # Click on spot where equipment appears.
-            (355, 445),
+            (355, 411),
         ),
-        "clan_crate": (70, 165),
+        "clan_crate": (70, 131),
     },
     "PANELS": {
-        "expand_collapse_top": (386, 43),
-        "expand_collapse_bottom": (386, 478),
-        "close_top": (449, 43),
-        "close_bottom": (449, 479),
+        "expand_collapse_top": (386, 9),
+        "expand_collapse_bottom": (386, 444),
+        "close_top": (449, 9),
+        "close_bottom": (449, 445),
     },
     "TOURNAMENT": {
-        "tournament": (30, 105),
-        "tournament_prestige": (330, 570),
-        "collect_prize": (245, 765),
-        "join": (245, 730),
+        "tournament": (30, 71),
+        "tournament_prestige": (330, 536),
+        "collect_prize": (245, 731),
+        "join": (245, 696),
     },
     "EGGS": {
-        "hatch_egg": (35, 315),
+        "hatch_egg": (35, 281),
     },
     "AD": {
-        "collect_ad": (365, 650),
-        "collect_ad_after_watch": (256, 635),
-        "no_thanks": (135, 650),
+        "collect_ad": (365, 616),
+        "collect_ad_after_watch": (256, 601),
+        "no_thanks": (135, 616),
     },
     "ARTIFACTS": {
-        "bottom_region": (2, 727, 475, 797),
+        "bottom_region": (2, 693, 475, 763),
     },
     "EMULATOR": {
-        "exit_emulator": (468, 16),
-        "restart_emulator": (300, 473),
-        "back_emulator": (504, 733),
+        "exit_emulator": (468, -18),
+        "restart_emulator": (300, 439),
+        "back_emulator": (504, 699),
     },
 }
 
 # Points used when clicking on locations present on the master panel.
 MASTER_LOCS = {
-    "master_level": (415, 170),
-    "prestige": (405, 770),
-    "prestige_confirm": (245, 660),
-    "prestige_final": (330, 570),
-    "screen_top": (240, 40),
-    "achievements": (207, 537),
-    "daily_achievements": (342, 123),
+    "master_level": (415, 136),
+    "prestige": (405, 736),
+    "prestige_confirm": (245, 626),
+    "prestige_final": (330, 536),
+    "screen_top": (240, 6),
+    "achievements": (207, 503),
+    "daily_achievements": (342, 89),
     "skills": {
-        "heavenly_strike": (415, 270),
-        "deadly_strike": (415, 350),
-        "hand_of_midas": (415, 430),
-        "fire_sword": (415, 508),
-        "war_cry": (415, 580),
-        "shadow_clone": (415, 650),
+        "heavenly_strike": (415, 236),
+        "deadly_strike": (415, 316),
+        "hand_of_midas": (415, 396),
+        "fire_sword": (415, 474),
+        "war_cry": (415, 546),
+        "shadow_clone": (415, 616),
     },
     "skill_level_max": {
-        "heavenly_strike": (268, 280),
-        "deadly_strike": (268, 357),
-        "hand_of_midas": (268, 433),
-        "fire_sword": (268, 508),
-        "war_cry": (268, 584),
-        "shadow_clone": (268, 659),
+        "heavenly_strike": (268, 246),
+        "deadly_strike": (268, 323),
+        "hand_of_midas": (268, 399),
+        "fire_sword": (268, 474),
+        "war_cry": (268, 550),
+        "shadow_clone": (268, 625),
     },
 }
 
 # Points used when clicking on locations present in the heroes panel.
 HEROES_LOCS = {
     "drag_heroes": {
-        "start": (328, 85),
+        "start": (328, 51),
         # End is quite finicky, be sure to experiment with the y
         # value if using different resolutions.
-        "end": (328, 920),
+        "end": (328, 886),
     },
     "level_heroes": (
-        (405, 770),
-        (405, 690),
-        (405, 615),
-        (405, 540),
-        (405, 465),
-        (405, 390),
-        (405, 310),
-        (405, 240),
-        (405, 160),
-        (405, 85),
+        (405, 736),
+        (405, 656),
+        (405, 581),
+        (405, 506),
+        (405, 431),
+        (405, 356),
+        (405, 276),
+        (405, 206),
+        (405, 126),
+        (405, 51),
     ),
-    "stats_collapsed": (135, 540),
-    "stats_expanded": (135, 105),
+    "stats_collapsed": (135, 506),
+    "stats_expanded": (135, 71),
 }
 
 ARTIFACTS_LOCS = {
@@ -164,9 +164,9 @@ ARTIFACTS_LOCS = {
         "x": 375,
         "y": 20,
     },
-    "buy_multiplier": (410, 105),
-    "buy_max": (50, 105),
-    "percent_toggle": (303, 540),
+    "buy_multiplier": (410, 71),
+    "buy_max": (50, 71),
+    "percent_toggle": (303, 506),
 }
 
 # Store any colors used (RGB) by the bot to determine so things in game.
@@ -283,52 +283,52 @@ IMAGES = {
 # All coordinates mapped to their respective resolutions for grabbing
 # each stat image that will be parsed by pytesseract.
 STATS_COORDS = {
-    "highest_stage_reached": (55, 474, 430, 495),
-    "total_pet_level": (55, 495, 430, 515),
-    "gold_earned": (55, 516, 430, 536),
-    "taps": (55, 537, 430, 561),
-    "titans_killed": (55, 559, 430, 579),
-    "bosses_killed": (55, 580, 430, 600),
-    "critical_hits": (55, 602, 430, 621),
-    "chestersons_killed": (55, 623, 430, 643),
-    "prestiges": (55, 645, 430, 666),
-    "days_since_install": (55, 670, 430, 686),
-    "play_time": (55, 687, 430, 708),
-    "relics_earned": (55, 709, 430, 729),
-    "fairies_tapped": (55, 731, 430, 751),
-    "daily_achievements": (55, 750, 430, 773),
+    "highest_stage_reached": (55, 440, 430, 461),
+    "total_pet_level": (55, 461, 430, 481),
+    "gold_earned": (55, 482, 430, 502),
+    "taps": (55, 503, 430, 527),
+    "titans_killed": (55, 525, 430, 545),
+    "bosses_killed": (55, 546, 430, 566),
+    "critical_hits": (55, 568, 430, 587),
+    "chestersons_killed": (55, 589, 430, 609),
+    "prestiges": (55, 611, 430, 632),
+    "days_since_install": (55, 636, 430, 652),
+    "play_time": (55, 653, 430, 674),
+    "relics_earned": (55, 675, 430, 695),
+    "fairies_tapped": (55, 697, 430, 717),
+    "daily_achievements": (55, 716, 430, 739),
 }
 
 STAGE_COORDS = {
-    "region": (214, 71, 268, 84),
+    "region": (214, 37, 268, 50),
 }
 
 PRESTIGE_COORDS = {
-    "time_since": (300, 614, 360, 628),
-    "advance_start": (145, 557, 202, 577),
+    "time_since": (300, 580, 360, 594),
+    "advance_start": (145, 523, 202, 543),
 }
 
 # The regions for each skill present on the master screen if the panel
 # is expanded and scrolled all the way to the top.
 MASTER_COORDS = {
     "skills": {
-        "heavenly_strike": (0, 233, 480, 303),
-        "deadly_strike": (0, 309, 480, 380),
-        "hand_of_midas": (0, 385, 480, 455),
-        "fire_sword": (0, 460, 480, 531),
-        "war_cry": (0, 536, 480, 607),
-        "shadow_clone": (0, 612, 480, 682),
+        "heavenly_strike": (0, 199, 480, 269),
+        "deadly_strike": (0, 275, 480, 346),
+        "hand_of_midas": (0, 351, 480, 421),
+        "fire_sword": (0, 426, 480, 497),
+        "war_cry": (0, 502, 480, 573),
+        "shadow_clone": (0, 578, 480, 648),
     },
 }
 
 CLAN_COORDS = {
-    "info_name": (133, 70, 362, 103),
-    "info_code": (123, 730, 172, 745),
+    "info_name": (133, 36, 362, 69),
+    "info_code": (123, 696, 172, 711),
 }
 
 # Clan raid coordinates located in the main clan raid page.
 CLAN_RAID_COORDS = {
-    "raid_attack_reset": (55, 753, 240, 771),
+    "raid_attack_reset": (55, 719, 240, 737),
 }
 
 # Set of skills in game.
