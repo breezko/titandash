@@ -22,22 +22,22 @@
            style="width: 100%;">
         <thead>
         <tr>
+            <th>Session</th>
             <th>Timestamp</th>
             <th>Duration</th>
             <th>Stage</th>
             <th>Artifact</th>
-            <th>Session</th>
         </tr>
         </thead>
         <tbody>
         {% for prestige in prestiges %}
             <tr>
+                <td><a href="{{ prestige.session.url }}">{{ prestige.session.uuid }}</a></td>
                 <td data-order="{{ prestige.timestamp.epoch }}">{{ prestige.timestamp.formatted }}</td>
                 <td>{{ prestige.duration.formatted }}</td>
                 <td>{{ prestige.stage|default_if_none:"N/A" }}</td>
                 <td><img height="20" width="20" src="{% static prestige.artifact.image %}"
                          alt="{{ prestige.artifact.name }}"> {{ prestige.artifact.title }}</td>
-                <td><a href="{{ prestige.session.url }}">{{ prestige.session.uuid_short }}</a></td>
             </tr>
         {% endfor %}
         </tbody>

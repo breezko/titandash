@@ -53,7 +53,6 @@ class Prestige(models.Model):
             "stage": self.stage if self.stage else "N/A",
             "session": {
                 "uuid": self.session.uuid,
-                "uuid_short": self.session.uuid[:8] + "...",
                 "url": reverse('session', kwargs={"uuid": self.session.uuid}),
             }
         }

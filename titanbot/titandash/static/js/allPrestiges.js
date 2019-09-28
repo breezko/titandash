@@ -12,7 +12,7 @@ $(document).ready(function() {
         $("#allPrestigeTable").DataTable({
             responsive: true,
             pageLength: 50,
-            order: [[0, "desc"]],
+            order: [[1, "desc"]],
         });
     }
 
