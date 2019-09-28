@@ -540,14 +540,10 @@ class Bot(object):
         """
         Calculate when the next clan result parse should take place.
         """
-        if self.configuration.enable_clan_results_parse:
-            now = timezone.now()
-            dt = now + datetime.timedelta(minutes=self.configuration.parse_clan_results_every_x_minutes)
-            self.props.next_clan_results_parse = dt
-            self.logger.info("clan results parse in game will be initiated in {time}".format(time=strfdelta(dt - now)))
-        else:
-            # If result parsing is disabled, No datetime is configured and will be ignored.
-            self.props.next_clan_results_parse = None
+        now = timezone.now()
+        dt = now + datetime.timedelta(minutes=self.configuration.parse_clan_results_every_x_minutes)
+        self.props.next_clan_results_parse = dt
+        self.logger.info("clan results parse in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     @wrap_current_function
     def calculate_next_break(self):
