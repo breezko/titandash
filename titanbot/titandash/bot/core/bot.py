@@ -77,10 +77,8 @@ class Bot(object):
         # Bot utilities.
         self.grabber = Grabber(window=self.window, logger=self.logger)
         self.stats = Stats(instance=self.instance, window=self.window, grabber=self.grabber, configuration=self.configuration, logger=self.logger)
-
         # Statistics handles Log instance creation... Set BotInstance now.
         self.instance.log = self.stats.session.log
-
         # Data containers.
         self.images = Images(IMAGES, self.logger)
         self.locs = Locs(GAME_LOCS, self.logger)
@@ -95,7 +93,9 @@ class Bot(object):
 
         self.logger.info("==========================================================================================")
         self.logger.info(self.instance_string)
-        self.logger.info("{session}".format(session=self.stats.session))
+        self.logger.info("s: {session}".format(session=self.stats.session))
+        self.logger.info("w: {window}".format(window=self.window))
+        self.logger.info("c: {configuration}".format(configuration=self.configuration))
         self.logger.info("==========================================================================================")
 
         # Set authentication reference to an online state.
