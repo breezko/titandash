@@ -126,11 +126,11 @@ class Bot(object):
         if start:
             self.run()
 
-    def click(self, point, clicks=1, interval=0.0, button="left", pause=0.0, offset=5):
+    def click(self, point, clicks=1, interval=0.0, button="left", pause=0.0, offset=5, disable_padding=False):
         """
         Local click method for use with the bot, ensuring we pass the window being used into the click function.
         """
-        click_on_point(point=point, window=self.window, clicks=clicks, interval=interval, button=button, pause=pause, offset=offset)
+        click_on_point(point=point, window=self.window, clicks=clicks, interval=interval, button=button, pause=pause, offset=offset, disable_padding=disable_padding)
 
     def drag(self, start, end, button="left", duration=0.3, pause=0.5, tween=linear, quick_stop=None):
         """
@@ -858,12 +858,12 @@ class Bot(object):
 
             # Making it here means the artifact in question has been found.
             found, position = self.grabber.search(ARTIFACT_MAP.get(artifact))
-            new_x = position[0] + ARTIFACTS_LOCS["artifact_push"]["x"] + self.window.x
-            new_y = position[1] + ARTIFACTS_LOCS["artifact_push"]["y"] + self.window.y
+            new_x = position[0] + ARTIFACTS_LOCS["artifact_push"]["x"]
+            new_y = position[1] + ARTIFACTS_LOCS["artifact_push"]["y"]
 
             # Currently just upgrading the artifact to it's max level. Future updates may include the ability
             # to determine how much to upgrade an artifact by.
-            self.click(point=(new_x, new_y), pause=1)
+            self.click(point=(new_x, new_y), pause=1, disable_padding=True)
 
     @not_in_transition
     def check_tournament(self):
