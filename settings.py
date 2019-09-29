@@ -5,13 +5,17 @@ Store all project specific settings here.
 """
 import os
 import logging
+import pathlib
+import textwrap
 
 logger = logging.getLogger(__name__)
 
 
 BOT_VERSION = "1.5.4.01"
-TITAN_DB = "titan.sqlite3"
 
+
+# Grab the windows local users directory (ie: C:/Users/<username>).
+USER_DIR = str(pathlib.Path.home())
 # Store the root directory of the project. May be used and appended to files in other directories without
 # the need for relative urls being generated to travel to the file.
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -32,6 +36,12 @@ DATA_DIR = os.path.join(BOT_DIR, "data")
 # Additional data directories.
 IMAGE_DIR = os.path.join(DATA_DIR, "images")
 
+# Additional data directories used to store local data
+# on the users machine.
+LOCAL_DATA_DIR = os.path.join(USER_DIR, ".titandash")
+# Directory to store our database in.
+LOCAL_DATA_DB_DIR = os.path.join(LOCAL_DATA_DIR, "db")
+
 # Testing directory.
 TEST_DIR = os.path.join(TITANDASH_DIR, "tests")
 TEST_BOT_DIR = os.path.join(TEST_DIR, "bot")
@@ -43,6 +53,10 @@ THEMES_DIR = os.path.join(TITANDASH_DIR, "static/css/theme")
 # Make sure a "logs" directory actually exists.
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
+
+
+TITAN_DB_NAME = "titan.sqlite3"
+TITAN_DB_PATH = os.path.join(LOCAL_DATA_DB_DIR, TITAN_DB_NAME)
 
 
 def git_info():
