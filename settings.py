@@ -78,6 +78,56 @@ def git_info():
 
 GIT_COMMIT = git_info()
 
+
+def user_directory():
+    """
+    Perform some idempotent functionality to generate our user directory that contains
+    some local data used by titandash. The goal here is to create a location to place files
+    that remain even throughout updates to the program.
+    """
+    if not os.path.exists(LOCAL_DATA_DIR):
+        os.makedirs(LOCAL_DATA_DIR)
+    if not os.path.exists(LOCAL_DATA_DB_DIR):
+        os.makedirs(LOCAL_DATA_DB_DIR)
+
+    # Our local data directory is guaranteed to exist now, check for the existence of our actual
+    # database within the codebase, and move it if one exists.
+    existing = [p for p in pathlib.Path(ROOT_DIR).glob("**/{titan_db}".format(titan_db=TITAN_DB_NAME))]
+
+    # Spit out a helpful warning if a user has more than one database in their source directory.
+    # This isn't common, but would happen potentially.
+    if len(existing) > 1:
+        logger.warning(textwrap.dedent("""\
+            It looks like you have more than one database present in your titandash project.
+                
+            The first database found will be moved into your local data directory ({local_dir}), but you can manually
+            place a database at that location if you want to use a different one.
+            
+            Titandash uses the following path when connecting to your database by default: {local}.
+        """.format(
+            local_dir=LOCAL_DATA_DB_DIR,
+            local=TITAN_DB_PATH
+        )))
+        logger.warning(
+            "Databases found:\n{dbs}".format(
+                dbs="\n".join([str(p) for p in existing])
+            ))
+
+    # Renaming and moving the database present into the local database directory.
+    # If a database is already present, we can ignore this part so no overwrite of
+    # the users database takes place.
+    if existing:
+        if not os.path.exists(TITAN_DB_PATH):
+            existing[0].rename(TITAN_DB_PATH)
+            logger.info("Database: {local} has been moved to {database}".format(
+                local=str(existing[0]),
+                database=TITAN_DB_PATH
+            ))
+
+
+user_directory()
+
+
 # In game specific settings should be stored here. As the game is updated, these will change
 # and reflect the new constants that may be used by the bot.
 # Note: This reflect what the project is currently setup to support. Newer versions may be
