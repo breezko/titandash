@@ -190,7 +190,7 @@ def all_prestiges(request):
         ctx = {
             "prestiges": [
                 cache.get_or_set(
-                    key="prestige.pk".format(pk=prestige.pk),
+                    key="prestige.{pk}".format(pk=prestige.pk),
                     default=prestige.json,
                     timeout=CACHE_TIMEOUT
                 ) for prestige in qs
