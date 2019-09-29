@@ -126,6 +126,14 @@ class Images:
         self.tap_titans_2 = None
         self.restart = None
 
+        # WELCOME
+        self.welcome_header = None
+        self.welcome_collect_no_vip = None
+        self.welcome_collect_vip = None
+
+        # RATE
+        self.rate_icon = None
+
 
 class Locs:
     """Locs class wraps all location points into a friendly wrapper class for use with the bot."""
