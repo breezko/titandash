@@ -277,6 +277,14 @@ IMAGES = {
     },
     "STATS": {
         "stats_title": IMAGE_DIR + "/stats/stats_title.png",
+    },
+    "WELCOME": {
+        "welcome_header": IMAGE_DIR + "/welcome/welcome_header.png",
+        "welcome_collect_no_vip": IMAGE_DIR + "/welcome/welcome_collect_no_vip.png",
+        "welcome_collect_vip": IMAGE_DIR + "/welcome/welcome_collect_vip.png",
+    },
+    "RATE": {
+        "rate_icon": IMAGE_DIR + "/rate/rate_icon.png",
     }
 }
 
