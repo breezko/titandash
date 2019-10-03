@@ -6,6 +6,8 @@ Store all project specific settings here.
 import os
 import pathlib
 import json
+import shutil
+import datetime
 
 
 # Version file used to determine the current project version.
@@ -53,6 +55,8 @@ PROGRAM_SETUP_BAT = os.path.join(ROOT_DIR, "setup.bat")
 LOCAL_DATA_DIR = os.path.join(USER_DIR, ".titandash")
 # Directory to store our database in.
 LOCAL_DATA_DB_DIR = os.path.join(LOCAL_DATA_DIR, "db")
+# Directory to store our database backups in.
+LOCAL_DATA_DB_BACKUP_DIR = os.path.join(LOCAL_DATA_DB_DIR, "backup")
 # Directory to store newly downloaded version in.
 LOCAL_DATA_UPDATE_DIR = os.path.join(LOCAL_DATA_DIR, "update")
 # Directory to store the latest backup in.
@@ -102,16 +106,13 @@ def user_directory():
     some local data used by titandash. The goal here is to create a location to place files
     that remain even throughout updates to the program.
     """
-    if not os.path.exists(LOCAL_DATA_DIR):
-        os.makedirs(LOCAL_DATA_DIR)
-    if not os.path.exists(LOCAL_DATA_DB_DIR):
-        os.makedirs(LOCAL_DATA_DB_DIR)
-    if not os.path.exists(LOCAL_DATA_UPDATE_DIR):
-        os.makedirs(LOCAL_DATA_UPDATE_DIR)
-    if not os.path.exists(LOCAL_DATA_BACKUP_DIR):
-        os.makedirs(LOCAL_DATA_BACKUP_DIR)
-    if not os.path.exists(LOCAL_DATA_LOG_DIR):
-        os.makedirs(LOCAL_DATA_LOG_DIR)
+    for path in [
+        LOCAL_DATA_DIR, LOCAL_DATA_DB_DIR, LOCAL_DATA_DB_BACKUP_DIR, LOCAL_DATA_UPDATE_DIR,
+        LOCAL_DATA_BACKUP_DIR, LOCAL_DATA_LOG_DIR
+    ]:
+        # Create the specified local data directory if it does not currently exist.
+        if not os.path.exists(path):
+            os.makedirs(path)
 
     # Our local data directory is guaranteed to exist now, check for the existence of our actual
     # database within the codebase, and move it if one exists.
@@ -126,6 +127,57 @@ def user_directory():
 
 user_directory()
 
+
+def database_backup(limit=10):
+    """
+    Perform functionality used to create database backups, we do this lazily.
+
+    We only attempt the backup when this file is imported. The database backup names will include
+    a timestamp in their name so users can differentiate between the backups.
+    """
+    def create_backup():
+        """
+        Create a new database backup file with the current date appended to the end of the backup file.
+        """
+        shutil.copyfile(
+            src=TITAN_DB_PATH,
+            dst=os.path.join(
+                LOCAL_DATA_DB_BACKUP_DIR,
+                "titan_{date}.sqlite3".format(
+                    date=datetime.datetime.now().date().strftime("%m-%d-%Y")
+                )
+            )
+        )
+
+    def backup_date(backup):
+        """
+        Given a backup, parse out the date string from the filename.
+        """
+        elems = [int(s) for s in backup.split("_")[1].split(".")[0].split("-")]
+
+        # Coerce into date object and return.
+        return datetime.date(month=elems[0], day=elems[1], year=elems[2])
+
+    backups = [f for f in os.listdir(LOCAL_DATA_DB_BACKUP_DIR) if os.path.isfile(os.path.join(LOCAL_DATA_DB_BACKUP_DIR, f))]
+
+    # No backups are present at all yet, let's go ahead and make one with the current database.
+    if len(backups) == 0:
+        create_backup()
+    # Some backups are available, but we haven't yet hit our limit so none need to be deleted.
+    # Check if one needs to be created if the day is not the same as the last backups date.
+    elif len(backups) < limit:
+        # If the current date is greater than the last available backup,
+        # generate a new backup file.
+        if datetime.datetime.now().date() > backup_date(backups[-1]):
+            create_backup()
+
+            # Now that a backups was created, check if the length would be equal to our limit,
+            # if it is, remove the first backup.
+            if len(backups) + 1 >= limit:
+                os.remove(os.path.join(LOCAL_DATA_DB_BACKUP_DIR, backups[0]))
+
+
+database_backup()
 
 # In game specific settings should be stored here. As the game is updated, these will change
 # and reflect the new constants that may be used by the bot.
