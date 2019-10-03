@@ -74,11 +74,13 @@ class GameStatistics(models.Model):
         played = self.play_time if self.play_time else None
 
         if played:
-            played = int(played.split("d")[0])
+            if "d" in played:
+                played_hours = int(played.split("d")[0]) * 24
+            else:
+                played_hours = int(played.split(":")[0])
         else:
             return 0
 
-        played_hours = played * 24
         return round(played_hours / installed, 2)
 
     @property
