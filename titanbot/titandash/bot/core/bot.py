@@ -26,7 +26,8 @@ from .utilities import (
 )
 from .constants import (
     STAGE_PARSE_THRESHOLD, FUNCTION_LOOP_TIMEOUT, BOSS_LOOP_TIMEOUT,
-    QUEUEABLE_FUNCTIONS, FORCEABLE_FUNCTIONS, PROPERTIES, BREAK_NEXT_PROPS
+    QUEUEABLE_FUNCTIONS, FORCEABLE_FUNCTIONS, PROPERTIES, BREAK_NEXT_PROPS,
+    BREAK_NEXT_PROPS_ALL
 )
 
 from pyautogui import easeOutQuad, FailSafeException, linear
@@ -394,6 +395,20 @@ class Bot(object):
         dt = now + datetime.timedelta(seconds=self.configuration.recovery_check_interval_minutes * 60)
         self.props.next_recovery_reset = dt
         self.logger.info("the next recovery reset will take place in {time}".format(time=strfdelta(dt - now)))
+
+    @wrap_current_function
+    def bump_timed_variables(self, delta):
+        """
+        Bump the bot variables that are used to determine when functionality takes place (ie: next_xxx)
+        by the specified delta.
+
+        This is useful to us if a user has to wait for things to happens (ie: wait for an ad).
+        """
+        for attr in BREAK_NEXT_PROPS_ALL:
+            # Ignore None attributes so that disabled functionality isn't
+            # also bumped unnecessarily.
+            if getattr(self.props, attr):
+                setattr(self.props, attr, getattr(self.props, attr) + delta)
 
     @wrap_current_function
     def recover(self, force=False):
@@ -1264,7 +1279,10 @@ class Bot(object):
                 self.click(point=self.locs.collect_ad, offset=1)
 
                 # An ad has been launched... Let's wait a while before attempting to close it.
-                sleep(30)
+                sleep(60)
+                self.bump_timed_variables(
+                    delta=datetime.timedelta(seconds=60)
+                )
 
                 # Ad likely finished at this point, attempt to close the ad now by using the
                 # back button within the emulator.
