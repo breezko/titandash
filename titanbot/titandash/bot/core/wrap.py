@@ -34,6 +34,8 @@ class Images:
         self.spend_max = None
         self.salvaged = None
         self.percent_on = None
+        self.discover: None
+        self.enchant: None
 
         # CLAN_BATTLE.
         self.diamond = None
@@ -213,6 +215,11 @@ class Locs:
         self.collect_ad_after_watch = None
         self.no_thanks = None
 
+        # ARTIFACTS
+        self.discover_point = None
+        self.enchant_point = None
+        self.purchase = None
+
         # EMULATOR.
         self.exit_emulator = None
         self.restart_emulator = None
@@ -230,3 +237,5 @@ class Colors:
 
     def _base(self):
         self.WHITE = None
+        self.DISCOVER = None
+        self.ENCHANT = None
