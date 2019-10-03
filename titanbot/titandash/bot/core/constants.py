@@ -162,6 +162,10 @@ BREAK_NEXT_PROPS = [
     prop for prop in PROPERTIES if prop.split("_")[0] == "next" and prop not in ["next_break", "next_raid_attack_reset"]
 ]
 
+# Create an additional list containing all of the properties we can modify when needed including
+# the next break variable. This is useful when functionality occurs that needs all timed variables to change.
+BREAK_NEXT_PROPS_ALL = BREAK_NEXT_PROPS + ["next_break", "resume_from_break"]
+
 # Specify the filter strings used to find emulator windows.
 WINDOW_FILTER = [
     "nox", "noxplayer"
