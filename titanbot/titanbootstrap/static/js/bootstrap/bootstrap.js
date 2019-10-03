@@ -269,12 +269,24 @@ let TitandashBootstrapper = function() {
             success: function(data) {
                 if (data["status"] === "DONE") {
                     addStatusTableRow("Update Titandash", "GOOD", "success");
-
-                    // Regardless of status, updating the progress bar.
                     updateProgressBar(100);
 
                     // Updater has finished, moving onto our restart process.
                     performApplicationRestart();
+                }
+
+                // Maybe an error occurred while syncing our code directory with the newest release,
+                // in that case, the backup should be synced back into the root directory and we can
+                // ensure that the exception is shown.
+                if (data["status"] === "RECOVERED") {
+                    // Pushing error into list...
+                    _errorContainer.push(data["exception"]);
+
+                    // Update the status table to reflect this issue.
+                    addStatusTableRow("Update Titandash", "RECOVERED", "danger");
+
+                    // We will continue on with our bootstrapper process after a recovery.
+                    performRequirements();
                 }
 
                 // A broad exception occurred while attempting to update. We're gonna push that into our
@@ -286,6 +298,7 @@ let TitandashBootstrapper = function() {
                     // Update the status table to contain our errored out update.
                     // The error is not displayed here, but stored and ready for use later.
                     addStatusTableRow("Update Titandash", "ERROR", "danger");
+                    updateProgressBar(100);
 
                     // We also do not need to continue with our bootstrapping since unrecoverable
                     // errors that occur while updating may need manual intervention anyways.

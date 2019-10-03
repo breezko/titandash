@@ -124,7 +124,7 @@ def perform_update(request):
                 action="sync",
                 purge=True
             )
-        except Exception:
+        except Exception as exc:
             # An exception has occurred while attempting to update the code base,
             # our best bet here is to recover our backup so that the code goes back
             # to what it was before the update.
@@ -133,6 +133,23 @@ def perform_update(request):
                 targetdir=settings.ROOT_DIR,
                 action="sync"
             )
+
+            # Returning a recovered status to the javascript...
+            # Since we're restoring our backup directory, our code
+            # should not have changed, we can continue with bootstrapping and
+            # display a message at the end about what happened.
+            return JsonResponse(data={
+                "status": "RECOVERED",
+                "exception": _exception_response(
+                    title="Perform Update",
+                    exception=exc,
+                    as_json=True,
+                    extra="The exception above occurred while attempting to update titandash to the newest version, "
+                          "a backup of all your application files was safely recovered and the program has not been "
+                          "updated.<br/><br/>You can attempt to auto update again by refreshing the page, or, download "
+                          "the newest release manually."
+                )
+            })
 
         # We were able to successfully synchronize the newest codebase into our main directory.
         # We should now return some useful information to the bootstrapping javascript
