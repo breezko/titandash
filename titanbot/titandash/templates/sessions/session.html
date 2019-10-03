@@ -2,6 +2,10 @@
 {% load staticfiles %}
 {% load replace %}
 
+{% block head_title %}
+    Session {{ session.uuid }}
+{% endblock %}
+
 {% block content %}
     <div id="accordion">
         <div class="card">

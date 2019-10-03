@@ -7,6 +7,7 @@ panel located inside of the heroes panel in game.
 from settings import BOT_VERSION
 
 from django.utils import timezone
+from django.conf import settings
 
 from titandash.models.statistics import Statistics, PrestigeStatistics, ArtifactStatistics, Session, Log
 from titandash.models.artifact import Artifact
@@ -26,6 +27,8 @@ import cv2
 import numpy as np
 import uuid
 import logging
+
+pytesseract.pytesseract.tesseract_cmd = settings.TESSERACT_COMMAND
 
 
 class Stats:

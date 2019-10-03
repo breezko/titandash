@@ -10,7 +10,11 @@
     <meta name="description" content="TitanDash Dashboard for TapTitans2 Bot.">
     <meta name="author" content="Votum">
 
-    <title>titandash</title>
+    <title>
+        {% block head_title %}
+            Titandash
+        {% endblock %}
+    </title>
 
     <!-- Bootstrap core CSS -->
     <link href="{% static "bootstrap/dist/css/bootstrap.min.css"  %}" rel="stylesheet">
@@ -86,7 +90,7 @@
 
         <!-- Sidebar -->
         <div class="bg-light border-right" id="sidebar-wrapper">
-            <div class="sidebar-heading text-uppercase" style="border-right: 0; padding: 0.8rem 1.25rem;"><img style="margin-top: -6px;" width="30" height="30" src="{% static "favicon.ico" %}" alt="logo"><small><strong>Titandash</strong></small></div>
+            <div class="sidebar-heading text-uppercase" style="border-right: 0; padding: 0.8rem 1.25rem;"><img style="margin-top: -6px;" width="30" height="30" src="{% static "favicon.ico" %}" alt="logo"><small><strong>Titandash {{ BOT.TITANBOT_VERSION }}</strong></small></div>
             <div class="list-group list-group-flush">
                 <a href="{% url "dashboard" %}" class="list-group-item list-group-item-action bg-light">Dashboard</a>
                 <a href="{% url "sessions" %}" class="list-group-item list-group-item-action bg-light">Sessions</a>

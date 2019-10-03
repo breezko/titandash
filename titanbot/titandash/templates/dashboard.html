@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 
+{% block head_title %}
+    Dashboard
+{% endblock %}
+
 {% block extra_js %}
     <script src="{% static "js/dashboard/timers.js" %}"></script>
     <script src="{% static "js/dashboard/botInstances.js" %}"></script>

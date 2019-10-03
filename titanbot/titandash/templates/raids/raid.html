@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 
+{% block head_title %}
+    Raid {{ raid.digest }}
+{% endblock %}
+
 {% block content %}
         <div id="accordionOne">
         <div class="card">

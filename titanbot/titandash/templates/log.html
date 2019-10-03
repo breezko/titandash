@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 
+{% block head_title %}
+    View Log
+{% endblock %}
+
 {% block extra_js %}
     <script src="{% static "js/log/log.js" %}"></script>
 {% endblock %}
