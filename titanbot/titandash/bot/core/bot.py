@@ -1122,12 +1122,7 @@ class Bot(object):
                 if found:
                     self.logger.info("watching daily achievement ad.")
                     click_on_image(image=self.images.daily_watch, pos=pos)
-                    sleep(30)
-
-                    # Ad likely finished at this point, attempt to close the ad now by using the
-                    # back button within the emulator.
-                    self.logger.info("attempting to close watched ad.")
-                    self.click(self.locs.back_emulator, pause=3)
+                    self.watch_ad(stop_image=self.images.achievements_title)
 
                     # Attempt to collect the ad.
                     found, pos = self.grabber.search(self.images.daily_collect)
@@ -1295,6 +1290,31 @@ class Bot(object):
 
                 self.calculate_next_clan_result_parse()
 
+    def watch_ad(self, stop_image):
+        """
+        Use this function while an ad is being watched.
+
+        Waiting until the specified stop_image is found on the screen. We click on the back button
+        continuously until the image is found. Then leaving the function.
+        """
+        self.logger.info("attempting to watch ad...")
+        # Initial sleep for five seconds...
+        # Ensure we dont begin clicking before the starts, lag could
+        # cause the ad to be delayed.
+        sleep(5)
+
+        # Looping while the image specified is not found.
+        while not self.grabber.search(image=stop_image, bool_only=True):
+            self.logger.info("attempting to close ad...")
+            # Bumping our timed variables.
+            self.bump_timed_variables(datetime.timedelta(seconds=5))
+            sleep(5)
+
+            # Attempt to close the ad?
+            self.click(point=self.locs.back_emulator, pause=1)
+
+        self.logger.info("ad has now been closed!")
+
     def ad(self):
         """
         Collect ad if one is available on the screen.
@@ -1313,20 +1333,12 @@ class Bot(object):
             else:
                 self.logger.info("watching normal ad!")
                 self.click(point=self.locs.collect_ad, offset=1)
+                self.watch_ad(stop_image=self.images.collect_ad)
 
-                # An ad has been launched... Let's wait a while before attempting to close it.
-                sleep(60)
-                self.bump_timed_variables(
-                    delta=datetime.timedelta(seconds=60)
-                )
-
-                # Ad likely finished at this point, attempt to close the ad now by using the
-                # back button within the emulator.
-                self.logger.info("attempting to close watched ad.")
-                self.click(point=self.locs.back_emulator, pause=3)
+                # Collect the ad after it's been watched.
                 self.click(point=self.locs.collect_ad_after_watch, pause=2)
 
-            self.stats.statistics.bot_statistics.premium_ads += 1
+            self.stats.statistics.bot_statistics.ads += 1
             self.stats.statistics.bot_statistics.save()
 
     @wrap_current_function
