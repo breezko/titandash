@@ -15,6 +15,23 @@ class TitandashAuthenticationMiddleware:
     backend to determine if a user has access to the dashboard.
     """
     def __init__(self, get_response):
+        self.exceptions = [
+            "/auth/authenticate",
+            "/auth/ajax/credentials",
+
+            # Bootstrapper urls should be allowed into our pages always.
+            # When bootstrapping is finished, if no authentication has been
+            # done, then we can force the login through our middleware.
+            "/bootstrap/",
+            "/bootstrap/ajax/check_update",
+            "/bootstrap/ajax/perform_update",
+            "/bootstrap/ajax/perform_requirements",
+            "/bootstrap/ajax/perform_node_packages",
+            "/bootstrap/ajax/perform_migration",
+            "/bootstrap/ajax/perform_cache",
+            "/bootstrap/ajax/perform_static",
+            "/bootstrap/ajax/perform_dependency",
+        ]
         self.get_response = get_response
 
     def __call__(self, request):
@@ -23,7 +40,7 @@ class TitandashAuthenticationMiddleware:
         """
         # No user has been set yet, redirect to the login page and setup an empty user
         # that will be used for any subsequent requests.
-        if request.path not in ["/auth/authenticate", "/auth/ajax/credentials"]:
+        if request.path not in self.exceptions:
             if not ExternalAuthReference.objects.valid():
                 return redirect("authenticate")
 
