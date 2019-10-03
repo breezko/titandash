@@ -55,6 +55,7 @@ HELP_TEXT = {
     "prestige_at_max_stage": "Should a prestige take place once your max stage has been reached? (Stats must be up to date).",
     "prestige_at_max_stage_percent": "Determine if you would like to perform an automatic prestige once a certain percent of your max stage has been reached. You may use values larger than 100 here to push your max stage. (0 = off).",
     "enable_artifact_purchase": "Enable the ability to purchase artifacts in game after a prestige has taken place.",
+    "enable_artifact_discover_enchant": "Enable the ability to discover or enchant artifacts if possible after a prestige.",
     "upgrade_owned_tier": "Upgrade a specific tier (or tiers) of artifacts only.",
     "shuffle_artifacts": "Should owned artifacts be shuffled once calculated.",
     "ignore_artifacts": "Should any specific artifacts be ignored regardless of them being owned or not.",
@@ -159,6 +160,7 @@ class Configuration(ParanoidModel):
     prestige_at_max_stage_percent = models.DecimalField(verbose_name="Prestige At Max Stage Percent", default=0, decimal_places=3, max_digits=255, help_text=HELP_TEXT["prestige_at_max_stage_percent"])
 
     # ARTIFACTS ACTION Settings.
+    enable_artifact_discover_enchant = models.BooleanField(verbose_name="Enable Artifact Discover/Enchant", default=True, help_text=HELP_TEXT["enable_artifact_discover_enchant"])
     enable_artifact_purchase = models.BooleanField(verbose_name="Enable Artifact Purchase", default=True, help_text=HELP_TEXT["enable_artifact_purchase"])
     upgrade_owned_tier = models.ManyToManyField(verbose_name="Upgrade Owned Tier", to="Tier", blank=True, related_name='upgrade_tiers', help_text=HELP_TEXT["upgrade_owned_tier"])
     shuffle_artifacts = models.BooleanField(verbose_name="Shuffle Artifacts", default=True, help_text=HELP_TEXT["shuffle_artifacts"])
