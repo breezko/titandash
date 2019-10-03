@@ -823,6 +823,42 @@ class Bot(object):
         """
         Determine whether or not any artifacts should be purchased, and purchase them.
         """
+        def purchase_new(image, point, color):
+            """
+            Given an image, point and color, use as a helper function to either discover or enchant an artifact.
+            """
+            # Is the image on the screen?
+            if self.grabber.search(image=image, bool_only=True):
+                # Is the specified color present in the point chosen.
+                if self.grabber.point_is_color(point=point, color=color):
+                    # Click to enchant/discover artifact.
+                    self.logger.info("performing...")
+                    self.click(point=point, pause=1)
+                    self.click(point=self.locs.purchase, pause=2)
+
+                    self.click(point=self.locs.close_top, clicks=5, interval=0.5, pause=2)
+
+        # Check for discovery/enchantment first.
+        if self.configuration.enable_artifact_discover_enchant:
+            self.logger.info("beginning artifact enchant/discover process.")
+            if not self.goto_artifacts():
+                return False
+
+            # Checking for discover available.
+            self.logger.info("checking if artifact discovery can be performed.")
+            purchase_new(
+                image=self.images.discover,
+                point=self.locs.discover_point,
+                color=self.colors.DISCOVER
+            )
+            # Checking for enchant available.
+            self.logger.info("checking if artifact enchantment can be performed.")
+            purchase_new(
+                image=self.images.enchant,
+                point=self.locs.enchant_point,
+                color=self.colors.ENCHANT
+            )
+
         if self.configuration.enable_artifact_purchase:
             self.logger.info("beginning artifact purchase process.")
             if not self.goto_artifacts(collapsed=False):
