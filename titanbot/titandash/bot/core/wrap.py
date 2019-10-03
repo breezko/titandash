@@ -20,6 +20,7 @@ class Images:
         Manually set every expected value, allows for easier access later on.
         """
         # ACHIEVEMENTS.
+        self.achievements_title = None
         self.daily_collect = None
         self.daily_watch = None
 
