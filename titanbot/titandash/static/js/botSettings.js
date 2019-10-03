@@ -8,6 +8,7 @@ $(document).ready(function() {
     let table = $("#settingsTable");
 
     table.DataTable({
+        order: [],
         responsive: true,
         paging: false,
         info: false
