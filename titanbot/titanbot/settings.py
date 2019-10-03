@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'channels',
     'titandash.apps.TitandashConfig',
     'titanauth',
+    'titanbootstrap',
 ]
 
 MIDDLEWARE = [
