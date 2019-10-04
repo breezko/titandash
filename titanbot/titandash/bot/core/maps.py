@@ -346,6 +346,11 @@ CLAN_RAID_COORDS = {
     "raid_attack_reset": (55, 719, 240, 737),
 }
 
+# Artifact coordinates used py any artifact related functionality.
+ARTIFACT_COORDS = {
+    "parse_region": (0, 57, 72, 763)
+}
+
 # Set of skills in game.
 SKILLS = (
     "heavenly_strike",
