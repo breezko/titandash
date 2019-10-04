@@ -181,6 +181,7 @@ GAME_COLORS = {
 # All images should have their names mapped to the file path within the module.
 IMAGES = {
     "ACHIEVEMENTS": {
+        "achievements_title": IMAGE_DIR + "/achievements/achievements.png",
         "daily_collect": IMAGE_DIR + "/achievements/daily_collect.png",
         "daily_watch": IMAGE_DIR + "/achievements/daily_watch.png",
     },
