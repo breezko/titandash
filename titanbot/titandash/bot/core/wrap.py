@@ -28,6 +28,7 @@ class Images:
         self.collect_ad = None
         self.watch_ad = None
         self.no_thanks = None
+        self.prompt_resume_01 = None
 
         # ARTIFACTS.
         self.artifacts_discovered = None

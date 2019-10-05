@@ -194,6 +194,7 @@ IMAGES = {
         "collect_ad": IMAGE_DIR + "/ads/collect.png",
         "watch_ad": IMAGE_DIR + "/ads/watch.png",
         "no_thanks": IMAGE_DIR + "/ads/no_thanks.png",
+        "prompt_resume_01": IMAGE_DIR + "/ads/prompt_resume_01.png",
     },
     "ARTIFACTS": {
         "artifacts_discovered": IMAGE_DIR + "/artifacts/artifacts_discovered.png",
