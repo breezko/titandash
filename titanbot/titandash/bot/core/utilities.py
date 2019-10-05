@@ -254,6 +254,26 @@ def in_transition_func(*args, max_loops):
     _self = args[0]
     loops = 0
     while True:
+        # Is the welcome back screen present?
+        # If the welcome screen is on the screen currently, we look for either
+        # the vip collection image, or non vip image, and click on the one we find.
+        if _self.grabber.search(_self.images.welcome_header, bool_only=True):
+            found, pos = _self.grabber.search(_self.images.welcome_collect_no_vip)
+            if found:
+                click_on_image(image=_self.images.welcome_collect_no_vip, pos=pos, pause=1)
+            else:
+                found, pos = _self.grabber.search(_self.images.welcome_collect_vip)
+                if found:
+                    click_on_image(image=_self.images.welcome_collect_vip, pos=pos, pause=1)
+
+        # Has the game asked us to rate the game? We do a separate check for this in case
+        # the panel opens over another panel in game.. We can close it explicitly,
+        # and then do another check below for the same panel close image.
+        if _self.grabber.search(_self.images.rate_icon, bool_only=True):
+            found, pos = _self.grabber.search(_self.images.large_exit_panel)
+            if found:
+                click_on_image(image=_self.images.large_exit_panel, pos=pos, pause=1)
+
         # Is a panel open that should be closed? This large exit panel will close any in game
         # panels that may of been opened on accident.
         found, pos = _self.grabber.search(_self.images.large_exit_panel)
@@ -347,3 +367,20 @@ def make_logger(instance, log_level="INFO", log_format=LOGGER_FORMAT, log_name=L
 
     _logger.setLevel(log_level)
     return _logger
+
+
+def timeit(method):
+    """
+    Timeit decorator used to measure the execution time of functions.
+    """
+    def timed(*args, **kw):
+        ts = time.time()
+        result = method(*args, **kw)
+        te = time.time()
+        if 'log_time' in kw:
+            name = kw.get('log_name', method.__name__.upper())
+            kw['log_time'][name] = int((te - ts) * 1000)
+        else:
+            print('%r  %2.2f ms' % (method.__name__, (te - ts) * 1000))
+        return result
+    return timed

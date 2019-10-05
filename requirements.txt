@@ -1,6 +1,9 @@
+redis
 wxPython
 PySide2
+PySimpleGUI
 PySimpleGUIWx
+pythonnet
 requests
 Pillow
 opencv-python
@@ -11,12 +14,14 @@ pywin32
 ipython
 pytesseract
 coverage
+dirsync
 keyboard==0.11.0
 GitPython
 Django
 django-paranoid
 django-jsonfield
 channels
+imagehash
 asgiref
 channels_redis
 pytz

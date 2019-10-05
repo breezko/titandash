@@ -38,7 +38,7 @@ def migrate_callback(sender, **kwargs):
 
         # Generating a default configuration if none exist yet.
         if Configuration.objects.all().count() == 0:
-            cfg = Configuration.objects.create(name="DEFAULT", bottom_artifact=Artifact.objects.get(name="ward_of_the_darkness"))
+            cfg = Configuration.objects.create(name="DEFAULT")
             cfg.upgrade_owned_tier.add(Tier.objects.get(tier="S"))
             cfg.save()
 

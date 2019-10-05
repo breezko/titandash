@@ -97,7 +97,9 @@ GAME_LOCS = {
         "no_thanks": (135, 616),
     },
     "ARTIFACTS": {
-        "bottom_region": (2, 693, 475, 763),
+        "discover_point": (407, 604),
+        "enchant_point": (410, 608),
+        "purchase": (254, 554)
     },
     "EMULATOR": {
         "exit_emulator": (468, -18),
@@ -171,12 +173,15 @@ ARTIFACTS_LOCS = {
 
 # Store any colors used (RGB) by the bot to determine so things in game.
 GAME_COLORS = {
-    "WHITE": (255, 255, 255)
+    "WHITE": (255, 255, 255),
+    "DISCOVER": (60, 185, 174),
+    "ENCHANT": (235, 167, 12),
 }
 
 # All images should have their names mapped to the file path within the module.
 IMAGES = {
     "ACHIEVEMENTS": {
+        "achievements_title": IMAGE_DIR + "/achievements/achievements.png",
         "daily_collect": IMAGE_DIR + "/achievements/daily_collect.png",
         "daily_watch": IMAGE_DIR + "/achievements/daily_watch.png",
     },
@@ -190,7 +195,9 @@ IMAGES = {
         "book_of_shadows": IMAGE_DIR + "/artifacts/book_of_shadows.png",
         "spend_max": IMAGE_DIR + "/artifacts/spend_max.png",
         "salvaged": IMAGE_DIR + "/artifacts/salvaged.png",
-        "percent_on": IMAGE_DIR + "/artifacts/percent_on.png"
+        "percent_on": IMAGE_DIR + "/artifacts/percent_on.png",
+        "discover": IMAGE_DIR + "/artifacts/discover.png",
+        "enchant": IMAGE_DIR + "/artifacts/enchant.png",
     },
     "DAILY_REWARD": {
         "collect_reward": IMAGE_DIR + "/daily_reward/collect.png",
@@ -277,6 +284,14 @@ IMAGES = {
     },
     "STATS": {
         "stats_title": IMAGE_DIR + "/stats/stats_title.png",
+    },
+    "WELCOME": {
+        "welcome_header": IMAGE_DIR + "/welcome/welcome_header.png",
+        "welcome_collect_no_vip": IMAGE_DIR + "/welcome/welcome_collect_no_vip.png",
+        "welcome_collect_vip": IMAGE_DIR + "/welcome/welcome_collect_vip.png",
+    },
+    "RATE": {
+        "rate_icon": IMAGE_DIR + "/rate/rate_icon.png",
     }
 }
 
@@ -329,6 +344,11 @@ CLAN_COORDS = {
 # Clan raid coordinates located in the main clan raid page.
 CLAN_RAID_COORDS = {
     "raid_attack_reset": (55, 719, 240, 737),
+}
+
+# Artifact coordinates used py any artifact related functionality.
+ARTIFACT_COORDS = {
+    "parse_region": (0, 57, 72, 763)
 }
 
 # Set of skills in game.

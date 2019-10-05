@@ -20,6 +20,7 @@ class Images:
         Manually set every expected value, allows for easier access later on.
         """
         # ACHIEVEMENTS.
+        self.achievements_title = None
         self.daily_collect = None
         self.daily_watch = None
 
@@ -34,6 +35,8 @@ class Images:
         self.spend_max = None
         self.salvaged = None
         self.percent_on = None
+        self.discover: None
+        self.enchant: None
 
         # CLAN_BATTLE.
         self.diamond = None
@@ -126,6 +129,14 @@ class Images:
         self.tap_titans_2 = None
         self.restart = None
 
+        # WELCOME
+        self.welcome_header = None
+        self.welcome_collect_no_vip = None
+        self.welcome_collect_vip = None
+
+        # RATE
+        self.rate_icon = None
+
 
 class Locs:
     """Locs class wraps all location points into a friendly wrapper class for use with the bot."""
@@ -205,6 +216,11 @@ class Locs:
         self.collect_ad_after_watch = None
         self.no_thanks = None
 
+        # ARTIFACTS
+        self.discover_point = None
+        self.enchant_point = None
+        self.purchase = None
+
         # EMULATOR.
         self.exit_emulator = None
         self.restart_emulator = None
@@ -222,3 +238,5 @@ class Colors:
 
     def _base(self):
         self.WHITE = None
+        self.DISCOVER = None
+        self.ENCHANT = None

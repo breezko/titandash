@@ -30,7 +30,7 @@ class Grabber:
         # Screen is updated and set to the result of an image grab as needed through the snapshot method.
         self.current = None
 
-    def snapshot(self, region=None):
+    def snapshot(self, region=None, downsize=None):
         """
         Take a snapshot of the current game session, based on the width and height of the grabber unless
         an explicit region is specified to use to take a screen-shot with.
@@ -50,7 +50,13 @@ class Grabber:
             )
             self.current = region_grabber(region)
 
-    def search(self, image, region=None, precision=0.8, bool_only=False, testing=False):
+            if downsize:
+                self.current.thumbnail((
+                    self.current.width / downsize,
+                    self.current.height / downsize
+                ))
+
+    def search(self, image, region=None, precision=0.8, bool_only=False, testing=False, im=None):
         """
         Search the specified image for another image with a specified amount of precision.
 
@@ -72,9 +78,9 @@ class Grabber:
                     region[0] + self.window.x, region[1] + padded,
                     region[2] + self.window.x, region[3] + padded
                 )
-                position = imagesearcharea(image, region[0], region[1], region[2], region[3], precision)
+                position = imagesearcharea(image, region[0], region[1], region[2], region[3], precision, im=im)
             else:
-                position = imagesearcharea(image, self.x, self.y, self.x2, self.y2, precision, self.current)
+                position = imagesearcharea(image, self.x, self.y, self.x2, self.y2, precision, self.current if not im else im)
         except cv2.error:
             self.logger.error("error occurred during image search, does the file: {file} exist?".format(file=image))
             raise ValueError()

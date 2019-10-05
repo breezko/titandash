@@ -74,11 +74,13 @@ class GameStatistics(models.Model):
         played = self.play_time if self.play_time else None
 
         if played:
-            played = int(played.split("d")[0])
+            if "d" in played:
+                played_hours = int(played.split("d")[0]) * 24
+            else:
+                played_hours = int(played.split(":")[0])
         else:
             return 0
 
-        played_hours = played * 24
         return round(played_hours / installed, 2)
 
     @property
@@ -124,7 +126,7 @@ class GameStatistics(models.Model):
 
 
 BOT_STATISTICS_HELP_TEXT = {
-    "premium_ads": "How many premium ads have been earned and tracked by the bot.",
+    "ads": "How many ads have been earned and tracked by the bot.",
     "actions": "How many sets of actions have been ran by the bot.",
     "updates": "How many times has bot statistics been updated.",
     "instance": "The bot instance associated with these game statistics."
@@ -142,7 +144,7 @@ class BotStatistics(models.Model):
         verbose_name_plural = "Bot Statistics"
 
     # Game actions.
-    premium_ads = models.PositiveIntegerField(verbose_name="Premium Ads", default=0, help_text=BOT_STATISTICS_HELP_TEXT["premium_ads"])
+    ads = models.PositiveIntegerField(verbose_name="Premium Ads", default=0, help_text=BOT_STATISTICS_HELP_TEXT["ads"])
     actions = models.PositiveIntegerField(verbose_name="Actions", default=0, help_text=BOT_STATISTICS_HELP_TEXT["actions"])
     updates = models.PositiveIntegerField(verbose_name="Updates", default=0, help_text=BOT_STATISTICS_HELP_TEXT["updates"])
 
@@ -167,7 +169,7 @@ class BotStatistics(models.Model):
 
     def json(self):
         return {
-            "premium_ads": self.premium_ads,
+            "ads": self.ads,
             "actions": self.actions,
             "updates": self.updates,
             "prestiges": self.prestiges,

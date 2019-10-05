@@ -26,7 +26,8 @@ from .utilities import (
 )
 from .constants import (
     STAGE_PARSE_THRESHOLD, FUNCTION_LOOP_TIMEOUT, BOSS_LOOP_TIMEOUT,
-    QUEUEABLE_FUNCTIONS, FORCEABLE_FUNCTIONS, PROPERTIES, BREAK_NEXT_PROPS
+    QUEUEABLE_FUNCTIONS, FORCEABLE_FUNCTIONS, PROPERTIES, BREAK_NEXT_PROPS,
+    BREAK_NEXT_PROPS_ALL
 )
 
 from pyautogui import easeOutQuad, FailSafeException, linear
@@ -394,6 +395,20 @@ class Bot(object):
         dt = now + datetime.timedelta(seconds=self.configuration.recovery_check_interval_minutes * 60)
         self.props.next_recovery_reset = dt
         self.logger.info("the next recovery reset will take place in {time}".format(time=strfdelta(dt - now)))
+
+    @wrap_current_function
+    def bump_timed_variables(self, delta):
+        """
+        Bump the bot variables that are used to determine when functionality takes place (ie: next_xxx)
+        by the specified delta.
+
+        This is useful to us if a user has to wait for things to happens (ie: wait for an ad).
+        """
+        for attr in BREAK_NEXT_PROPS_ALL:
+            # Ignore None attributes so that disabled functionality isn't
+            # also bumped unnecessarily.
+            if getattr(self.props, attr):
+                setattr(self.props, attr, getattr(self.props, attr) + delta)
 
     @wrap_current_function
     def recover(self, force=False):
@@ -808,6 +823,42 @@ class Bot(object):
         """
         Determine whether or not any artifacts should be purchased, and purchase them.
         """
+        def purchase_new(image, point, color):
+            """
+            Given an image, point and color, use as a helper function to either discover or enchant an artifact.
+            """
+            # Is the image on the screen?
+            if self.grabber.search(image=image, bool_only=True):
+                # Is the specified color present in the point chosen.
+                if self.grabber.point_is_color(point=point, color=color):
+                    # Click to enchant/discover artifact.
+                    self.logger.info("performing...")
+                    self.click(point=point, pause=1)
+                    self.click(point=self.locs.purchase, pause=2)
+
+                    self.click(point=self.locs.close_top, clicks=5, interval=0.5, pause=2)
+
+        # Check for discovery/enchantment first.
+        if self.configuration.enable_artifact_discover_enchant:
+            self.logger.info("beginning artifact enchant/discover process.")
+            if not self.goto_artifacts():
+                return False
+
+            # Checking for discover available.
+            self.logger.info("checking if artifact discovery can be performed.")
+            purchase_new(
+                image=self.images.discover,
+                point=self.locs.discover_point,
+                color=self.colors.DISCOVER
+            )
+            # Checking for enchant available.
+            self.logger.info("checking if artifact enchantment can be performed.")
+            purchase_new(
+                image=self.images.enchant,
+                point=self.locs.enchant_point,
+                color=self.colors.ENCHANT
+            )
+
         if self.configuration.enable_artifact_purchase:
             self.logger.info("beginning artifact purchase process.")
             if not self.goto_artifacts(collapsed=False):
@@ -1071,12 +1122,7 @@ class Bot(object):
                 if found:
                     self.logger.info("watching daily achievement ad.")
                     click_on_image(image=self.images.daily_watch, pos=pos)
-                    sleep(30)
-
-                    # Ad likely finished at this point, attempt to close the ad now by using the
-                    # back button within the emulator.
-                    self.logger.info("attempting to close watched ad.")
-                    self.click(self.locs.back_emulator, pause=3)
+                    self.watch_ad(stop_image=self.images.achievements_title)
 
                     # Attempt to collect the ad.
                     found, pos = self.grabber.search(self.images.daily_collect)
@@ -1244,6 +1290,31 @@ class Bot(object):
 
                 self.calculate_next_clan_result_parse()
 
+    def watch_ad(self, stop_image):
+        """
+        Use this function while an ad is being watched.
+
+        Waiting until the specified stop_image is found on the screen. We click on the back button
+        continuously until the image is found. Then leaving the function.
+        """
+        self.logger.info("attempting to watch ad...")
+        # Initial sleep for five seconds...
+        # Ensure we dont begin clicking before the starts, lag could
+        # cause the ad to be delayed.
+        sleep(5)
+
+        # Looping while the image specified is not found.
+        while not self.grabber.search(image=stop_image, bool_only=True):
+            self.logger.info("attempting to close ad...")
+            # Bumping our timed variables.
+            self.bump_timed_variables(datetime.timedelta(seconds=5))
+            sleep(5)
+
+            # Attempt to close the ad?
+            self.click(point=self.locs.back_emulator, pause=1)
+
+        self.logger.info("ad has now been closed!")
+
     def ad(self):
         """
         Collect ad if one is available on the screen.
@@ -1262,17 +1333,12 @@ class Bot(object):
             else:
                 self.logger.info("watching normal ad!")
                 self.click(point=self.locs.collect_ad, offset=1)
+                self.watch_ad(stop_image=self.images.collect_ad)
 
-                # An ad has been launched... Let's wait a while before attempting to close it.
-                sleep(30)
-
-                # Ad likely finished at this point, attempt to close the ad now by using the
-                # back button within the emulator.
-                self.logger.info("attempting to close watched ad.")
-                self.click(point=self.locs.back_emulator, pause=3)
+                # Collect the ad after it's been watched.
                 self.click(point=self.locs.collect_ad_after_watch, pause=2)
 
-            self.stats.statistics.bot_statistics.premium_ads += 1
+            self.stats.statistics.bot_statistics.ads += 1
             self.stats.statistics.bot_statistics.save()
 
     @wrap_current_function

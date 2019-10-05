@@ -122,10 +122,6 @@ class ConfigurationAdmin(ParanoidAdmin):
             "classes": ("expanded",),
             "fields": ("enable_stats", "update_stats_on_start", "update_stats_every_x_minutes",),
         }),
-        ("Artifact Parsing Settings", {
-            "classes": ("expanded",),
-            "fields": ("bottom_artifact",),
-        }),
         ("Recovery Settings", {
             "classes": ("expanded",),
             "fields": ("recovery_check_interval_minutes", "recovery_allowed_failures",),

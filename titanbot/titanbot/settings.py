@@ -9,9 +9,7 @@ https://docs.djangoproject.com/en/2.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.1/ref/settings/
 """
-
-
-from settings import ROOT_DIR, IMAGE_DIR, TITAN_DB
+from settings import *
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -43,6 +41,7 @@ INSTALLED_APPS = [
     'channels',
     'titandash.apps.TitandashConfig',
     'titanauth',
+    'titanbootstrap',
 ]
 
 MIDDLEWARE = [
@@ -89,15 +88,16 @@ ASGI_APPLICATION = 'titanbot.routing.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, TITAN_DB),
+        'NAME': TITAN_DB_PATH,
     }
 }
 
+CHANNEL_PORT = 6379
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [('localhost', 6379)],
+            'hosts': [('localhost', CHANNEL_PORT)],
         },
     }
 }
@@ -147,3 +147,8 @@ STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
+
+# Dependency settings
+# Defaulting to the program being available on the users path.
+# Bootstrapping handles the case where it isn't on the path (which may be a common case).
+TESSERACT_COMMAND = "tesseract"
