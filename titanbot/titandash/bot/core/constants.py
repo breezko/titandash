@@ -62,8 +62,8 @@ FUNCTION_LOOP_TIMEOUT = 40
 BOSS_LOOP_TIMEOUT = int(FUNCTION_LOOP_TIMEOUT / 2)
 
 # Specify any functions that may be forced.
-FORCEABLE_FUNCTIONS = ["recover", "actions", "update_stats", "prestige", "daily_achievement_check", "raid_notifications",
-                       "activate_skills", "clan_results_parse", "breaks"]
+FORCEABLE_FUNCTIONS = ["recover", "actions", "update_stats", "prestige", "daily_achievement_check", "milestone_check",
+                       "raid_notifications", "activate_skills", "clan_results_parse", "breaks"]
 
 # Specify functions that can be activated through keyboard shortcuts.
 # The key present should represent a function that's present on the Bot.
@@ -88,6 +88,7 @@ SHORTCUT_FUNCTIONS = {
     "update_stats": "shift+u",
     "prestige": "shift+p",
     "daily_achievement_check": "ctrl+d",
+    "milestone_check": "ctrl+m",
     "clan_results_parse": "ctrl+p",
     "raid_notifications": "ctrl+r",
     "activate_skills": "ctrl+a",
@@ -140,6 +141,7 @@ QUEUEABLE_TOOLTIPS = {
     "update_stats": "Force a statistics update in game.",
     "prestige": "Force a prestige in game.",
     "daily_achievement_check": "Force a daily achievement check in game.",
+    "milestone_check": "Force a milestone check in game.",
     "clan_results_parse": "Force a clan results parse in game.",
     "raid_notifications": "Force a raid notifications check in game.",
     "activate_skills": "Force a skill activation in game.",
@@ -151,9 +153,9 @@ QUEUEABLE_TOOLTIPS = {
 # same time, update the current BotInstance and send out socket updates to the dashboard.
 PROPERTIES = [
     "current_stage", "current_function", "last_prestige", "next_action_run", "next_prestige",
-    "next_stats_update", "next_recovery_reset", "next_daily_achievement_check", "next_break", "resume_from_break",
-    "next_raid_notifications_check", "next_raid_attack_reset", "next_clan_results_parse", "next_heavenly_strike",
-    "next_deadly_strike", "next_hand_of_midas", "next_fire_sword", "next_war_cry", "next_shadow_clone"
+    "next_stats_update", "next_recovery_reset", "next_daily_achievement_check", "next_milestone_check", "next_break",
+    "resume_from_break", "next_raid_notifications_check", "next_raid_attack_reset", "next_clan_results_parse",
+    "next_heavenly_strike", "next_deadly_strike", "next_hand_of_midas", "next_fire_sword", "next_war_cry", "next_shadow_clone"
 ]
 
 # Creating a list of all properties that should be modified when a break takes place so that
