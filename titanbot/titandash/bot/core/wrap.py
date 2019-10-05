@@ -207,8 +207,9 @@ class Locs:
         # CLAN_BATTLE.
         self.clan = None
         self.clan_info = None
+        self.clan_info_header = None
         self.clan_info_close = None
-        self.clan_results = None
+        self.clan_previous_raid = None
         self.clan_results_copy = None
         self.clan_raid = None
 
