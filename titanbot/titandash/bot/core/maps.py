@@ -117,6 +117,10 @@ MASTER_LOCS = {
     "screen_top": (240, 6),
     "achievements": (207, 503),
     "daily_achievements": (342, 89),
+    "milestones": {
+        "milestones_header": (245, 85),
+        "milestones_collect_point": (382, 259),
+    },
     "skills": {
         "heavenly_strike": (415, 236),
         "deadly_strike": (415, 316),
@@ -176,6 +180,7 @@ GAME_COLORS = {
     "WHITE": (255, 255, 255),
     "DISCOVER": (60, 185, 174),
     "ENCHANT": (235, 167, 12),
+    "COLLECT_GREEN": (101, 155, 28),
 }
 
 # All images should have their names mapped to the file path within the module.
