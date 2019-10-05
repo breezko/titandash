@@ -1156,30 +1156,30 @@ class Bot(object):
                 self.logger.info("{force_or_initiate} milestone check now".format(
                     force_or_initiate="forcing" if force else "beginning"))
 
-            if not self.goto_master():
-                return False
-            if not self.leave_boss():
-                return False
+                if not self.goto_master():
+                    return False
+                if not self.leave_boss():
+                    return False
 
-            # Open the milestones tab in game.
-            self.click(point=MASTER_LOCS["achievements"], pause=2)
-            self.click(point=MASTER_LOCS["milestones"]["milestones_header"], pause=1)
+                # Open the milestones tab in game.
+                self.click(point=MASTER_LOCS["achievements"], pause=2)
+                self.click(point=MASTER_LOCS["milestones"]["milestones_header"], pause=1)
 
-            # Loop forever until no more milestones can be collected.
-            while True:
-                # Is the collect button available and the correct color for collection?
-                if self.grabber.point_is_color(point=MASTER_LOCS["milestones"]["milestones_collect_point"], color=self.colors.COLLECT_GREEN):
-                    self.logger.info("a completed milestone is complete, collecting now...")
-                    self.click(point=MASTER_LOCS["milestones"]["milestones_collect_point"], pause=1)
-                    self.click(point=self.locs.game_middle, clicks=5, interval=0.5)
-                    sleep(3)
-                else:
-                    self.logger.info("no milestone available for completion...")
-                    break
+                # Loop forever until no more milestones can be collected.
+                while True:
+                    # Is the collect button available and the correct color for collection?
+                    if self.grabber.point_is_color(point=MASTER_LOCS["milestones"]["milestones_collect_point"], color=self.colors.COLLECT_GREEN):
+                        self.logger.info("a completed milestone is complete, collecting now...")
+                        self.click(point=MASTER_LOCS["milestones"]["milestones_collect_point"], pause=1)
+                        self.click(point=self.locs.game_middle, clicks=5, interval=0.5)
+                        sleep(3)
+                    else:
+                        self.logger.info("no milestone available for completion...")
+                        break
 
-            # Exiting milestones screen now.
-            self.calculate_next_milestone_check()
-            self.click(point=MASTER_LOCS["screen_top"], clicks=3)
+                # Exiting milestones screen now.
+                self.calculate_next_milestone_check()
+                self.click(point=MASTER_LOCS["screen_top"], clicks=3)
 
     @wrap_current_function
     @not_in_transition
