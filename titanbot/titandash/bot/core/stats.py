@@ -14,17 +14,19 @@ from titandash.models.artifact import Artifact
 from titandash.models.prestige import Prestige
 
 from .maps import (
-    STATS_COORDS, STAGE_COORDS, IMAGES, GAME_LOCS, PRESTIGE_COORDS,
-    ARTIFACT_TIER_MAP, ARTIFACT_MAP, CLAN_COORDS, CLAN_RAID_COORDS
+    STATS_COORDS, STAGE_COORDS, GAME_LOCS, PRESTIGE_COORDS,
+    ARTIFACT_MAP, CLAN_COORDS, CLAN_RAID_COORDS
 )
 from .utilities import convert, delta_from_values
 
 from PIL import Image
 
+import threading
 import datetime
 import pytesseract
 import cv2
 import numpy as np
+import imagehash
 import uuid
 import logging
 
@@ -146,54 +148,105 @@ class Stats:
 
         Additionally, this method expects that the game screen is at the top of the expanded artifacts screen.
         """
-        # from tt2.core.maps import ARTIFACT_TIER_MAP, ARTIFACT_MAP, GAME_LOCS, IMAGES
+        from titandash.bot.core.maps import ARTIFACT_COORDS
+
         from titandash.bot.core.utilities import sleep
         from titandash.bot.core.utilities import drag_mouse
 
-        # Game locations based on current size of game.
+        _threads = []
+        _found = []
+
+        def images_duplicate(image_one, image_two, cutoff=2):
+            """
+            Determine if the specified images are the same or not through the use of the imagehash
+            library.
+
+            We can get an average hash of each image and compare them, using a cutoff to determine if
+            they are similar enough to end the loop.
+            """
+            if imagehash.average_hash(image=image_one) - imagehash.average_hash(image=image_two) < cutoff:
+                return True
+            else:
+                return False
+
+        def parse_image(_artifacts, _image):
+            """
+            Threaded Function.
+
+            Initialize a thread with this function and specific image to search for the specified list of artifacts.
+            """
+            _local_found = []
+            for artifact in _artifacts:
+                if artifact.artifact.name in _found:
+                    continue
+
+                # Get cv2 re-sized version of the artifact image.
+                # We use cv2 because the imagesearch library uses that image module.
+                artifact_image = cv2.imread(ARTIFACT_MAP.get(artifact.artifact.name))
+                artifact_image = cv2.resize(artifact_image, None, fx=0.5, fy=0.5)
+                if self.grabber.search(image=artifact_image, bool_only=True, im=_image):
+                    _local_found.append(artifact.artifact.name)
+
+            if _local_found:
+                self.logger.info("{length} artifacts found".format(length=len(_local_found)))
+                _found.extend(_local_found)
+
+        # Region used when taking screenshots of the window of artifacts.
+        capture_region = ARTIFACT_COORDS["parse_region"]
         locs = GAME_LOCS["GAME_SCREEN"]
-        images = IMAGES["GENERIC"]
 
-        # Region to search for the final artifact, taken from the configuration file.
-        last_artifact_region = GAME_LOCS["ARTIFACTS"]["bottom_region"]
+        # Take an initial screenshot of the artifacts panel.
+        self.grabber.snapshot(region=capture_region, downsize=2)
+        # Creating a list that will be used to place image objects
+        # into from the grabber.
+        images_container = [self.grabber.current]
 
-        # Looping forever until the bottom artifact has been found.
-        break_next = False
+        # Looping forever until we break from our loop
+        # due to us finding a duplicate image.
+        loops = 0
         while True:
-            for tier, d in ARTIFACT_TIER_MAP.items():
-                for artifact, values in d.items():
-                    # Break early if the artifact has already been discovered.
-                    art = self.artifact_statistics.artifacts.get(artifact=Artifact.objects.get(name=artifact))
-                    if art.owned:
-                        continue
+            loops += 1
 
-                    try:
-                        # Do a quick check to ensure that the artifacts screen is still open (no transition state).
-                        while not self.grabber.search(images["artifacts_active"], bool_only=True):
-                            continue
-
-                        if self.grabber.search(image=ARTIFACT_MAP.get(art.artifact.name), bool_only=True):
-                            self.logger.info("artifact: {artifact} was successfully found, marking as owned".format(
-                                artifact=artifact))
-                            art.owned = True
-                            art.save()
-
-                    except ValueError:
-                        self.logger.error("artifact: {artifact} could not be searched for, leaving false".format(
-                            artifact=artifact))
-
-            if break_next:
-                self.logger.info("artifact: {artifact} was found at the bottom of the screen, exiting parse loop now".format(
-                    artifact=self.session.configuration.bottom_artifact))
-                break
-
-            # Scroll down slightly and check for artifacts again.
             drag_mouse(start=locs["scroll_start"], end=locs["scroll_bottom_end"], window=self.window, quick_stop=locs["scroll_quick_stop"])
             sleep(1)
 
-            # Checking at the end of the loop to break, one more loop takes place before exit.
-            if self.grabber.search(ARTIFACT_MAP.get(self.session.configuration.bottom_artifact.name), region=last_artifact_region, bool_only=True):
-                break_next = True
+            # Take another screenshot of the screen now.
+            self.logger.info("taking screenshot {loop} of current artifacts on screen.".format(loop=loops))
+            self.grabber.snapshot(region=capture_region, downsize=2)
+
+            if images_duplicate(image_one=self.grabber.current, image_two=images_container[-1]):
+                # We should now have a list of all images available with the users entire
+                # set of owned artifacts. We can use this during parsing.
+                self.logger.info("duplicate images found, ending screenshot loop.")
+                break
+            else:
+                images_container.append(self.grabber.current)
+
+            if loops == 30:
+                self.logger.warning("30 screenshots have been reached... breaking loop manually now.")
+                break
+
+        # Looping through each image, creating a new thread to parse the information
+        # about the artifacts present.
+        unowned = self.artifact_statistics.artifacts.filter(owned=False)
+        for index, image in enumerate(images_container):
+            # Firing and forgetting our threads... Functionality can continue while this runs.
+            # Since a prestige never takes place right after a artifacts parse (or it shouldn't).
+            _threads.append(threading.Thread(name="ParserThread{index}".format(index=index), target=parse_image, kwargs={
+                "_artifacts": unowned,
+                "_image": image
+            }))
+            self.logger.info("created new thread ({thread}) for artifact parsing.".format(thread=_threads[-1]))
+
+        for thread in _threads:
+            self.logger.info("starting thread {thread}".format(thread=thread))
+            thread.start()
+
+        self.logger.info("waiting for threads to finish...")
+        for thread in _threads:
+            thread.join()
+
+        self.artifact_statistics.artifacts.filter(artifact__name__in=_found).update(owned=True)
 
     def update_ocr(self, test_set=None):
         """
