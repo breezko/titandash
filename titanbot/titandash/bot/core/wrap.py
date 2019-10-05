@@ -28,6 +28,7 @@ class Images:
         self.collect_ad = None
         self.watch_ad = None
         self.no_thanks = None
+        self.prompt_resume_01 = None
 
         # ARTIFACTS.
         self.artifacts_discovered = None
@@ -206,8 +207,9 @@ class Locs:
         # CLAN_BATTLE.
         self.clan = None
         self.clan_info = None
+        self.clan_info_header = None
         self.clan_info_close = None
-        self.clan_results = None
+        self.clan_previous_raid = None
         self.clan_results_copy = None
         self.clan_raid = None
 
@@ -240,3 +242,4 @@ class Colors:
         self.WHITE = None
         self.DISCOVER = None
         self.ENCHANT = None
+        self.COLLECT_GREEN = None

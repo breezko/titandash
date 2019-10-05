@@ -32,10 +32,11 @@ GAME_LOCS = {
     },
     "CLAN": {
         "clan": (82, 25),
-        "clan_info": (392, 124),
-        "clan_info_close": (408, 63),
-        "clan_results": (267, 119),
-        "clan_results_copy": (80, 228),
+        "clan_info": (194, 728),
+        "clan_info_header": (351, 82),
+        "clan_info_close": (431, 34),
+        "clan_previous_raid": (373, 298),
+        "clan_results_copy": (83, 226),
         "clan_raid": (109, 716),
     },
     "SKILL_BAR": {
@@ -117,6 +118,10 @@ MASTER_LOCS = {
     "screen_top": (240, 6),
     "achievements": (207, 503),
     "daily_achievements": (342, 89),
+    "milestones": {
+        "milestones_header": (245, 85),
+        "milestones_collect_point": (382, 259),
+    },
     "skills": {
         "heavenly_strike": (415, 236),
         "deadly_strike": (415, 316),
@@ -176,6 +181,7 @@ GAME_COLORS = {
     "WHITE": (255, 255, 255),
     "DISCOVER": (60, 185, 174),
     "ENCHANT": (235, 167, 12),
+    "COLLECT_GREEN": (101, 155, 28),
 }
 
 # All images should have their names mapped to the file path within the module.
@@ -189,6 +195,7 @@ IMAGES = {
         "collect_ad": IMAGE_DIR + "/ads/collect.png",
         "watch_ad": IMAGE_DIR + "/ads/watch.png",
         "no_thanks": IMAGE_DIR + "/ads/no_thanks.png",
+        "prompt_resume_01": IMAGE_DIR + "/ads/prompt_resume_01.png",
     },
     "ARTIFACTS": {
         "artifacts_discovered": IMAGE_DIR + "/artifacts/artifacts_discovered.png",
@@ -337,8 +344,8 @@ MASTER_COORDS = {
 }
 
 CLAN_COORDS = {
-    "info_name": (133, 36, 362, 69),
-    "info_code": (123, 696, 172, 711),
+    "info_name": (95, 15, 392, 54),
+    "info_code": (128, 746, 207, 766),
 }
 
 # Clan raid coordinates located in the main clan raid page.

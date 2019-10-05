@@ -120,6 +120,7 @@ class Bot(object):
         self.calculate_next_action_run()
         self.calculate_next_recovery_reset()
         self.calculate_next_daily_achievement_check()
+        self.calculate_next_milestone_check()
         self.calculate_next_raid_notifications_check()
         self.calculate_next_clan_result_parse()
         self.calculate_next_break()
@@ -539,6 +540,16 @@ class Bot(object):
         dt = now + datetime.timedelta(hours=self.configuration.daily_achievements_check_every_x_hours)
         self.props.next_daily_achievement_check = dt
         self.logger.info("daily achievement check in game will be initiated in {time}".format(time=strfdelta(dt - now)))
+
+    @wrap_current_function
+    def calculate_next_milestone_check(self):
+        """
+        Calculate when the next milestone check should take place.
+        """
+        now = timezone.now()
+        dt = now + datetime.timedelta(hours=self.configuration.milestones_check_every_x_hours)
+        self.props.next_milestone_check = dt
+        self.logger.info("milestone check in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     @wrap_current_function
     def calculate_next_raid_notifications_check(self):
@@ -1135,6 +1146,43 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    def milestone_check(self, force=False):
+        """
+        Perform a check for the collection of a completed milestone reward.
+        """
+        if self.configuration.enable_milestones:
+            now = timezone.now()
+            if force or now > self.props.next_milestone_check:
+                self.logger.info("{force_or_initiate} milestone check now".format(
+                    force_or_initiate="forcing" if force else "beginning"))
+
+            if not self.goto_master():
+                return False
+            if not self.leave_boss():
+                return False
+
+            # Open the milestones tab in game.
+            self.click(point=MASTER_LOCS["achievements"], pause=2)
+            self.click(point=MASTER_LOCS["milestones"]["milestones_header"], pause=1)
+
+            # Loop forever until no more milestones can be collected.
+            while True:
+                # Is the collect button available and the correct color for collection?
+                if self.grabber.point_is_color(point=MASTER_LOCS["milestones"]["milestones_collect_point"], color=self.colors.COLLECT_GREEN):
+                    self.logger.info("a completed milestone is complete, collecting now...")
+                    self.click(point=MASTER_LOCS["milestones"]["milestones_collect_point"], pause=1)
+                    self.click(point=self.locs.game_middle, clicks=5, interval=0.5)
+                    sleep(3)
+                else:
+                    self.logger.info("no milestone available for completion...")
+                    break
+
+            # Exiting milestones screen now.
+            self.calculate_next_milestone_check()
+            self.click(point=MASTER_LOCS["screen_top"], clicks=3)
+
+    @wrap_current_function
+    @not_in_transition
     def raid_notifications(self, force=False):
         """
         Perform all checks to see if a sms message will be sent to notify a user of an active raid.
@@ -1231,6 +1279,7 @@ class Bot(object):
                 # A clan is available, begin by opening the information panel
                 # to retrieve some generic information about the clan.
                 self.click(point=self.locs.clan_info, pause=2)
+                self.click(point=self.locs.clan_info_header, pause=2)
 
                 self.logger.info("attempting to parse out generic clan information now...")
 
@@ -1259,14 +1308,9 @@ class Bot(object):
                     clan.save()
 
                 self.logger.info("{clan} was parsed successfully.".format(clan=clan))
-
-                # At this point, the clan has been grabbed, safe to leave the information
-                # panel and begin the retrieval of the current raid results.
-                self.click(point=self.locs.clan_info_close, pause=1)
-
                 self.logger.info("attempting to parse out most recent raid results from clan...")
 
-                self.click(point=self.locs.clan_results, pause=2)
+                self.click(point=self.locs.clan_previous_raid, pause=2)
                 self.click(point=self.locs.clan_results_copy, pause=1)
 
                 win32clipboard.OpenClipboard()
@@ -1312,6 +1356,23 @@ class Bot(object):
 
             # Attempt to close the ad?
             self.click(point=self.locs.back_emulator, pause=1)
+
+            # Perform a quick check to see if a prompt is available
+            # that would otherwise block the ad from finishing.
+            for possible in [self.images.prompt_resume_01]:
+                found, pos = self.grabber.search(image=possible)
+                if found:
+                    click_on_image(image=possible, pos=pos, pause=0.5)
+
+            # Do an additional check for the welcome screen and close if it's present.
+            if self.grabber.search(self.images.welcome_header, bool_only=True):
+                found, pos = self.grabber.search(self.images.welcome_collect_no_vip)
+                if found:
+                    click_on_image(image=self.images.welcome_collect_no_vip, pos=pos, pause=1)
+                else:
+                    found, pos = self.grabber.search(self.images.welcome_collect_vip)
+                    if found:
+                        click_on_image(image=self.images.welcome_collect_vip, pos=pos, pause=1)
 
         self.logger.info("ad has now been closed!")
 
@@ -1664,6 +1725,7 @@ class Bot(object):
                 "parse_current_stage": True,
                 "prestige": self.configuration.enable_auto_prestige,
                 "daily_achievement_check": self.configuration.enable_daily_achievements,
+                "milestone_check": self.configuration.enable_milestones,
                 "raid_notifications": self.configuration.enable_raid_notifications,
                 "clan_results_parse": self.configuration.enable_clan_results_parse,
                 "actions": True,
@@ -1737,6 +1799,8 @@ class Bot(object):
             self.update_stats(force=True)
         if self.configuration.daily_achievements_check_on_start:
             self.daily_achievement_check(force=True)
+        if self.configuration.milestones_check_on_start:
+            self.milestone_check(force=True)
         if self.configuration.parse_clan_results_on_start:
             self.clan_results_parse(force=True)
         if self.configuration.raid_notifications_check_on_start:
