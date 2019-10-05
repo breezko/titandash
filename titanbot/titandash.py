@@ -1,7 +1,17 @@
 """
-titandash_improved.py
+titandash.py
 
-Experimental improvements to the titandash gui and executable.
+Main program entry point.
+
+All main functionality is performed here before starting the actual web server.
+
+We setup a basic logger here that logs information about the initialization of the app,
+which can be found in the local data directory (titandash.log).
+
+The web server is stopped, and started before opening the bootstrapper page by default.
+
+Once the server is started and application is opened in a webbrowser, we enter the system
+tray event loop that blocks forever while the user has the application open.
 """
 from django.conf import settings
 

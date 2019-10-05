@@ -12,9 +12,20 @@
 ## Getting Started
 Take a look at the [wiki](https://github.com/becurrie/titandash/wiki) for information about setting up and configuring the dependencies and requirements needed to start the dashboard and initiate a new bot instance.
 
-You can also visit our homepage, [here](https://titanda.sh) for more information and register now!
+You can also visit our homepage, [here](https://titanda.sh) for more information!
 
 ## Features
+### Bootstrapper
+- Perform automatic updates as they are released directly from this page within the web application.
+- Automate the following processes through the bootstrapper:
+  - Updating titandash to the newest version.
+  - Install python requirements taken from the `requirements.txt` file.
+  - Install all node packages from the `package.json` file.
+  - Perform the database caching command to ensure it's setup properly.
+  - Collect static files into the static directory.
+  - Perform dependency checks (`tesseract`, `redis`, `node`).
+- Display helpful error messages when any of the above processes fail.
+
 ### Dashboard
 - Main dashboard screen providing real-time updates and the ability to start, pause or stop the bot and view information about the current session.
 - Choose a specific window (emulator) to target when initializing a bot.
@@ -31,12 +42,10 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 - Choose different themes for the dashboard (including dark theme).
 
 ### System Tray
-- Use a system tray application instead of the web application to perform minimal functionality.
-- Start/Stop Bot Instances.
-- Start/Stop Titandash server.
-- Migrate/Open database.
-- Collect static files.
-- Open Github repository.
+- Open Dashboard.
+- Open Bootstrapper.
+- Open Github Repository.
+- Exit Application.
 
 ### Bot
 - Activate chosen in game skills on a specified cooldown, with the option to wait for a specific skill before activating others.
@@ -51,6 +60,7 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 - Hatch and collect any eggs when they become available.
 - Collect in game ads (VIP/Watch).
 - Collect daily achievements when they are completed (Watch daily ad).
+- Collect milestones in game when they are completed.
 - Collect daily rewards when they are available.
 
 ### Quickstart
@@ -69,3 +79,7 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 ## Development
 Thanks for taking the time to check out this project. If you have any suggestions, 
 you can create a new issue about it or create a pull request with your changes!
+
+## Discord
+You can also join our discord channel, [here](https://discord.gg/XJqfVEx) to stay up to date with all the newest features being worked on and make
+feature requests here if you want.
