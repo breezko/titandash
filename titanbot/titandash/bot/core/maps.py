@@ -32,10 +32,11 @@ GAME_LOCS = {
     },
     "CLAN": {
         "clan": (82, 25),
-        "clan_info": (392, 124),
-        "clan_info_close": (408, 63),
-        "clan_results": (267, 119),
-        "clan_results_copy": (80, 228),
+        "clan_info": (194, 728),
+        "clan_info_header": (351, 82),
+        "clan_info_close": (431, 34),
+        "clan_previous_raid": (373, 298),
+        "clan_results_copy": (83, 226),
         "clan_raid": (109, 716),
     },
     "SKILL_BAR": {
@@ -343,8 +344,8 @@ MASTER_COORDS = {
 }
 
 CLAN_COORDS = {
-    "info_name": (133, 36, 362, 69),
-    "info_code": (123, 696, 172, 711),
+    "info_name": (95, 15, 392, 54),
+    "info_code": (128, 746, 207, 766),
 }
 
 # Clan raid coordinates located in the main clan raid page.
