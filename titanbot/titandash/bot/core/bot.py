@@ -1361,6 +1361,23 @@ class Bot(object):
             # Attempt to close the ad?
             self.click(point=self.locs.back_emulator, pause=1)
 
+            # Perform a quick check to see if a prompt is available
+            # that would otherwise block the ad from finishing.
+            for possible in [self.images.prompt_resume_01]:
+                found, pos = self.grabber.search(image=possible)
+                if found:
+                    click_on_image(image=possible, pos=pos, pause=0.5)
+
+            # Do an additional check for the welcome screen and close if it's present.
+            if self.grabber.search(self.images.welcome_header, bool_only=True):
+                found, pos = self.grabber.search(self.images.welcome_collect_no_vip)
+                if found:
+                    click_on_image(image=self.images.welcome_collect_no_vip, pos=pos, pause=1)
+                else:
+                    found, pos = self.grabber.search(self.images.welcome_collect_vip)
+                    if found:
+                        click_on_image(image=self.images.welcome_collect_vip, pos=pos, pause=1)
+
         self.logger.info("ad has now been closed!")
 
     def ad(self):
