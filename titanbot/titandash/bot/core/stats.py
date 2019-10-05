@@ -30,8 +30,6 @@ import imagehash
 import uuid
 import logging
 
-pytesseract.pytesseract.tesseract_cmd = settings.TESSERACT_COMMAND
-
 
 class Stats:
     """Stats class contains all possible stat values and can be updated dynamically."""
@@ -73,6 +71,10 @@ class Stats:
         # Key is used by the update method to grab proper regions when taking screenshots.
         self.key = "{0}x{1}".format(self.grabber.width, self.grabber.height)
         self.version = BOT_VERSION
+
+        # Updating the pytesseract command that is used based on the one
+        # present in the django settings... Which should be handled by our bootstrapper.
+        pytesseract.pytesseract.tesseract_cmd = settings.TESSERACT_COMMAND
 
     @property
     def highest_stage(self):
