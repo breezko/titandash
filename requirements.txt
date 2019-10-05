@@ -21,6 +21,7 @@ Django
 django-paranoid
 django-jsonfield
 channels
+imagehash
 asgiref
 channels_redis
 pytz
