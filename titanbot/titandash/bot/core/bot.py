@@ -1279,6 +1279,7 @@ class Bot(object):
                 # A clan is available, begin by opening the information panel
                 # to retrieve some generic information about the clan.
                 self.click(point=self.locs.clan_info, pause=2)
+                self.click(point=self.locs.clan_info_header, pause=2)
 
                 self.logger.info("attempting to parse out generic clan information now...")
 
@@ -1307,14 +1308,9 @@ class Bot(object):
                     clan.save()
 
                 self.logger.info("{clan} was parsed successfully.".format(clan=clan))
-
-                # At this point, the clan has been grabbed, safe to leave the information
-                # panel and begin the retrieval of the current raid results.
-                self.click(point=self.locs.clan_info_close, pause=1)
-
                 self.logger.info("attempting to parse out most recent raid results from clan...")
 
-                self.click(point=self.locs.clan_results, pause=2)
+                self.click(point=self.locs.clan_previous_raid, pause=2)
                 self.click(point=self.locs.clan_results_copy, pause=1)
 
                 win32clipboard.OpenClipboard()
