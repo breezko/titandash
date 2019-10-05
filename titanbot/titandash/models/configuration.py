@@ -22,6 +22,9 @@ HELP_TEXT = {
     "enable_daily_achievements": "Enable the ability to check and collect daily achievements in game.",
     "daily_achievements_check_on_start": "Should daily achievements being checked for when a session is started.",
     "daily_achievements_check_every_x_hours": "Determine how many hours between each daily achievement check.",
+    "enable_milestones": "Enable the ability to check and collect milestones in game.",
+    "milestones_check_on_start": "Should milestones be checked for when a session is started?",
+    "milestones_check_every_x_hours": "Determine how many hours between each milestone check.",
     "enable_raid_notifications": "Should notifications be sent to a user when a clan raid starts or attacks are ready.",
     "raid_notifications_check_on_start": "Should a raid notifications check take place when a session is started.",
     "raid_notifications_check_every_x_minutes": "Determine how many minutes between each raid notifications check.",
@@ -112,6 +115,11 @@ class Configuration(ParanoidModel):
     enable_daily_achievements = models.BooleanField(verbose_name="Enable Daily Achievements", default=True, help_text=HELP_TEXT["enable_daily_achievements"])
     daily_achievements_check_on_start = models.BooleanField(verbose_name="Check Daily Achievements On Session Start", default=False, help_text=HELP_TEXT["daily_achievements_check_on_start"])
     daily_achievements_check_every_x_hours = models.PositiveIntegerField(verbose_name="Check Daily Achievements Every X Hours", default=1, help_text=HELP_TEXT["daily_achievements_check_every_x_hours"])
+
+    # MILESTONES Settings.
+    enable_milestones = models.BooleanField(verbose_name="Enable Milestones", default=True, help_text=HELP_TEXT["enable_milestones"])
+    milestones_check_on_start = models.BooleanField(verbose_name="Check Milestones On Session Start", default=False, help_text=HELP_TEXT["milestones_check_on_start"])
+    milestones_check_every_x_hours = models.PositiveIntegerField(verbose_name="Check Milestones Every X Hours", default=1, help_text=HELP_TEXT["milestones_check_every_x_hours"])
 
     # RAID NOTIFICATION Settings.
     enable_raid_notifications = models.BooleanField(verbose_name="Enable Raid Notifications", default=False, help_text=HELP_TEXT["enable_raid_notifications"])

@@ -240,3 +240,4 @@ class Colors:
         self.WHITE = None
         self.DISCOVER = None
         self.ENCHANT = None
+        self.COLLECT_GREEN = None
