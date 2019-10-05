@@ -80,6 +80,10 @@ class ConfigurationAdmin(ParanoidAdmin):
             "classes": ("expanded",),
             "fields": ("enable_daily_achievements", "daily_achievements_check_on_start", "daily_achievements_check_every_x_hours",),
         }),
+        ("Milestone Settings", {
+            "classes": ("expanded",),
+            "fields": ("enable_milestones", "milestones_check_on_start", "milestones_check_every_x_hours",),
+        }),
         ("Clan Raid Notifications Settings", {
             "classes": ("expanded",),
             "fields": ("enable_raid_notifications", "raid_notifications_check_on_start", "raid_notifications_check_every_x_minutes",
