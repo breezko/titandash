@@ -114,6 +114,12 @@ def user_directory():
         if not os.path.exists(path):
             os.makedirs(path)
 
+    # Our database directory definitely exists... Create a base database in the db location,
+    # we will move it through the function below... But if one doesn't exist yet at all,
+    # ensure an empty one does for use by other functionality.
+    if not os.path.exists(TITAN_DB_PATH):
+        open(TITAN_DB_PATH, "w")
+
     # Our local data directory is guaranteed to exist now, check for the existence of our actual
     # database within the codebase, and move it if one exists.
     existing = [p for p in pathlib.Path(ROOT_DIR).glob("**/{titan_db}".format(titan_db=TITAN_DB_NAME))]
@@ -122,6 +128,9 @@ def user_directory():
     # If a database is already present, we can ignore this part so no overwrite of
     # the users database takes place.
     if existing:
+        # We need to make sure we delete the empty database if we plan on moving
+        # one over... Ensuring a FileExistsError doesn't effect anything.
+        os.unlink(TITAN_DB_PATH)
         existing[0].rename(TITAN_DB_PATH)
 
 
