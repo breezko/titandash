@@ -10,6 +10,7 @@ HELP_TEXT = {
     "post_action_min_wait_time": "Determine the minimum amount of seconds to wait after an in game function is finished executing.",
     "post_action_max_wait_time": "Determine the maximum amount of seconds to wait after an in game function is finished executing.",
     "emulator": "Which emulator service is being used?",
+    "enable_ad_collection": "Enable to ability to collect ads in game.",
     "enable_premium_ad_collect": "Enable the premium ad collection, Note: This will only work if you have unlocked the ability to skip ads, watching ads is not supported.",
     "enable_egg_collection": "Enable the ability to collect and hatch eggs in game.",
     "enable_tapping": "Enable the ability to tap on titans (This also enables the clicking of fairies in game).",
@@ -98,8 +99,11 @@ class Configuration(ParanoidModel):
     # DEVICE Settings.
     emulator = models.CharField(verbose_name="Emulator", choices=EMULATOR_CHOICES, default=EMULATOR_CHOICES[0][0], max_length=255, help_text=HELP_TEXT["emulator"])
 
+    # AD Settings.
+    enable_ad_collection = models.BooleanField(verbose_name="Enable Ad Collection", default=True, help_text=HELP_TEXT["enable_ad_collection"])
+    enable_premium_ad_collect = models.BooleanField(verbose_name="Enable Premium Ad Collection", default=False, help_text=HELP_TEXT["enable_premium_ad_collect"])
+
     # GENERIC Settings.
-    enable_premium_ad_collect = models.BooleanField(verbose_name="Enable Premium Ad Collection", default=True, help_text=HELP_TEXT["enable_premium_ad_collect"])
     enable_egg_collection = models.BooleanField(verbose_name="Enable Egg Collection", default=True, help_text=HELP_TEXT["enable_egg_collection"])
     enable_tapping = models.BooleanField(verbose_name="Enable Tapping", default=True, help_text=HELP_TEXT["enable_tapping"])
     enable_tournaments = models.BooleanField(verbose_name="Enable Tournaments", default=True, help_text=HELP_TEXT["enable_tournaments"])
@@ -214,8 +218,11 @@ class Configuration(ParanoidModel):
             "Device": {
                 "emulator": self.emulator
             },
-            "Generic": {
+            "Ad": {
+                "enable_ad_collection": self.enable_ad_collection,
                 "enable_premium_ad_collect": self.enable_premium_ad_collect,
+            },
+            "Generic": {
                 "enable_egg_collection": self.enable_egg_collection,
                 "enable_tapping": self.enable_tapping,
                 "enable_tournaments": self.enable_tournaments
@@ -277,6 +284,7 @@ class Configuration(ParanoidModel):
                 "prestige_at_max_stage_percent": self.prestige_at_max_stage_percent
             },
             "Artifacts Action": {
+                "enable_artifact_discover_enchant": self.enable_artifact_discover_enchant,
                 "enable_artifact_purchase": self.enable_artifact_purchase,
                 "upgrade_owned_tier": [tier.json() for tier in self.upgrade_owned_tier.all()],
                 "shuffle_artifacts": self.shuffle_artifacts,
