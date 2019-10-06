@@ -68,9 +68,13 @@ class ConfigurationAdmin(ParanoidAdmin):
             "classes": ("expanded",),
             "fields": ("emulator",),
         }),
+        ("Ad Settings", {
+            "classes": ("expanded",),
+            "fields": ("enable_ad_collection", "enable_premium_ad_collect",)
+        }),
         ("Generic Settings", {
             "classes": ("expanded",),
-            "fields": ("enable_premium_ad_collect", "enable_egg_collection", "enable_tapping", "enable_tournaments",),
+            "fields": ("enable_egg_collection", "enable_tapping", "enable_tournaments",),
         }),
         ("Breaks Settings", {
             "classes": ("expanded",),
