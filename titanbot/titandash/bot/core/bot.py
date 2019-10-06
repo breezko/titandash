@@ -1129,16 +1129,17 @@ class Bot(object):
                 # Check for the single ad watching daily achievement.
                 # This only is ever present when a user does not have the
                 # vip ad collection feature unlocked.
-                found, pos = self.grabber.search(self.images.daily_watch)
-                if found:
-                    self.logger.info("watching daily achievement ad.")
-                    click_on_image(image=self.images.daily_watch, pos=pos)
-                    self.watch_ad(stop_image=self.images.achievements_title)
-
-                    # Attempt to collect the ad.
-                    found, pos = self.grabber.search(self.images.daily_collect)
+                if self.configuration.enable_ad_collection:
+                    found, pos = self.grabber.search(self.images.daily_watch)
                     if found:
-                        click_on_image(image=self.images.daily_collect, pos=pos)
+                        self.logger.info("watching daily achievement ad.")
+                        click_on_image(image=self.images.daily_watch, pos=pos)
+                        self.watch_ad(stop_image=self.images.achievements_title)
+
+                        # Attempt to collect the ad.
+                        found, pos = self.grabber.search(self.images.daily_collect)
+                        if found:
+                            click_on_image(image=self.images.daily_collect, pos=pos)
 
                 # Exiting achievements screen now.
                 self.calculate_next_daily_achievement_check()
@@ -1409,19 +1410,22 @@ class Bot(object):
            - The other one allows the function to be called directly without decorators added.
         """
         while self.grabber.search(self.images.collect_ad, bool_only=True) or self.grabber.search(self.images.watch_ad, bool_only=True):
-            if self.configuration.enable_premium_ad_collect:
-                self.logger.info("collecting premium ad!")
-                self.click(point=self.locs.collect_ad, pause=1, offset=1)
+            if self.configuration.enable_ad_collection:
+                if self.configuration.enable_premium_ad_collect:
+                    self.logger.info("collecting premium ad!")
+                    self.click(point=self.locs.collect_ad, pause=1, offset=1)
+                else:
+                    self.logger.info("watching normal ad!")
+                    self.click(point=self.locs.collect_ad, offset=1)
+                    self.watch_ad(stop_image=self.images.collect_ad)
+
+                    # Collect the ad after it's been watched.
+                    self.click(point=self.locs.collect_ad_after_watch, pause=2)
+
+                self.stats.statistics.bot_statistics.ads += 1
+                self.stats.statistics.bot_statistics.save()
             else:
-                self.logger.info("watching normal ad!")
-                self.click(point=self.locs.collect_ad, offset=1)
-                self.watch_ad(stop_image=self.images.collect_ad)
-
-                # Collect the ad after it's been watched.
-                self.click(point=self.locs.collect_ad_after_watch, pause=2)
-
-            self.stats.statistics.bot_statistics.ads += 1
-            self.stats.statistics.bot_statistics.save()
+                self.click(point=self.locs.no_thanks, pause=1, offset=1)
 
     @wrap_current_function
     @not_in_transition
