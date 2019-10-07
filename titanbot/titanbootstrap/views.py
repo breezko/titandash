@@ -286,24 +286,48 @@ def _check_tesseract():
     If it is, we can use this path to ensure settings TESSERACT_COMMAND is set to a valid value and test it.
     If not, we can display an exception to let the user know they they should install tesseract.
     """
+    # We are explicitly adding the "ProgramW6432" environment variable to the end in case
+    # issues come up with the os module when grabbing the paths.
+    environ_vars = ["ProgramW6432", "ProgramFiles(x86)"]
+    potential_paths = [os.path.join(os.environ[var], "Tesseract-OCR") for var in environ_vars]
+
+    # Base exception raised if issues come up with the tesseract pathing.
+    exception = TesseractCheckError("It seems like tesseract is not currently installed on your system, or titandash "
+                                    "was unable to find the program in any of these directories: {dirs}. Some of the "
+                                    "functionality used by the bot relies on this program. The bot may break or "
+                                    "crash unexpectedly until you've installed tesseract.".format(dirs=", ".join(potential_paths)))
+
     installed_path = None
     try:
-        for path in [os.path.join(os.environ[_program_files], "Tesseract-OCR") for _program_files in ["ProgramFiles", "ProgramFiles(x86)"]]:
+        for path in potential_paths:
             if os.path.exists(path):
                 installed_path = path
                 break
 
+        # Unable to find the installed path means one of two things, something in the users environment has
+        # gone awry and we can't find the path, or they do not have it installed. We'll do a final check to
+        # see if tesseract has been put on their path and works in a command prompt. Otherwise we error out.
         if not installed_path:
-            raise TesseractCheckError("It seems like tesseract is not currently installed on your system. Some of "
-                                      "the functionality used by the bot relies on this program. The bot may break or "
-                                      "crash unexpectedly until you've installed tesseract.")
+            if subprocess.run("tesseract --version", shell=True, universal_newlines=True).returncode == 0:
+                # Tesseract is on users path, we can just return true, default
+                # command is just "tesseract" which will always work.
+                return True
+            else:
+                raise exception
 
         # Tesseract is available, set the proper path for use by any piece of functionality
         # that makes use of text recognition.
         settings.TESSERACT_COMMAND = "{path}/tesseract".format(path=installed_path)
         return True
 
-    # Broadly catch exceptions so  our TesseractCheckError is caught as well as any other error.
+    # Check for a file not found error which may occur when tesseract is not installed at all.
+    except subprocess.CalledProcessError:
+        return _exception_response(
+            title="Dependencies - Tesseract",
+            exception=exception,
+            as_json=True
+        )
+    # Broadly catch exceptions so our TesseractCheckError is caught as well as any other error.
     except Exception as exc:
         return _exception_response(
             title="Dependencies - Tesseract",
