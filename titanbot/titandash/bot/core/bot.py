@@ -1129,16 +1129,17 @@ class Bot(object):
                 # Check for the single ad watching daily achievement.
                 # This only is ever present when a user does not have the
                 # vip ad collection feature unlocked.
-                found, pos = self.grabber.search(self.images.daily_watch)
-                if found:
-                    self.logger.info("watching daily achievement ad.")
-                    click_on_image(image=self.images.daily_watch, pos=pos)
-                    self.watch_ad(stop_image=self.images.achievements_title)
-
-                    # Attempt to collect the ad.
-                    found, pos = self.grabber.search(self.images.daily_collect)
+                if self.configuration.enable_ad_collection:
+                    found, pos = self.grabber.search(self.images.daily_watch)
                     if found:
-                        click_on_image(image=self.images.daily_collect, pos=pos)
+                        self.logger.info("watching daily achievement ad.")
+                        click_on_image(image=self.images.daily_watch, pos=pos)
+                        self.watch_ad(stop_image=self.images.achievements_title)
+
+                        # Attempt to collect the ad.
+                        found, pos = self.grabber.search(self.images.daily_collect)
+                        if found:
+                            click_on_image(image=self.images.daily_collect, pos=pos)
 
                 # Exiting achievements screen now.
                 self.calculate_next_daily_achievement_check()
@@ -1334,27 +1335,52 @@ class Bot(object):
 
                 self.calculate_next_clan_result_parse()
 
-    def watch_ad(self, stop_image):
+    def welcome_screen_check(self):
+        """
+        Check to see if the welcome panel is currently on the screen, and close it.
+        """
+        if self.grabber.search(self.images.welcome_header, bool_only=True):
+            found, pos = self.grabber.search(self.images.welcome_collect_no_vip)
+            if found:
+                click_on_image(image=self.images.welcome_collect_no_vip, pos=pos, pause=1)
+            else:
+                found, pos = self.grabber.search(self.images.welcome_collect_vip)
+                if found:
+                    click_on_image(image=self.images.welcome_collect_vip, pos=pos, pause=1)
+
+    def rate_screen_check(self):
+        """
+        Check to see if the game rate panel is currently on the screen, and close it.
+        """
+        if self.grabber.search(self.images.rate_icon, bool_only=True):
+            found, pos = self.grabber.search(self.images.large_exit_panel)
+            if found:
+                click_on_image(image=self.images.large_exit_panel, pos=pos, pause=1)
+
+    def watch_ad(self, stop_image, wait_time=10):
         """
         Use this function while an ad is being watched.
 
         Waiting until the specified stop_image is found on the screen. We click on the back button
         continuously until the image is found. Then leaving the function.
         """
-        self.logger.info("attempting to watch ad...")
+        self.logger.info("attempting to watch and collect ad...")
         # Initial sleep for five seconds...
-        # Ensure we dont begin clicking before the starts, lag could
-        # cause the ad to be delayed.
+        # Ensure we dont begin clicking before the ad starts,
+        # lag could cause the ad to be delayed.
         sleep(5)
 
-        # Looping while the image specified is not found.
+        # Looping while the image specified is not found. Allows this function
+        # to be used by any location that launches an ad. We currently only
+        # use it for the daily achievement ad, and the fairy ads.
         while not self.grabber.search(image=stop_image, bool_only=True):
-            self.logger.info("attempting to close ad...")
-            # Bumping our timed variables.
-            self.bump_timed_variables(datetime.timedelta(seconds=5))
-            sleep(5)
+            # Wait a bit before attempting to close the ad.
+            self.logger.info("waiting for {time}s before trying to close ad.".format(time=wait_time))
+            sleep(wait_time)
+            self.bump_timed_variables(datetime.timedelta(seconds=wait_time))
 
-            # Attempt to close the ad?
+            # Attempt to close the ad after waiting for a bit...
+            self.logger.info("attempting to close the active ad...")
             self.click(point=self.locs.back_emulator, pause=1)
 
             # Perform a quick check to see if a prompt is available
@@ -1364,16 +1390,12 @@ class Bot(object):
                 if found:
                     click_on_image(image=possible, pos=pos, pause=0.5)
 
-            # Do an additional check for the welcome screen and close if it's present.
-            if self.grabber.search(self.images.welcome_header, bool_only=True):
-                found, pos = self.grabber.search(self.images.welcome_collect_no_vip)
-                if found:
-                    click_on_image(image=self.images.welcome_collect_no_vip, pos=pos, pause=1)
-                else:
-                    found, pos = self.grabber.search(self.images.welcome_collect_vip)
-                    if found:
-                        click_on_image(image=self.images.welcome_collect_vip, pos=pos, pause=1)
+            # Check for the welcome screen being visible, this may occur if that ad is
+            # longer than usual... Ensuring that we don't get stuck on the screen.
+            self.welcome_screen_check()
 
+        # Reaching this point means that we've found the image specified to
+        # be visible once the ad is closed.
         self.logger.info("ad has now been closed!")
 
     def ad(self):
@@ -1388,19 +1410,22 @@ class Bot(object):
            - The other one allows the function to be called directly without decorators added.
         """
         while self.grabber.search(self.images.collect_ad, bool_only=True) or self.grabber.search(self.images.watch_ad, bool_only=True):
-            if self.configuration.enable_premium_ad_collect:
-                self.logger.info("collecting premium ad!")
-                self.click(point=self.locs.collect_ad, pause=1, offset=1)
+            if self.configuration.enable_ad_collection:
+                if self.configuration.enable_premium_ad_collect:
+                    self.logger.info("collecting premium ad!")
+                    self.click(point=self.locs.collect_ad, pause=1, offset=1)
+                else:
+                    self.logger.info("watching normal ad!")
+                    self.click(point=self.locs.collect_ad, offset=1)
+                    self.watch_ad(stop_image=self.images.collect_ad)
+
+                    # Collect the ad after it's been watched.
+                    self.click(point=self.locs.collect_ad_after_watch, pause=2)
+
+                self.stats.statistics.bot_statistics.ads += 1
+                self.stats.statistics.bot_statistics.save()
             else:
-                self.logger.info("watching normal ad!")
-                self.click(point=self.locs.collect_ad, offset=1)
-                self.watch_ad(stop_image=self.images.collect_ad)
-
-                # Collect the ad after it's been watched.
-                self.click(point=self.locs.collect_ad_after_watch, pause=2)
-
-            self.stats.statistics.bot_statistics.ads += 1
-            self.stats.statistics.bot_statistics.save()
+                self.click(point=self.locs.no_thanks, pause=1, offset=1)
 
     @wrap_current_function
     @not_in_transition
