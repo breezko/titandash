@@ -481,7 +481,7 @@ class Bot(object):
 
         # Any other conditionals will be using the current stage attribute of the bot.
         elif self.configuration.prestige_at_stage != 0:
-            self.logger.info("prestige at specific stage: {current}/{needed}.".format(current=strfnumber(self.props.current_stage), needed=strfnumber(self.configuration.PRESTIGE_AT_STAGE)))
+            self.logger.info("prestige at specific stage: {current}/{needed}.".format(current=strfnumber(self.props.current_stage), needed=strfnumber(self.configuration.prestige_at_stage)))
             if self.props.current_stage >= self.configuration.prestige_at_stage:
                 self.logger.info("prestige stage has been reached, prestige will happen now.")
                 return True
