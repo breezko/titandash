@@ -36,7 +36,8 @@ class BaseBotTest(TestCase):
             configuration=cls.config,
             window=cls.window,
             instance=BotInstance.objects.grab(),
-            logger=cls.logger
+            logger=cls.logger,
+            debug=True
         )
 
         # All required/needed Bot/Test Images are built here.
