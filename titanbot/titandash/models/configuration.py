@@ -1,7 +1,95 @@
 from django.db import models
 from django_paranoid.models import ParanoidModel
 
-from titandash.constants import INFO, LOGGING_LEVEL_CHOICES, EMULATOR_CHOICES
+from titandash.models.mixins import ExportModelMixin
+from titandash.models.artifact import Artifact
+from titandash.models.artifact import Tier
+from titandash.utils import import_model_kwargs
+from titandash.constants import INFO, LOGGING_LEVEL_CHOICES, EMULATOR_CHOICES, GENERIC_BLACKLIST
+
+EXPORT_BLACKLIST = [
+    "raid_notifications_twilio_account_sid",
+    "raid_notifications_twilio_auth_token",
+    "raid_notifications_twilio_from_number",
+    "raid_notifications_twilio_to_number"
+]
+
+# Use the compression keys to compress/decompress the configuration export string.
+# As more configuration options are added, we should add the field name to this list
+# with the next incrementing number available. This will ensure that we future proof
+# our export function without needing to worry about the number given.
+COMPRESSION_KEYS = {
+    "name": 0,
+    "soft_shutdown_on_critical_error": 1,
+    "soft_shutdown_update_stats": 2,
+    "post_action_min_wait_time": 3,
+    "post_action_max_wait_time": 4,
+    "emulator": 5,
+    "enable_ad_collection": 6,
+    "enable_premium_ad_collect": 7,
+    "enable_egg_collection": 8,
+    "enable_tapping": 9,
+    "enable_tournaments": 10,
+    "enable_breaks": 11,
+    "breaks_jitter": 12,
+    "breaks_minutes_required": 13,
+    "breaks_minutes_max": 14,
+    "breaks_minutes_min": 15,
+    "enable_daily_achievements": 16,
+    "daily_achievements_check_on_start": 17,
+    "daily_achievements_check_every_x_hours": 18,
+    "enable_milestones": 19,
+    "milestones_check_on_start": 20,
+    "milestones_check_every_x_hours": 21,
+    "enable_raid_notifications": 22,
+    "raid_notifications_check_on_start": 23,
+    "raid_notifications_check_every_x_minutes": 24,
+    "raid_notifications_twilio_account_sid": 25,
+    "raid_notifications_twilio_auth_token": 26,
+    "raid_notifications_twilio_from_number": 27,
+    "raid_notifications_twilio_to_number": 28,
+    "run_actions_every_x_seconds": 29,
+    "run_actions_on_start": 30,
+    "order_level_heroes": 31,
+    "order_level_master": 32,
+    "order_level_skills": 33,
+    "enable_master": 34,
+    "master_level_intensity": 35,
+    "enable_heroes": 36,
+    "hero_level_intensity": 37,
+    "enable_skills": 38,
+    "activate_skills_on_start": 39,
+    "interval_heavenly_strike": 40,
+    "interval_deadly_strike": 41,
+    "interval_hand_of_midas": 42,
+    "interval_fire_sword": 43,
+    "interval_war_cry": 44,
+    "interval_shadow_clone": 45,
+    "force_enabled_skills_wait": 46,
+    "max_skill_if_possible": 47,
+    "skill_level_intensity": 48,
+    "enable_auto_prestige": 49,
+    "prestige_x_minutes": 50,
+    "prestige_at_stage": 51,
+    "prestige_at_max_stage": 52,
+    "prestige_at_max_stage_percent": 53,
+    "enable_artifact_purchase": 54,
+    "enable_artifact_discover_enchant": 55,
+    "upgrade_owned_tier": 56,
+    "shuffle_artifacts": 57,
+    "ignore_artifacts": 58,
+    "upgrade_artifacts": 59,
+    "enable_stats": 60,
+    "update_stats_on_start": 61,
+    "update_stats_every_x_minutes": 62,
+    "enable_clan_results_parse": 63,
+    "parse_clan_results_on_start": 64,
+    "parse_clan_results_every_x_minutes": 65,
+    "recovery_check_interval_minutes": 66,
+    "recovery_allowed_failures": 67,
+    "enable_logging": 68,
+    "logging_level": 69,
+}
 
 
 HELP_TEXT = {
@@ -77,7 +165,7 @@ HELP_TEXT = {
 }
 
 
-class Configuration(ParanoidModel):
+class Configuration(ParanoidModel, ExportModelMixin):
     """
     Configuration Model.
 
@@ -198,6 +286,57 @@ class Configuration(ParanoidModel):
 
     def __str__(self):
         return "{name}".format(name=self.name)
+
+    def export_key(self):
+        return self.name
+
+    def export_model(self, compression_keys=None, blacklist=None):
+        return super(Configuration, self).export_model(compression_keys=COMPRESSION_KEYS, blacklist=EXPORT_BLACKLIST)
+
+    @staticmethod
+    def import_model_kwargs(export_string, compression_keys=None):
+        return import_model_kwargs(export_string=export_string, compression_keys=COMPRESSION_KEYS)
+
+    @staticmethod
+    def import_model(export_kwargs):
+        """
+        Configuration implementation for importing a new model instance.
+
+        The set of kwargs here should be in the format required. We can use the names we expect to derive specific
+        functionality. Since M2M fields don't support creation on objects that don't exist, as well as the fact
+        that some of our export keys will need to be used to get the model and attach it to the new configuration.
+        """
+        relation_fields = [field.name for field in Configuration._meta.get_fields() if field.name not in GENERIC_BLACKLIST and field.many_to_many or field.many_to_one]
+        relational_kwargs = {k: v for k, v in export_kwargs.items() if k in relation_fields}
+
+        # Remove relation fields from our base kwargs set.
+        for field in relation_fields:
+            del export_kwargs[field]
+
+        # Update the name of the configuration.
+        export_kwargs["name"] = "Imported " + export_kwargs["name"]
+
+        # Go ahead and attempt to create the new configuration, stripped of relational fields
+        # information, it will default to our normal default options.
+        configuration = Configuration.objects.create(**export_kwargs)
+        configuration.upgrade_owned_tier.clear()
+        configuration.ignore_artifacts.clear()
+        configuration.upgrade_artifacts.clear()
+
+        # Parsing the foreign key information and m2m data needed.
+        # Upgrade Owned Tier Information (Using "Tier" Value).
+        relational_kwargs["upgrade_owned_tier"] = [t.pk for t in Tier.objects.filter(tier__in=relational_kwargs["upgrade_owned_tier"])]
+        # Ignore Artifacts Information (Using "Key" Value).
+        relational_kwargs["ignore_artifacts"] = [a.pk for a in Artifact.objects.filter(key__in=relational_kwargs["ignore_artifacts"])]
+        # Upgrade Artifacts Information (Using "Key" Value).
+        relational_kwargs["upgrade_artifacts"] = [a.pk for a in Artifact.objects.filter(key__in=relational_kwargs["upgrade_artifacts"])]
+
+        configuration.upgrade_owned_tier.add(*relational_kwargs["upgrade_owned_tier"])
+        configuration.ignore_artifacts.add(*relational_kwargs["ignore_artifacts"])
+        configuration.upgrade_artifacts.add(*relational_kwargs["upgrade_artifacts"])
+        configuration.save()
+
+        return configuration
 
     def json(self, condense=False):
         """
