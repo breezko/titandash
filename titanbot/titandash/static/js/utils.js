@@ -97,3 +97,20 @@ function getActiveInstance() {
     });
     return active;
 }
+
+/**
+ * Copy the text within the specified container to the users clipboard.
+ */
+let copyToClipboard = function(containerId) {
+    if (document.selection) {
+        let range = document.body.createTextRange();
+        range.moveToElementText(document.getElementById(containerId));
+        range.select().createTextRange();
+        document.execCommand("copy");
+    } else if (window.getSelection) {
+        let range = document.createRange();
+        range.selectNode(document.getElementById(containerId));
+        window.getSelection().addRange(range);
+        document.execCommand("copy");
+    }
+};
