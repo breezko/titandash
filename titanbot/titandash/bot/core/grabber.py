@@ -71,6 +71,7 @@ class Grabber:
             self.snapshot()
 
         found = False
+        position = -1, -1
         padded = self.window.y + self.window.y_padding
         try:
             if region:
@@ -78,12 +79,40 @@ class Grabber:
                     region[0] + self.window.x, region[1] + padded,
                     region[2] + self.window.x, region[3] + padded
                 )
-                position = imagesearcharea(image, region[0], region[1], region[2], region[3], precision, im=im)
+
+                search_kwargs = {
+                    "x1": region[0],
+                    "y1": region[1],
+                    "x2": region[2],
+                    "y2": region[3],
+                    "precision": precision,
+                    "im": im
+                }
             else:
-                position = imagesearcharea(image, self.x, self.y, self.x2, self.y2, precision, self.current if not im else im)
+                search_kwargs = {
+                    "x1": self.x,
+                    "y1": self.y,
+                    "x2": self.x2,
+                    "y2": self.y2,
+                    "precision": precision,
+                    "im": self.current if not im else im
+                }
+
+            # If a list of images to be searched for is being used, loop through and search.
+            # The first image specified that is found breaks the loop.
+            if isinstance(image, list):
+                for _image in image:
+                    position = imagesearcharea(image=_image, **search_kwargs)
+                    if position[0] != -1:
+                        break
+            else:
+                position = imagesearcharea(image=image, **search_kwargs)
+
+        # Catch any errors relating the cv2 functionality. Most commonly appears if the
+        # file could not be found. But additional errors could crop up.
         except cv2.error:
-            self.logger.error("error occurred during image search, does the file: {file} exist?".format(file=image))
-            raise ValueError()
+            self.logger.error("error occurred during image search, does the file: {file} exist?".format(file=image), exc_info=True)
+            raise
 
         if position[0] != -1:
             found = True
