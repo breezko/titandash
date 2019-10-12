@@ -445,6 +445,13 @@
                     <p class="text-muted">{{ help.enable_master }}</p>
                 </div>
 
+                <div class="form-check">
+                    {# Master Level Only Once #}
+                    <input {% if config.master_level_only_once %}checked{% endif %} type="checkbox" class="form-check-input" id="master_level_only_once" name="master_level_only_once">
+                    <label class="form-check-label" for="master_level_only_once">Level Sword Master Once Per Prestige</label>
+                    <p class="text-muted">{{ help.master_level_only_once }}</p>
+                </div>
+
                 <div class="form-group">
                     {# Master Level Intensity #}
                     <label for="master_level_intensity">Master Level Intensity:</label>
