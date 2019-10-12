@@ -12,7 +12,6 @@ from titandash.models.statistics import Session
 from titandash.models.bot import BotInstance
 from titandash.utils import WindowHandler
 from titandash.bot.core.bot import Bot
-from titandash.bot.core.constants import WINDOW_FILTER
 
 from datetime import timedelta
 
@@ -35,7 +34,7 @@ def make_bot():
 
     return Bot(
         configuration=Configuration.objects.first(),
-        window=next(iter(wh.filter(contains=WINDOW_FILTER).items()))[1],
+        window=next(iter(wh.filter().items()))[1],
         instance=BotInstance.objects.first(),
         start=False
     )

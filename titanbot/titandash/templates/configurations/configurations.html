@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block head_title %}
+    Configurations
+{% endblock %}
+
+{% block content %}
+    <!-- Hidden Message Container -->
+    <div style="display: none;" id="messageContainer" data-message="{{ message }}"></div>
+
+    <!-- Import Modal -->
+    <div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importModalTitle">Import Configuration</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="importImportString">Import String:</label>
+                        <textarea rows="10" class="form-control" id="importImportString"></textarea>
+                    </div>
+                    <p class="text-muted">
+                        Paste a valid configuration export string here.
+                    </p>
+                    <div style="width: 100%;" id="importAlertContainer"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-dark" data-dismiss="modal">Close</button>
+                    <button id="importImportButton" type="button" disabled class="btn btn-primary">Import</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exportModalTitle">Export Configuration</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div style="word-break: break-word; font-size: 11px;" class="text-muted" id="exportModalExportString"></div>
+                    <hr/>
+                    <button id="exportCopyButton" style="width: 100%;" class="btn btn-success btn-sm"><span style="margin-right: 8px;" class="fa fa-clipboard"></span>Copy To Clipboard</button>
+                    <div style="width: 100%;" id="copyAlertContainer"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-dark" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalTitle">Delete Configuration</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div id="deleteModalBody" class="modal-body">
+                    <p id="deleteModalConfirmationMessage">Are you sure you want to delete this configuration?</p>
+                </div>
+                <div class="modal-footer">
+                    <button id="confirmDeleteButton" type="button" class="btn btn-danger">Delete</button>
+                    <button type="button" class="btn btn-dark" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="accordion">
+        <div class="card">
+            <div class="card-header" id="configurations">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne">Configurations</button>
+                     <a style="margin-left: 15px;" href="{% url "add_configuration" %}" class="float-right btn btn-primary">Add New Configuration<span style="margin-left: 8px;" class="fa fa-plus"></span></a>
+                    <button id="importConfigurationButton" class="float-right btn btn-primary">Import Configuration<span style="margin-left: 8px;" class="fa fa-file-import"></span></button>
+                </h5>
+            </div>
+
+            <div id="collapseOne" class="collapse show" data-parent="#accordion">
+                <div id="configurationsCardBody" class="card-body">
+                    <table id="configurationsTable" class="display table table-lg table-hover table-striped" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>Name</th>
+                                <th>Created</th>
+                                <th>Modified</th>
+                                <th>Export</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for configuration in configurations %}
+                                <tr data-export-string="{{ configuration.export }}" data-name="{{ configuration.config.name }}" data-id="{{ configuration.config.pk }}">
+                                    <td><a href="{% url "configuration" pk=configuration.config.pk %}">{{ configuration.config.pk }}</a></td>
+                                    <td><a href="{% url "configuration" pk=configuration.config.pk %}">{{ configuration.config.name }}</a></td>
+                                    <td data-order="{{ configuration.config.created_at.timestamp }}">{{ configuration.config.created }}</td>
+                                    <td data-order="{{ configuration.config.created_at.timestamp }}">{{ configuration.config.updated }}</td>
+                                    <td><button style="width: 100%;" type="button" class="btn btn-primary btn-export">Export<span style="margin-left: 8px;" class="fa fa-file-export"></span></button></td>
+                                    <td><button style="width: 100%;" type="button" class="btn btn-danger btn-delete">Delete<span style="margin-left: 8px;" class="fa fa-trash"></span></button></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+    <script src="{% static "js/configurations/configurations.js" %}"></script>
+{% endblock %}

@@ -41,7 +41,7 @@ function exportToJsonFile(jsonData, filename) {
  */
 function sendAlert(message, container, style, type="success", fade=true, dismissible=false) {
     let alert = $(`
-        <div style="${style}" class="alert fade show alert-${type} dashboard-alert">
+        <div style="display: none; ${style || ""}" class="alert alert-${type} dashboard-alert">
             ${message}
         </div>
     `);
@@ -54,17 +54,16 @@ function sendAlert(message, container, style, type="success", fade=true, dismiss
         `)
     }
 
-    // Appending the alert to our specified container.
-    container.append(alert);
+    alert.appendTo(container);
+    alert.fadeIn(250);
 
     if (fade) {
-        alert.fadeIn(250);
         // Fadeout after five full seconds.
         setTimeout(function () {
             alert.fadeOut(500, function () {
                 $(this).remove()
             });
-        }, 2000);
+        }, 4000);
     }
 }
 
@@ -98,3 +97,20 @@ function getActiveInstance() {
     });
     return active;
 }
+
+/**
+ * Copy the text within the specified container to the users clipboard.
+ */
+let copyToClipboard = function(containerId) {
+    if (document.selection) {
+        let range = document.body.createTextRange();
+        range.moveToElementText(document.getElementById(containerId));
+        range.select().createTextRange();
+        document.execCommand("copy");
+    } else if (window.getSelection) {
+        let range = document.createRange();
+        range.selectNode(document.getElementById(containerId));
+        window.getSelection().addRange(range);
+        document.execCommand("copy");
+    }
+};

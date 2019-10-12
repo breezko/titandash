@@ -1,0 +1,18 @@
+<thead>
+<tr>
+    <th>Select</th>
+    <th>Tier</th>
+    <th>Name</th>
+</tr>
+</thead>
+<tbody>
+{% for tier in choices.tiers %}
+    <tr data-key="{{ tier.pk }}">
+        <td style="vertical-align: middle;">
+            <input {% if tier in model.all %}checked{% endif %} style="height: 20px; width: 20px;" id="tierSelect" aria-label="check" type="checkbox">
+        </td>
+        <td>{{ tier.tier }}</td>
+        <td>{{ tier.name }}</td>
+    </tr>
+{% endfor %}
+</tbody>

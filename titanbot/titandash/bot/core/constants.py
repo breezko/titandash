@@ -169,6 +169,9 @@ BREAK_NEXT_PROPS = [
 BREAK_NEXT_PROPS_ALL = BREAK_NEXT_PROPS + ["next_break", "resume_from_break"]
 
 # Specify the filter strings used to find emulator windows.
-WINDOW_FILTER = [
-    "nox", "noxplayer"
+NOX_WINDOW_FILTER = [
+    "nox", "noxplayer",
+]
+MEMU_WINDOW_FILTER = [
+    "memu"
 ]

@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 
+from titandash.models.mixins import ExportModelMixin
+
 
 TIER_HELP_TEXT = {
     "tier": "Specify the tier.",
@@ -8,7 +10,7 @@ TIER_HELP_TEXT = {
 }
 
 
-class Tier(models.Model):
+class Tier(models.Model, ExportModelMixin):
     """
     Tier Model.
 
@@ -23,6 +25,16 @@ class Tier(models.Model):
 
     def __str__(self):
         return "{name}".format(name=self.name)
+
+    def export_key(self):
+        return self.tier
+
+    def import_model(self, export_kwargs):
+        pass
+
+    @staticmethod
+    def import_model_kwargs(export_string, compression_keys=None):
+        pass
 
     def json(self):
         return {
@@ -59,7 +71,7 @@ class ArtifactManager(models.Manager):
             return arts.exclude(name__in=ignore)
 
 
-class Artifact(models.Model):
+class Artifact(models.Model, ExportModelMixin):
     """
     Artifact Model.
 
@@ -79,14 +91,31 @@ class Artifact(models.Model):
         from titandash.utils import title
         return "{name} ({key}) - [{tier}]".format(name=title(self.name), key=self.key, tier=self.tier)
 
+    def export_key(self):
+        return self.key
+
+    @staticmethod
+    def import_model_kwargs(export_string, compression_keys=None):
+        pass
+
+    def import_model(self, export_kwargs):
+        pass
+
+    @property
+    def title(self):
+        """
+        Return a titled version of the artifact name.
+        """
+        from titandash.utils import title
+        return title(self.name)
+
     def json(self):
         """
         Return Artifact as a JSON Compliant Object.
         """
-        from titandash.utils import title
         return {
             "name": self.name,
-            "title": title(self.name),
+            "title": self.title,
             "key": self.key,
             "image": self.image,
             "path": "{dir}{path}".format(dir=settings.STATIC_URL, path=self.image)

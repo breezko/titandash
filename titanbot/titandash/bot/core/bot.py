@@ -50,7 +50,7 @@ class Bot(object):
 
     Statistics, Configurations and Logging is all setup here.
     """
-    def __init__(self, configuration, window, instance, logger=None, start=False):
+    def __init__(self, configuration, window, instance, logger=None, start=False, debug=False):
         """
         Initialize a new Bot. Setting up base variables as well as performing some bootstrapping
         to ensure authentication is handled before moving on.
@@ -81,8 +81,8 @@ class Bot(object):
         # Statistics handles Log instance creation... Set BotInstance now.
         self.instance.log = self.stats.session.log
         # Data containers.
-        self.images = Images(IMAGES, self.logger)
-        self.locs = Locs(GAME_LOCS, self.logger)
+        self.images = Images(IMAGES, self.logger, emulator_images=EMULATOR_IMAGES[self.configuration.emulator])
+        self.locs = Locs(GAME_LOCS, self.logger, emulator_locs=EMULATOR_LOCS[self.configuration.emulator])
         self.colors = Colors(GAME_COLORS, self.logger)
 
         self.instance.start(session=self.stats.session)
@@ -100,7 +100,8 @@ class Bot(object):
         self.logger.info("==========================================================================================")
 
         # Set authentication reference to an online state.
-        AuthWrapper().online()
+        if not debug:
+            AuthWrapper().online()
 
         # Create a list of the functions called in there proper order
         # when actions are performed by the bot.
@@ -111,6 +112,10 @@ class Bot(object):
         self.owned_artifacts = None
         self.next_artifact_index = None
         self.next_artifact_upgrade = None
+
+        # Current prestige information, this should be reset on each prestige so that certain actions
+        # can be performed a number of times, and be disabled when needed.
+        self.current_prestige_master_levelled = False
 
         # Setup the datetime objects used initially to determine when the bot
         # will perform specific actions in game.
@@ -650,11 +655,21 @@ class Bot(object):
         Perform all actions related to the levelling of the sword master in game.
         """
         if self.configuration.enable_master:
-            self.logger.info("levelling the sword master {clicks} time(s)".format(clicks=self.configuration.master_level_intensity))
-            if not self.goto_master(collapsed=False):
-                return False
+            # If the user has specified to only level the sword master once after every prestige
+            # and once at the beginning of their session.
+            if self.configuration.master_level_only_once:
+                if self.current_prestige_master_levelled:
+                    return True
+                else:
+                    self.logger.info("levelling the sword master once until the next prestige...")
+                    self.click(point=MASTER_LOCS["master_level"], clicks=self.configuration.master_level_intensity)
+                    self.current_prestige_master_levelled = True
+            else:
+                self.logger.info("levelling the sword master {clicks} time(s)".format(clicks=self.configuration.master_level_intensity))
+                if not self.goto_master(collapsed=False):
+                    return False
 
-            self.click(point=MASTER_LOCS["master_level"], clicks=self.configuration.master_level_intensity)
+                self.click(point=MASTER_LOCS["master_level"], clicks=self.configuration.master_level_intensity)
 
     @wrap_current_function
     @not_in_transition
@@ -764,6 +779,11 @@ class Bot(object):
             if self.should_prestige() or force:
                 self.logger.info("{begin_force} prestige process in game now.".format(
                     begin_force="beginning" if not force else "forcing"))
+
+                # Reset the current prestige variables, so that after this prestige is finished,
+                # we perform those functions then disable them when needed.
+                self.current_prestige_master_levelled = False
+
                 tournament = self.check_tournament()
 
                 # If tournament==True, then a tournament was available to join (which means we prestiged, exit early).
@@ -1676,11 +1696,11 @@ class Bot(object):
                 self.ERRORS += 1
                 return False
 
-            self.click(point=self.locs.close_bottom, offset=2)
+            self.click(point=self.locs.close_bottom, offset=2, pause=1)
             if not self.grabber.search(self.images.exit_panel, bool_only=True):
                 break
 
-            self.click(point=self.locs.close_top, offset=2)
+            self.click(point=self.locs.close_top, offset=2, pause=1)
             if not self.grabber.search(self.images.exit_panel, bool_only=True):
                 break
 
@@ -1771,7 +1791,7 @@ class Bot(object):
         Restart the emulator.
         """
         self.logger.info("attempting to restart the emulator...")
-        self.click(point=EMULATOR_LOCS[self.configuration.emulator]["close_emulator"], pause=1)
+        self.click(point=self.locs.close_emulator, pause=1)
 
         loops = 0
         while self.grabber.search(self.images.restart, bool_only=True):
@@ -1795,7 +1815,7 @@ class Bot(object):
         self.logger.info("opening tap titans 2 now...")
 
         loops = 0
-        while not self.grabber.search(self.images.tap_titans_2, bool_only=True):
+        while not self.grabber.search(image=self.images.tap_titans_2, bool_only=True):
             loops += 1
             if loops == FUNCTION_LOOP_TIMEOUT:
                 self.logger.warn("unable to open game...")
@@ -1804,11 +1824,16 @@ class Bot(object):
             # Sleep for a while after each check...
             sleep(2)
 
-        found, pos = self.grabber.search(self.images.tap_titans_2)
+        found, pos = self.grabber.search(image=self.images.tap_titans_2)
         if found:
             self.logger.info("game launcher was found, starting game...")
             click_on_image(image=self.images.tap_titans_2, pos=pos)
             sleep(wait)
+
+            # Check for welcome/rate screens.
+            self.welcome_screen_check()
+            self.rate_screen_check()
+
             return True
 
     @wrap_current_function

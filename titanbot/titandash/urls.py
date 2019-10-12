@@ -7,6 +7,14 @@ urlpatterns = [
     # MAIN DASHBOARD.
     path('', views.dashboard, name='dashboard'),
 
+    # CONFIGURATIONS.
+    path('configurations', views.configurations, name='configurations'),
+    path('configuration/<pk>/', views.configuration, name='configuration'),
+    path('configurations/add/', views.add_configuration, name='add_configuration'),
+    path('configurations/delete/', views.delete_configuration, name='delete_configuration'),
+    path('configurations/import/', views.import_configuration, name='import_configuration'),
+    path('configurations/save/', views.save_configuration, name='save_configuration'),
+
     # SECONDARY URLS.
     path('project_settings', views.project_settings, name='settings'),
     path('all_prestiges', views.all_prestiges, name='all_prestiges'),
