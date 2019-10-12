@@ -113,6 +113,10 @@ class Bot(object):
         self.next_artifact_index = None
         self.next_artifact_upgrade = None
 
+        # Current prestige information, this should be reset on each prestige so that certain actions
+        # can be performed a number of times, and be disabled when needed.
+        self.current_prestige_master_levelled = False
+
         # Setup the datetime objects used initially to determine when the bot
         # will perform specific actions in game.
         self.calculate_next_skill_execution()
@@ -651,11 +655,21 @@ class Bot(object):
         Perform all actions related to the levelling of the sword master in game.
         """
         if self.configuration.enable_master:
-            self.logger.info("levelling the sword master {clicks} time(s)".format(clicks=self.configuration.master_level_intensity))
-            if not self.goto_master(collapsed=False):
-                return False
+            # If the user has specified to only level the sword master once after every prestige
+            # and once at the beginning of their session.
+            if self.configuration.master_level_only_once:
+                if self.current_prestige_master_levelled:
+                    return True
+                else:
+                    self.logger.info("levelling the sword master once until the next prestige...")
+                    self.click(point=MASTER_LOCS["master_level"], clicks=self.configuration.master_level_intensity)
+                    self.current_prestige_master_levelled = True
+            else:
+                self.logger.info("levelling the sword master {clicks} time(s)".format(clicks=self.configuration.master_level_intensity))
+                if not self.goto_master(collapsed=False):
+                    return False
 
-            self.click(point=MASTER_LOCS["master_level"], clicks=self.configuration.master_level_intensity)
+                self.click(point=MASTER_LOCS["master_level"], clicks=self.configuration.master_level_intensity)
 
     @wrap_current_function
     @not_in_transition
@@ -765,6 +779,11 @@ class Bot(object):
             if self.should_prestige() or force:
                 self.logger.info("{begin_force} prestige process in game now.".format(
                     begin_force="beginning" if not force else "forcing"))
+
+                # Reset the current prestige variables, so that after this prestige is finished,
+                # we perform those functions then disable them when needed.
+                self.current_prestige_master_levelled = False
+
                 tournament = self.check_tournament()
 
                 # If tournament==True, then a tournament was available to join (which means we prestiged, exit early).
