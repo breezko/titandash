@@ -6,11 +6,32 @@ and mapping the proper values and coordinates to their respective keys.
 """
 from settings import IMAGE_DIR
 
+# Emulator specific locations will match up with the supported emulator
+# choices available in our configurations. We can use this to derive the location
+# of elements within the screen.
 EMULATOR_LOCS = {
     "nox": {
         "close_emulator": (465, -17),
         "restart": (296, 438),
+        "back": (504, 699),
     },
+    "memu": {
+        "close_emulator": (463, -20),
+        "restart": (327, 391),
+        "back": (500, 666),
+
+    }
+}
+
+EMULATOR_IMAGES = {
+    "nox": {
+        "tap_titans_2": IMAGE_DIR + "/emulator/tap_titans_2_nox.png",
+        "restart": IMAGE_DIR + "/emulator/restart_nox.png",
+    },
+    "memu": {
+        "tap_titans_2": IMAGE_DIR + "/emulator/tap_titans_2_memu.png",
+        "restart": IMAGE_DIR + "/emulator/restart_memu.png",
+    }
 }
 
 # All points in game that are relevant to the given resolution can be stored here.
@@ -101,11 +122,6 @@ GAME_LOCS = {
         "discover_point": (407, 604),
         "enchant_point": (410, 608),
         "purchase": (254, 554)
-    },
-    "EMULATOR": {
-        "exit_emulator": (468, -18),
-        "restart_emulator": (300, 439),
-        "back_emulator": (504, 699),
     },
 }
 
@@ -277,10 +293,6 @@ IMAGES = {
     },
     "CLAN_CRATE": {
         "okay": IMAGE_DIR + "/clan_crate/okay.png",
-    },
-    "EMULATOR": {
-        "tap_titans_2": IMAGE_DIR + "/emulator/tap_titans_2.png",
-        "restart": IMAGE_DIR + "/emulator/restart.png"
     },
     "CLAN": {
         "clan": IMAGE_DIR + "/clan/clan.png",
