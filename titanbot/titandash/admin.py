@@ -104,7 +104,7 @@ class ConfigurationAdmin(ParanoidAdmin):
         }),
         ("Master Action Settings", {
             "classes": ("expanded",),
-            "fields": ("enable_master", "master_level_intensity",),
+            "fields": ("enable_master", "master_level_only_once", "master_level_intensity",),
         }),
         ("Heroes Action Settings", {
             "classes": ("expanded",),
