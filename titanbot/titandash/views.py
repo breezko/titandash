@@ -2,7 +2,8 @@ from django.shortcuts import render
 from django.http.response import JsonResponse
 from django.core.cache import cache
 
-from django.db.models import Sum, Avg
+from django.db.models import Avg
+from django.urls import reverse
 
 from titanauth.authentication.wrapper import AuthWrapper
 
@@ -12,7 +13,7 @@ from titandash.constants import RUNNING, PAUSED, STOPPED, CACHE_TIMEOUT
 from titandash.models.bot import BotInstance
 from titandash.models.statistics import Session, Statistics, Log, ArtifactStatistics
 from titandash.models.clan import RaidResult
-from titandash.models.artifact import Artifact
+from titandash.models.artifact import Artifact, Tier
 from titandash.models.configuration import Configuration, ThemeConfig
 from titandash.models.prestige import Prestige
 from titandash.models.queue import Queue
@@ -54,6 +55,191 @@ def dashboard(request):
         })
 
     return render(request, "dashboard.html", context=ctx)
+
+
+def configurations(request):
+    """
+    Render a list of all available configurations. The option to export existing configurations should also be available.
+
+    Additionally, this is our list view, so after a add/save, a message should be available to include
+    in our contextual data.
+    """
+    ctx = {"configurations": []}
+    for config in Configuration.objects.all():
+        ctx["configurations"].append({"config": config, "export": config.export_model()})
+
+    if request.session.get("message"):
+        ctx["message"] = request.session.pop("message")
+
+    return render(request, "configurations/configurations.html", context=ctx)
+
+
+def configuration(request, pk):
+    """
+    Render a specific configuration for modification.
+    """
+    config = Configuration.objects.get(pk=pk)
+    ctx = config.form_dict()
+
+    return render(request, "configurations/edit_configuration.html", context=ctx)
+
+
+def add_configuration(request):
+    """
+    Render a page with default configuration settings to create a new one.
+
+    Visiting this url generates a brand new configuration temporarily to retrieve an instance
+    with all its default values set, it is then deleted and only re added once the users has
+    audited the options and chosen to save.
+    """
+    temp = Configuration()
+    ctx = temp.form_dict()
+    temp.delete()
+
+    return render(request, "configurations/add_configuration.html", context=ctx)
+
+
+def delete_configuration(request):
+    """
+    Delete the specified configuration present in the requests GET.
+    """
+    config = Configuration.objects.get(pk=request.GET.get("id"))
+    config.delete()
+
+    return JsonResponse(data={
+        "status": "success",
+        "message": "Configuration successfully deleted."
+    })
+
+
+def save_configuration(request):
+    """
+    Save the configuration information specified in the requests POST.
+    """
+    configuration_kwargs = dict(request.POST)
+    existing = configuration_kwargs.get("key", None)[0]
+
+    # Strip out any un-necessary information.
+    del configuration_kwargs["csrfmiddlewaretoken"]
+    del configuration_kwargs["key"]
+
+    # Fixup values to be compliant with configuration model.
+    try:
+        for kwarg, value in configuration_kwargs.items():
+            if isinstance(value, list):
+                if len(value) == 1:
+                    if value[0] in ["true", "false"]:
+                        configuration_kwargs[kwarg] = bool(value[0])
+                        continue
+
+                # Specific values may need to be coerced into a float.
+                if kwarg in ["prestige_at_max_stage_percent"]:
+                    configuration_kwargs[kwarg] = float(value[0])
+                # M2M Fields should just use their base value.
+                elif kwarg in ["upgrade_owned_tier", "upgrade_artifacts", "ignore_artifacts"]:
+                    configuration_kwargs[kwarg] = value[0]
+                else:
+                    # Check for an integer type value...
+                    try:
+                        configuration_kwargs[kwarg] = int(value[0])
+                    # Can not be an int... Use first value present.
+                    except ValueError:
+                        configuration_kwargs[kwarg] = value[0]
+    except Exception as exc:
+        return JsonResponse(data={
+            "status": "error",
+            "message": "An error occurred while parsing configuration data. {exc}".format(exc=exc)
+        })
+
+    try:
+        # Ensure any un needed keys are removed from kwargs.
+        fields = [f.name for f in Configuration._meta.get_fields()]
+        configuration_kwargs = {k: v for k, v in configuration_kwargs.items() if k in fields}
+
+        # Before saving/creating the configuration, we have to pop out our
+        # m2m fields and update them afterwards...
+        upgrade_owned_tier = Tier.objects.filter(pk__in=[t for t in configuration_kwargs.pop("upgrade_owned_tier").split(",") if t != ""])
+        upgrade_artifacts = Artifact.objects.filter(key__in=[a for a in configuration_kwargs.pop("upgrade_artifacts").split(",") if a != ""])
+        ignore_artifacts = Artifact.objects.filter(key__in=[a for a in configuration_kwargs.pop("ignore_artifacts").split(",") if a != ""])
+
+        if existing:
+            config = Configuration.objects.filter(pk=existing)
+            config.update(**configuration_kwargs)
+            config = config.first()
+        else:
+            config = Configuration.objects.create(**configuration_kwargs)
+
+        config.upgrade_owned_tier.clear()
+        config.upgrade_artifacts.clear()
+        config.ignore_artifacts.clear()
+
+        config.upgrade_owned_tier.add(*upgrade_owned_tier)
+        config.upgrade_artifacts.add(*upgrade_artifacts)
+        config.ignore_artifacts.add(*ignore_artifacts)
+
+        config.save()
+
+        # Return a helpful message for use on list view.
+        if existing:
+            request.session["message"] = "Configuration {name} was saved successfully.".format(name=config.name)
+        else:
+            request.session["message"] = "Configuration {name} was added successfully.".format(name=config.name)
+
+        return JsonResponse(data={
+            "status": "success",
+            "message": "Configuration saved."
+        })
+    except Exception as exc:
+        return JsonResponse(data={
+            "status": "error",
+            "message": "An error occurred while saving the configuration. {exc}".format(exc=exc)
+        })
+
+
+def import_configuration(request):
+    """
+    Import a configuration with the specified import string.
+    """
+    import_string = request.GET.get("importString", None)
+
+    if not import_string:
+        return JsonResponse(data={
+            "status": "error",
+            "message": "A configuration string must be specified before attempting to import a configuration."
+        })
+
+    # Configuration string exists! Let's attempt the creation of our
+    # configuration model now.
+    try:
+        config = Configuration.import_model(
+            export_kwargs=Configuration.import_model_kwargs(
+                export_string=import_string
+            )
+        )
+    except Exception as exc:
+        return JsonResponse(data={
+            "status": "error",
+            "message": "An error occurred while importing the specified configuration: {exc}".format(exc=exc)
+        })
+
+    return JsonResponse(data={
+        "status": "success",
+        "message": "Successfully imported configuration.",
+        "config": {
+            "name": config.name,
+            "export": config.export_model(),
+            "pk": config.pk,
+            "url": reverse("configuration", kwargs={"pk": config.pk}),
+            "created": {
+                "timestamp": config.created_at.timestamp(),
+                "formatted": config.created
+            },
+            "updated": {
+                "timestamp": config.updated_at.timestamp(),
+                "formatted": config.updated
+            }
+        }
+    })
 
 
 def theme_change(request):
