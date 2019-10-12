@@ -25,6 +25,7 @@ LOGGING_LEVEL_CHOICES = (
 # Emulator choices used by Configuration's.
 EMULATOR_CHOICES = (
     ("nox", "Nox Emulator"),
+    ("memu", "MEmu Emulator"),
 )
 
 # Convert datetimes into human readable strings...
