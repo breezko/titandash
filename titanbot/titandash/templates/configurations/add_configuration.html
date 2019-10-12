@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block head_title %}
+    Add Configuration
+{% endblock %}
+
+{% block content %}
+    {% with config as config_data %}
+        {% include "configurations/configuration_form.html" %}
+    {% endwith %}
+
+    {# Buttons For Saving The New Configuration. #}
+    <div class="card">
+        <div class="card-body">
+            <button id="saveConfigurationButton" class="btn btn-lg btn-success float-right" style="margin-left: 15px;">Add</button>
+            <a id="goBackButton" href="{% url "configurations" %}" role="button" class="btn btn-lg btn-primary float-right">Go Back</a>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static "js/configurations/configuration.js" %}"></script>
+{% endblock %}

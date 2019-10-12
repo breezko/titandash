@@ -5,7 +5,7 @@ from titandash.models.mixins import ExportModelMixin
 from titandash.models.artifact import Artifact
 from titandash.models.artifact import Tier
 from titandash.utils import import_model_kwargs
-from titandash.constants import INFO, LOGGING_LEVEL_CHOICES, EMULATOR_CHOICES, GENERIC_BLACKLIST
+from titandash.constants import INFO, LOGGING_LEVEL_CHOICES, EMULATOR_CHOICES, GENERIC_BLACKLIST, DATETIME_FMT
 
 EXPORT_BLACKLIST = [
     "raid_notifications_twilio_account_sid",
@@ -93,13 +93,14 @@ COMPRESSION_KEYS = {
 
 
 HELP_TEXT = {
+    "name": "Specify a name for this configuration.",
     "soft_shutdown_on_critical_error": "Should a soft shutdown be performed if the bot runs into a critical error during a session.",
-    "soft_shutdown_update_stats": "Enable stats updates when a soft shutdown is performed.",
+    "soft_shutdown_update_stats": "Perform a stats update when a soft shutdown is executed.",
     "post_action_min_wait_time": "Determine the minimum amount of seconds to wait after an in game function is finished executing.",
     "post_action_max_wait_time": "Determine the maximum amount of seconds to wait after an in game function is finished executing.",
     "emulator": "Which emulator service is being used?",
     "enable_ad_collection": "Enable to ability to collect ads in game.",
-    "enable_premium_ad_collect": "Enable the premium ad collection, Note: This will only work if you have unlocked the ability to skip ads, watching ads is not supported.",
+    "enable_premium_ad_collect": "Enable the premium ad collection, Note: This will only work if you have unlocked the ability to skip ads, leave disabled to watch ads.",
     "enable_egg_collection": "Enable the ability to collect and hatch eggs in game.",
     "enable_tapping": "Enable the ability to tap on titans (This also enables the clicking of fairies in game).",
     "enable_tournaments": "Enable the ability to enter and participate in tournaments.",
@@ -109,10 +110,10 @@ HELP_TEXT = {
     "breaks_minutes_max": "Maximum amount of minutes to break for.",
     "breaks_minutes_min": "Minimum amount of minutes to break for.",
     "enable_daily_achievements": "Enable the ability to check and collect daily achievements in game.",
-    "daily_achievements_check_on_start": "Should daily achievements being checked for when a session is started.",
+    "daily_achievements_check_on_start": "Should daily achievements be checked for completion when a session is started.",
     "daily_achievements_check_every_x_hours": "Determine how many hours between each daily achievement check.",
     "enable_milestones": "Enable the ability to check and collect milestones in game.",
-    "milestones_check_on_start": "Should milestones be checked for when a session is started?",
+    "milestones_check_on_start": "Should milestones be checked for completion when a session is started.",
     "milestones_check_every_x_hours": "Determine how many hours between each milestone check.",
     "enable_raid_notifications": "Should notifications be sent to a user when a clan raid starts or attacks are ready.",
     "raid_notifications_check_on_start": "Should a raid notifications check take place when a session is started.",
@@ -120,9 +121,9 @@ HELP_TEXT = {
     "raid_notifications_twilio_account_sid": "Specify the account sid associated with your twilio account.",
     "raid_notifications_twilio_auth_token": "Specify the auth token associated with your twilio account.",
     "raid_notifications_twilio_from_number": "Specify the from number associated with your twilio account",
-    "raid_notifications_twilio_to_number": "Specify the phone number you would like to receieve notifications at (ex: +19991234567)",
+    "raid_notifications_twilio_to_number": "Specify the phone number you would like to receive notifications at (ex: +19991234567)",
     "run_actions_every_x_seconds": "Determine how many seconds between each execution of all in game actions.",
-    "run_actions_on_start": "Should all actions be executed when a session is started.",
+    "run_actions_on_start": "Should all enabled actions be executed once when a session is started.",
     "order_level_heroes": "Select the order that heroes will be levelled in game (1, 2, 3).",
     "order_level_master": "Select the order that the sword master will be levelled in game (1, 2, 3).",
     "order_level_skills": "Select the order that skills will be levelled in game (1, 2, 3).",
@@ -131,7 +132,7 @@ HELP_TEXT = {
     "enable_heroes": "Enable the ability level heroes in game.",
     "hero_level_intensity": "Determine the amount of clicks performed on each hero when they are levelled.",
     "enable_skills": "Enable the ability to level and activate skills in game.",
-    "activate_skills_on_start": "Should skills be activated when a session is started.",
+    "activate_skills_on_start": "Should skills be activated once when a session is started.",
     "interval_heavenly_strike": "How many seconds between each activation of the heavenly strike skill.",
     "interval_deadly_strike": "How many seconds between each activation of the deadly strike skill.",
     "interval_hand_of_midas": "How many seconds between each activation of the hand of midas skill.",
@@ -139,19 +140,19 @@ HELP_TEXT = {
     "interval_war_cry": "How many seconds between each activation of the war cry skill.",
     "interval_shadow_clone": "How many seconds between each activation of the shadow clone skill.",
     "force_enabled_skills_wait": "Based on the intervals determined above, should skill activation wait until the largest interval is surpassed.",
-    "max_skill_if_possible": "Should a skill be levelled to it's maximum available amount if the option is present when a single level is bought.",
+    "max_skill_if_possible": "Should a skill be levelled to it's maximum available amount if the option is present when levelling.",
     "skill_level_intensity": "Determine the amount of clicks performed on each skill when levelled.",
     "enable_auto_prestige": "Enable the ability to automatically prestige in game.",
-    "prestige_x_minutes": "Determine the amount of minutes between each auto prestige process. This can be used for farming, or as a hard limit that is used if the thresholds below aren't met within this time. (0 = off).",
+    "prestige_x_minutes": "Determine the amount of minutes between each auto prestige process. This can be used for farming, or as a hard limit that is used if the thresholds below aren't met within this time limit. (0 = off).",
     "prestige_at_stage": "Determine the stage needed before the prestige process is started (Once you reach/pass this stage, you will prestige). (0 = off).",
     "prestige_at_max_stage": "Should a prestige take place once your max stage has been reached? (Stats must be up to date).",
-    "prestige_at_max_stage_percent": "Determine if you would like to perform an automatic prestige once a certain percent of your max stage has been reached. You may use values larger than 100 here to push your max stage. (0 = off).",
-    "enable_artifact_purchase": "Enable the ability to purchase artifacts in game after a prestige has taken place.",
+    "prestige_at_max_stage_percent": "Determine if you would like to perform an automatic prestige once a certain percent of your max stage has been reached. You may use values larger than 100 here to push your max stage. (ie: 99, 99.5, 101) (0 = off).",
     "enable_artifact_discover_enchant": "Enable the ability to discover or enchant artifacts if possible after a prestige.",
+    "enable_artifact_purchase": "Enable the ability to purchase artifacts in game after a prestige has taken place.",
     "upgrade_owned_tier": "Upgrade a specific tier (or tiers) of artifacts only.",
     "shuffle_artifacts": "Should owned artifacts be shuffled once calculated.",
     "ignore_artifacts": "Should any specific artifacts be ignored regardless of them being owned or not.",
-    "upgrade_artifacts": "Should any artifacts be specifically upgraded, disabling the above settings and choosing an artifact here will only upgrade this artifact.",
+    "upgrade_artifacts": "Should any artifacts be specifically upgraded, disabling the above settings and choosing an artifact here will only upgrade the selected artifact(s).",
     "enable_stats": "Enable the ability to update statistics during game sessions.",
     "update_stats_on_start": "Should stats be updated when a session is started.",
     "update_stats_every_x_minutes": "Determine how many minutes between each stats update in game.",
@@ -261,8 +262,8 @@ class Configuration(ParanoidModel, ExportModelMixin):
     # ARTIFACTS ACTION Settings.
     enable_artifact_discover_enchant = models.BooleanField(verbose_name="Enable Artifact Discover/Enchant", default=True, help_text=HELP_TEXT["enable_artifact_discover_enchant"])
     enable_artifact_purchase = models.BooleanField(verbose_name="Enable Artifact Purchase", default=True, help_text=HELP_TEXT["enable_artifact_purchase"])
-    upgrade_owned_tier = models.ManyToManyField(verbose_name="Upgrade Owned Tier", to="Tier", blank=True, related_name='upgrade_tiers', help_text=HELP_TEXT["upgrade_owned_tier"])
     shuffle_artifacts = models.BooleanField(verbose_name="Shuffle Artifacts", default=True, help_text=HELP_TEXT["shuffle_artifacts"])
+    upgrade_owned_tier = models.ManyToManyField(verbose_name="Upgrade Owned Tier", to="Tier", blank=True, related_name='upgrade_tiers', help_text=HELP_TEXT["upgrade_owned_tier"])
     ignore_artifacts = models.ManyToManyField(verbose_name="Ignore Artifacts", to="Artifact", blank=True, related_name='ignore_artifacts', help_text=HELP_TEXT["ignore_artifacts"])
     upgrade_artifacts = models.ManyToManyField(verbose_name="Upgrade Artifacts", to="Artifact", blank=True, related_name='upgrade_artifacts', help_text=HELP_TEXT["upgrade_artifacts"])
 
@@ -319,24 +320,55 @@ class Configuration(ParanoidModel, ExportModelMixin):
         # Go ahead and attempt to create the new configuration, stripped of relational fields
         # information, it will default to our normal default options.
         configuration = Configuration.objects.create(**export_kwargs)
-        configuration.upgrade_owned_tier.clear()
-        configuration.ignore_artifacts.clear()
-        configuration.upgrade_artifacts.clear()
 
-        # Parsing the foreign key information and m2m data needed.
-        # Upgrade Owned Tier Information (Using "Tier" Value).
-        relational_kwargs["upgrade_owned_tier"] = [t.pk for t in Tier.objects.filter(tier__in=relational_kwargs["upgrade_owned_tier"])]
-        # Ignore Artifacts Information (Using "Key" Value).
-        relational_kwargs["ignore_artifacts"] = [a.pk for a in Artifact.objects.filter(key__in=relational_kwargs["ignore_artifacts"])]
-        # Upgrade Artifacts Information (Using "Key" Value).
-        relational_kwargs["upgrade_artifacts"] = [a.pk for a in Artifact.objects.filter(key__in=relational_kwargs["upgrade_artifacts"])]
+        try:
+            configuration.upgrade_owned_tier.clear()
+            configuration.ignore_artifacts.clear()
+            configuration.upgrade_artifacts.clear()
 
-        configuration.upgrade_owned_tier.add(*relational_kwargs["upgrade_owned_tier"])
-        configuration.ignore_artifacts.add(*relational_kwargs["ignore_artifacts"])
-        configuration.upgrade_artifacts.add(*relational_kwargs["upgrade_artifacts"])
-        configuration.save()
+            # Parsing the foreign key information and m2m data needed.
+            # Upgrade Owned Tier Information (Using "Tier" Value).
+            relational_kwargs["upgrade_owned_tier"] = [t.pk for t in Tier.objects.filter(tier__in=relational_kwargs["upgrade_owned_tier"])]
+            # Ignore Artifacts Information (Using "Key" Value).
+            relational_kwargs["ignore_artifacts"] = [a.pk for a in Artifact.objects.filter(key__in=relational_kwargs["ignore_artifacts"])]
+            # Upgrade Artifacts Information (Using "Key" Value).
+            relational_kwargs["upgrade_artifacts"] = [a.pk for a in Artifact.objects.filter(key__in=relational_kwargs["upgrade_artifacts"])]
 
-        return configuration
+            configuration.upgrade_owned_tier.add(*relational_kwargs["upgrade_owned_tier"])
+            configuration.ignore_artifacts.add(*relational_kwargs["ignore_artifacts"])
+            configuration.upgrade_artifacts.add(*relational_kwargs["upgrade_artifacts"])
+            configuration.save()
+
+            return configuration
+
+        # Catch any exceptions post the creation of the new configuration,
+        # so we can safely delete the invalid config.
+        except Exception:
+            configuration.delete()
+            raise
+
+    @property
+    def created(self):
+        return self.created_at.astimezone().strftime(DATETIME_FMT)
+
+    @property
+    def updated(self):
+        return self.updated_at.astimezone().strftime(DATETIME_FMT)
+
+    def form_dict(self):
+        """
+        Return a contextual dictionary with information used to create configuration forms.
+        """
+        return {
+            "config": self,
+            "help": HELP_TEXT,
+            "choices": {
+                "emulator": EMULATOR_CHOICES,
+                "logging_level": LOGGING_LEVEL_CHOICES,
+                "artifacts": Artifact.objects.all(),
+                "tiers": Tier.objects.all()
+            }
+        }
 
     def json(self, condense=False):
         """

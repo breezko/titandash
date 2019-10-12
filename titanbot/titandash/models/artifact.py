@@ -101,14 +101,21 @@ class Artifact(models.Model, ExportModelMixin):
     def import_model(self, export_kwargs):
         pass
 
+    @property
+    def title(self):
+        """
+        Return a titled version of the artifact name.
+        """
+        from titandash.utils import title
+        return title(self.name)
+
     def json(self):
         """
         Return Artifact as a JSON Compliant Object.
         """
-        from titandash.utils import title
         return {
             "name": self.name,
-            "title": title(self.name),
+            "title": self.title,
             "key": self.key,
             "image": self.image,
             "path": "{dir}{path}".format(dir=settings.STATIC_URL, path=self.image)
