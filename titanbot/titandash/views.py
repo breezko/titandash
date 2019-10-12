@@ -129,7 +129,11 @@ def save_configuration(request):
             if isinstance(value, list):
                 if len(value) == 1:
                     if value[0] in ["true", "false"]:
-                        configuration_kwargs[kwarg] = bool(value[0])
+                        if value[0] == "true":
+                            configuration_kwargs[kwarg] = True
+                        else:
+                            configuration_kwargs[kwarg] = False
+
                         continue
 
                 # Specific values may need to be coerced into a float.
