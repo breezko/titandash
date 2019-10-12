@@ -81,8 +81,8 @@ class Bot(object):
         # Statistics handles Log instance creation... Set BotInstance now.
         self.instance.log = self.stats.session.log
         # Data containers.
-        self.images = Images(IMAGES, self.logger)
-        self.locs = Locs(GAME_LOCS, self.logger)
+        self.images = Images(IMAGES, self.logger, emulator_images=EMULATOR_IMAGES[self.configuration.emulator])
+        self.locs = Locs(GAME_LOCS, self.logger, emulator_locs=EMULATOR_LOCS[self.configuration.emulator])
         self.colors = Colors(GAME_COLORS, self.logger)
 
         self.instance.start(session=self.stats.session)
@@ -1772,7 +1772,7 @@ class Bot(object):
         Restart the emulator.
         """
         self.logger.info("attempting to restart the emulator...")
-        self.click(point=EMULATOR_LOCS[self.configuration.emulator]["close_emulator"], pause=1)
+        self.click(point=self.locs.close_emulator, pause=1)
 
         loops = 0
         while self.grabber.search(self.images.restart, bool_only=True):
@@ -1796,7 +1796,7 @@ class Bot(object):
         self.logger.info("opening tap titans 2 now...")
 
         loops = 0
-        while not self.grabber.search(self.images.tap_titans_2, bool_only=True):
+        while not self.grabber.search(image=self.images.tap_titans_2, bool_only=True):
             loops += 1
             if loops == FUNCTION_LOOP_TIMEOUT:
                 self.logger.warn("unable to open game...")
@@ -1805,11 +1805,16 @@ class Bot(object):
             # Sleep for a while after each check...
             sleep(2)
 
-        found, pos = self.grabber.search(self.images.tap_titans_2)
+        found, pos = self.grabber.search(image=self.images.tap_titans_2)
         if found:
             self.logger.info("game launcher was found, starting game...")
             click_on_image(image=self.images.tap_titans_2, pos=pos)
             sleep(wait)
+
+            # Check for welcome/rate screens.
+            self.welcome_screen_check()
+            self.rate_screen_check()
+
             return True
 
     @wrap_current_function
