@@ -1,2 +1,4 @@
 @echo off
-call workon titandash & cd titanbot & python titandash.py
+call workon titandash
+call cd %~dp0%titanbot
+call %WORKON_HOME%/titandash/Scripts/python titandash.py
