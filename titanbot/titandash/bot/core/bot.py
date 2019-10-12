@@ -1677,11 +1677,11 @@ class Bot(object):
                 self.ERRORS += 1
                 return False
 
-            self.click(point=self.locs.close_bottom, offset=2)
+            self.click(point=self.locs.close_bottom, offset=2, pause=1)
             if not self.grabber.search(self.images.exit_panel, bool_only=True):
                 break
 
-            self.click(point=self.locs.close_top, offset=2)
+            self.click(point=self.locs.close_top, offset=2, pause=1)
             if not self.grabber.search(self.images.exit_panel, bool_only=True):
                 break
 
