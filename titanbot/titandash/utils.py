@@ -2,6 +2,7 @@ from .constants import *
 
 from titandash.models.queue import Queue
 from titandash.bot.core.bot import Bot
+from titandash.bot.core.constants import NOX_WINDOW_FILTER, MEMU_WINDOW_FILTER
 
 from threading import Thread
 
@@ -91,6 +92,15 @@ class Window(object):
         self.width = rectangle[2] - self.x
         self.height = rectangle[3] - self.y
 
+        # Depending on the type of emulator being used (and support), some
+        # differences in the way their window object is defined.
+        # Nox: X Axis is not included in window rectangle.
+        # MEmu: X Axis is included.
+        # Based on these differences, we should modify appropriately
+        # the width and height values before calculating padding.
+        if self.text.lower() in MEMU_WINDOW_FILTER:
+            self.width -= 38
+
         # Additionally, based on the size of the emulator, we want
         # to ensure we can pad the x, y value so the title bar is taken
         # into account when things are clicked or searched for...
@@ -143,6 +153,7 @@ class InvalidHwndValue(Exception):
 class WindowHandler(object):
     """Window handle encapsulates all functionality for handling windows and processes needed."""
     def __init__(self):
+        self.filter_lst = MEMU_WINDOW_FILTER + NOX_WINDOW_FILTER
         self.windows = dict()
 
     def _cb(self, hwnd, extra):
@@ -171,17 +182,14 @@ class WindowHandler(object):
         except ValueError:
             raise InvalidHwndValue()
 
-    def filter(self, contains, ignore_hidden=True, ignore_smaller=(480, 800)):
+    def filter(self, ignore_hidden=True, ignore_smaller=(480, 800)):
         """
         Filter the currently available windows to ones that contain the specified text.
 
         Hidden (ie: 0x0 sized windows are ignored by default).
         Smaller: (ie: Windows smaller than the specified amount).
         """
-        if type(contains) == str:
-            contains = [contains]
-
-        dct = {hwnd: window for hwnd, window in self.windows.items() if window.find(contains)}
+        dct = {hwnd: window for hwnd, window in self.windows.items() if window.find(self.filter_lst)}
         if ignore_hidden:
             dct = {hwnd: window for hwnd, window in dct.items() if window.width != 0 and window.height != 0}
         if ignore_smaller:

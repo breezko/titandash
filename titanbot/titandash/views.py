@@ -17,7 +17,7 @@ from titandash.models.artifact import Artifact, Tier
 from titandash.models.configuration import Configuration, ThemeConfig
 from titandash.models.prestige import Prestige
 from titandash.models.queue import Queue
-from titandash.bot.core.constants import QUEUEABLE_FUNCTIONS, QUEUEABLE_TOOLTIPS, SHORTCUT_FUNCTIONS, WINDOW_FILTER
+from titandash.bot.core.constants import QUEUEABLE_FUNCTIONS, QUEUEABLE_TOOLTIPS, SHORTCUT_FUNCTIONS
 
 from io import BytesIO
 
@@ -41,7 +41,7 @@ def dashboard(request):
 
     wh = WindowHandler()
     wh.enum()
-    for hwnd, window in wh.filter(contains=WINDOW_FILTER).items():
+    for hwnd, window in wh.filter().items():
         ctx["windows"].append(window.json())
 
     ctx["windows"].reverse()
