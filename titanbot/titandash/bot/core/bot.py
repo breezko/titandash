@@ -50,7 +50,7 @@ class Bot(object):
 
     Statistics, Configurations and Logging is all setup here.
     """
-    def __init__(self, configuration, window, instance, logger=None, start=False):
+    def __init__(self, configuration, window, instance, logger=None, start=False, debug=False):
         """
         Initialize a new Bot. Setting up base variables as well as performing some bootstrapping
         to ensure authentication is handled before moving on.
@@ -100,7 +100,8 @@ class Bot(object):
         self.logger.info("==========================================================================================")
 
         # Set authentication reference to an online state.
-        AuthWrapper().online()
+        if not debug:
+            AuthWrapper().online()
 
         # Create a list of the functions called in there proper order
         # when actions are performed by the bot.

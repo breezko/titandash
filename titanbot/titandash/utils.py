@@ -1,7 +1,5 @@
-from .models.bot import BotInstance
-from .constants import RUNNING, PAUSED, STOPPED
+from .constants import *
 
-from titandash.models.configuration import Configuration
 from titandash.models.queue import Queue
 from titandash.bot.core.bot import Bot
 
@@ -33,6 +31,8 @@ def start(config, window, instance):
     current Bot model and the data present. If one does exist, we can send a termination signal to ensure that
     the old bot has stopped and that a new Bot Session can be initialized.
     """
+    from titandash.models.configuration import Configuration
+
     if instance.state == RUNNING:
         Queue.objects.add(function="terminate", instance=instance)
     if instance.state == PAUSED:
@@ -189,3 +189,66 @@ class WindowHandler(object):
 
         return dct
 
+
+# Import/Export Functionality.
+def import_model_kwargs(export_string, compression_keys=None):
+    """
+    Import a given export string back into the current model that the mixin is present on.
+    """
+    kwargs = {}
+    # Let's begin parsing out the export string provided...
+    # Fixup leading/trailing whitespace issues.
+    export_string = export_string.lstrip().rstrip()
+    export_attrs = export_string.split(ATTR_SEPARATOR)
+
+    for attribute in export_attrs:
+        key, value = attribute.split(VALUE_SEPARATOR)
+
+        # Initially, we must check if a compression key was used to shorten the key of this value.
+        # If so, we'll convert back to the correct value name.
+        if compression_keys:
+            for c_key, c_val in compression_keys.items():
+                if key == str(c_val):
+                    key = c_key
+                    break
+
+        # At this point, "key" should be the name of a value available on the model.
+        # We now need to parse the value itself...
+        # Is a boolean value being used (BOOL SEP + "T" Or "F")/
+        if len(value) == 3 and BOOLEAN_PREFIX in value:
+            if value[2] == "T":
+                value = True
+            elif value[2] == "F":
+                value = False
+
+            kwargs[key] = value
+            continue
+
+        # Is a foreign key value specified?
+        if FK_PREFIX in value:
+            kwargs[key] = [value.replace(FK_PREFIX, "")]
+            if kwargs[key][0] == "None":
+                kwargs[key][0] = None
+            continue
+
+        # Is a many to many value specified?
+        if M2M_PREFIX in value:
+            value = value.replace(M2M_PREFIX, "")
+            kwargs[key] = [val for val in value.split(M2M_SEPARATOR)]
+            for index, v in enumerate(kwargs[key]):
+                if v == "None":
+                    kwargs[key][index] = None
+            continue
+
+        # This case means we reached some sort of char field of plain
+        # text input field.
+        try:
+            kwargs[key] = int(value)
+        except ValueError:
+            if value == "None":
+                kwargs[key] = None
+            else:
+                kwargs[key] = value
+
+    # We now have the kwargs associated with this exported model.
+    return kwargs
