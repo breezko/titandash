@@ -89,6 +89,7 @@ COMPRESSION_KEYS = {
     "recovery_allowed_failures": 67,
     "enable_logging": 68,
     "logging_level": 69,
+    "master_level_only_once": 70,
 }
 
 
@@ -128,6 +129,7 @@ HELP_TEXT = {
     "order_level_master": "Select the order that the sword master will be levelled in game (1, 2, 3).",
     "order_level_skills": "Select the order that skills will be levelled in game (1, 2, 3).",
     "enable_master": "Enable the ability to level the sword master in game.",
+    "master_level_only_once": "Enable the option to only level the sword master once at the beginning of a session, and once after every prestige.",
     "master_level_intensity": "Determine the amount of clicks performed whenever the sword master is levelled.",
     "enable_heroes": "Enable the ability level heroes in game.",
     "hero_level_intensity": "Determine the amount of clicks performed on each hero when they are levelled.",
@@ -233,6 +235,7 @@ class Configuration(ParanoidModel, ExportModelMixin):
 
     # MASTER ACTION Settings.
     enable_master = models.BooleanField(verbose_name="Enable Master", default=True, help_text=HELP_TEXT["enable_master"])
+    master_level_only_once = models.BooleanField(verbose_name="Level Sword Master Once Per Prestige", default=False, help_text=HELP_TEXT["master_level_only_once"])
     master_level_intensity = models.PositiveIntegerField(verbose_name="Master Level Intensity", default=5, help_text=HELP_TEXT["master_level_intensity"])
 
     # HEROES ACTION Settings.
@@ -428,6 +431,7 @@ class Configuration(ParanoidModel, ExportModelMixin):
             },
             "Master Actions": {
                 "enable_master": self.enable_master,
+                "master_level_only_once": self.master_level_only_once,
                 "master_level_intensity": self.master_level_intensity
             },
             "Heroes": {
