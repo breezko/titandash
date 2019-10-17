@@ -602,6 +602,27 @@
                     <p class="text-muted">{{ help.enable_auto_prestige }}</p>
                 </div>
 
+                <div class="form-check">
+                    {# Enable Prestige Threshold Randomization #}
+                    <input {% if config.enable_prestige_threshold_randomization %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_prestige_threshold_randomization" name="enable_prestige_threshold_randomization">
+                    <label class="form-check-label" for="enable_prestige_threshold_randomization">Enable Prestige Threshold Randomization</label>
+                    <p class="text-muted">{{ help.enable_prestige_threshold_randomization }}</p>
+                </div>
+
+                <div class="form-group">
+                    {# Prestige Random Min Time #}
+                    <label for="prestige_random_min_time">Prestige Threshold Random Min Time:</label>
+                    <input value="{{ config.prestige_random_min_time|default_if_none:0 }}" type="number" class="form-control" id="prestige_random_min_time" name="prestige_random_min_time">
+                    <p style="padding: 3px;" class="text-muted">{{ help.prestige_random_min_time }}</p>
+                </div>
+
+                <div class="form-group">
+                    {# Prestige Random Max Time #}
+                    <label for="prestige_random_max_time">Prestige Threshold Random Max Time:</label>
+                    <input value="{{ config.prestige_random_max_time|default_if_none:0 }}" type="number" class="form-control" id="prestige_random_max_time" name="prestige_random_max_time">
+                    <p style="padding: 3px;" class="text-muted">{{ help.prestige_random_max_time }}</p>
+                </div>
+
                 <div class="form-group">
                     {# Prestige X Minutes #}
                     <label for="prestige_x_minutes">Prestige In X Minutes:</label>
