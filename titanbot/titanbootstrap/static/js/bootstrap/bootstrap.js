@@ -325,7 +325,6 @@ let TitandashBootstrapper = function() {
 
         // Display the hidden successful update message to the user.
         elements.bootstrapUpdatedContainer.fadeIn(500);
-        elements.bootstrapContinue.fadeIn(750);
     };
 
     /**
