@@ -73,3 +73,12 @@ kbd {
 .dash-prestige-table tr td {
     width: 25%;
 }
+
+/* Modify Modal Styles Directly... */
+#releaseModalBody > h1 {
+    font-size: 32px !important;
+}
+
+#releaseModalBody > h2 {
+    font-size: 28px; !important;
+}
