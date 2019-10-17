@@ -88,6 +88,7 @@ class BotInstance(models.Model):
     current_stage = models.PositiveIntegerField(verbose_name="Current Stage", blank=True, null=True)
     next_action_run = models.DateTimeField(verbose_name="Next Action Run", blank=True, null=True)
     next_prestige = models.DateTimeField(verbose_name="Next Timed Prestige", blank=True, null=True)
+    next_randomized_prestige = models.DateTimeField(verbose_name="Next Randomized Prestige", blank=True, null=True)
     next_stats_update = models.DateTimeField(verbose_name="Next Stats Update", blank=True, null=True)
     next_recovery_reset = models.DateTimeField(verbose_name="Next Recovery Reset", blank=True, null=True)
     next_daily_achievement_check = models.DateTimeField(verbose_name="Next Daily Achievement Check", blank=True, null=True)
@@ -193,6 +194,10 @@ class BotInstance(models.Model):
                 "datetime": str(self.next_prestige) if self.next_prestige else None,
                 "formatted": self.next_prestige.astimezone().strftime(DATETIME_FMT) if self.next_prestige else None
             },
+            "next_randomized_prestige": {
+                "datetime": str(self.next_randomized_prestige) if self.next_randomized_prestige else None,
+                "formatted": self.next_randomized_prestige.astimezone().strftime(DATETIME_FMT) if self.next_randomized_prestige else None
+            },
             "next_stats_update": {
                 "datetime": str(self.next_stats_update) if self.next_stats_update else None,
                 "formatted": self.next_stats_update.astimezone().strftime(DATETIME_FMT) if self.next_stats_update else None
@@ -282,6 +287,7 @@ class BotInstance(models.Model):
         self.current_stage = None
         self.next_action_run = None
         self.next_prestige = None
+        self.next_randomized_prestige = None
         self.next_stats_update = None
         self.next_recovery_reset = None
         self.next_daily_achievement_check = None
