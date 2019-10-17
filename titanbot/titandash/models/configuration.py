@@ -90,6 +90,9 @@ COMPRESSION_KEYS = {
     "enable_logging": 68,
     "logging_level": 69,
     "master_level_only_once": 70,
+    "enable_prestige_threshold_randomization": 71,
+    "prestige_random_min_time": 72,
+    "prestige_random_max_time": 73,
 }
 
 
@@ -145,6 +148,9 @@ HELP_TEXT = {
     "max_skill_if_possible": "Should a skill be levelled to it's maximum available amount if the option is present when levelling.",
     "skill_level_intensity": "Determine the amount of clicks performed on each skill when levelled.",
     "enable_auto_prestige": "Enable the ability to automatically prestige in game.",
+    "enable_prestige_threshold_randomization": "Enable the ability to add additional time to a prestige once one of the thresholds below are reached. For example, if this setting is enabled and you choose to prestige every 30 minutes, the actual prestige may take place in 33 minutes depending on the settings below. Additionally, if you choose to prestige at a percent, once you reach your percentage, the bot will wait the calculated amount of time before prestiging.",
+    "prestige_random_min_time": "Specify the lower floor that will be used when calculating an amount of time to wait after a prestige threshold is reached.",
+    "prestige_random_max_time": "Specify the upper ceiling that will be used when calculating an amount of time to wait after a prestige threshold is reached.",
     "prestige_x_minutes": "Determine the amount of minutes between each auto prestige process. This can be used for farming, or as a hard limit that is used if the thresholds below aren't met within this time limit. (0 = off).",
     "prestige_at_stage": "Determine the stage needed before the prestige process is started (Once you reach/pass this stage, you will prestige). (0 = off).",
     "prestige_at_max_stage": "Should a prestige take place once your max stage has been reached? (Stats must be up to date).",
@@ -257,6 +263,9 @@ class Configuration(ParanoidModel, ExportModelMixin):
 
     # PRESTIGE ACTION Settings.
     enable_auto_prestige = models.BooleanField(verbose_name="Enable Auto Prestige", default=True, help_text=HELP_TEXT["enable_auto_prestige"])
+    enable_prestige_threshold_randomization = models.BooleanField(verbose_name="Enable Prestige Threshold Randomization", default=True, help_text=HELP_TEXT["enable_prestige_threshold_randomization"])
+    prestige_random_min_time = models.PositiveIntegerField(verbose_name="Prestige Threshold Random Min Time", default=2, help_text=HELP_TEXT["prestige_random_min_time"])
+    prestige_random_max_time = models.PositiveIntegerField(verbose_name="Prestige Threshold Random Max Time", default=8, help_text=HELP_TEXT["prestige_random_max_time"])
     prestige_x_minutes = models.PositiveIntegerField(verbose_name="Prestige In X Minutes", default=45, help_text=HELP_TEXT["prestige_x_minutes"])
     prestige_at_stage = models.PositiveIntegerField(verbose_name="Prestige At Stage", default=0, help_text=HELP_TEXT["prestige_at_stage"])
     prestige_at_max_stage = models.BooleanField(verbose_name="Prestige At Max Stage", default=False, help_text=HELP_TEXT["prestige_at_max_stage"])
@@ -453,6 +462,9 @@ class Configuration(ParanoidModel, ExportModelMixin):
             },
             "Prestige Action": {
                 "enable_auto_prestige": self.enable_auto_prestige,
+                "enable_prestige_threshold_randomization": self.enable_prestige_threshold_randomization,
+                "prestige_random_min_time": self.prestige_random_min_time,
+                "prestige_random_max_time": self.prestige_random_max_time,
                 "prestige_x_minutes": self.prestige_x_minutes,
                 "prestige_at_stage": self.prestige_at_stage,
                 "prestige_at_max_stage": self.prestige_at_max_stage,
