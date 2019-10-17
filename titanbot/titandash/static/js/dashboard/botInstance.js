@@ -193,6 +193,15 @@ let BotInstanceConsumer = function() {
                     countdownObj[0] = new Countdown(data["datetime"], null, countdownObj[1], "0");
                 }
             }
+        } else {
+            // Destroying null datetimes sent from web socket...
+            // This will happen once a datetime is reset and is not expected
+            // to be set again for a while.
+            countdownObj[1].text("------");
+            if (countdownObj[0] !== null) {
+                countdownObj[0].destroy();
+                countdownObj[0] = null;
+            }
         }
     };
 
