@@ -13,6 +13,9 @@ from titandash.models.bot import BotInstance
 from titandash.utils import WindowHandler
 from titandash.bot.core.bot import Bot
 
+from pynput.mouse import Listener, Button
+
+
 from datetime import timedelta
 
 
@@ -38,6 +41,36 @@ def make_bot():
         instance=BotInstance.objects.first(),
         start=False
     )
+
+
+clicks = []
+
+
+def record_clicks():
+    """
+    Record the clicks that take place on the screen.
+
+    Each click coordinate is appended to a list of clicks and outputted once the
+    user has decided to stop recording, which can by stopped by pressing the right mouse button.
+
+    from titandash.bot.core.tester import *; record_clicks()
+    """
+    # Setup the events used by our listener.
+    def on_click(x, y, button, pressed):
+        global clicks
+        if pressed and button == Button.left:
+            clicks.append((x, y))
+        if pressed and button == Button.right:
+            print("CLICKS:")
+            for click in clicks:
+                print(click)
+
+            # Reset clicks list to blank.
+            clicks = []
+
+    print("RECORDING CLICKS NOW...")
+    with Listener(on_click=on_click) as listener:
+        listener.join()
 
 
 def make_prestige(instance_id=None, session_uuid=None):
