@@ -1,11 +1,13 @@
 from django.shortcuts import render
 from django.http.response import JsonResponse
 from django.core.cache import cache
+from django.conf import settings
 
 from django.db.models import Avg
 from django.urls import reverse
 
 from titanauth.authentication.wrapper import AuthWrapper
+from titanauth.models.release_info import ReleaseInfo
 
 from titandash.utils import start, pause, stop, resume, title
 from titandash.utils import WindowHandler
@@ -55,6 +57,49 @@ def dashboard(request):
         })
 
     return render(request, "dashboard.html", context=ctx)
+
+
+def release(request):
+    """
+    Perform a request to determine if the current release has had it's information shown to the user.
+
+    Once information is shown once, it does not ever happen again.
+    """
+    rel = ReleaseInfo.objects.grab(
+        version=settings.BOT_VERSION
+    )
+
+    # Check if the information has already been displayed to the user, if it has, we
+    # can simply return early with a successful request and our flag specifying the state.
+    if rel.grabbed:
+        return JsonResponse(data={
+            "status": "success",
+            "state": "shown",
+        })
+
+    # Otherwise, let's grab our required information, and return a response with that information.
+    try:
+        response = {
+            "status": "success",
+            "state": "not_shown",
+            "release": AuthWrapper().release_information(
+                version=rel.version
+            )
+        }
+
+        if response["release"]["status"] == "success":
+            rel.grabbed = True
+            rel.save()
+
+        return JsonResponse(data=response)
+
+    # Catch any exceptions that occur, we can display a simple alert on the users page
+    # Letting them know that this failed. They can report this issue if needed now.
+    except Exception as exc:
+        return JsonResponse(data={
+            "status": "error",
+            "error": str(exc)
+        })
 
 
 def configurations(request):

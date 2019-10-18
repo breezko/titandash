@@ -3,6 +3,7 @@
  */
 $(document).ready(function() {
     let InitializeDashboard = function() {
+        new ReleaseInfo();
         new Instances();
         new BotInstanceConsumer();
         new BotQueueConsumer();

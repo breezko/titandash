@@ -15,9 +15,30 @@
     <script src="{% static "js/dashboard/botGameScreen.js" %}"></script>
     <script src="{% static "js/dashboard/botQueue.js" %}"></script>
     <script src="{% static "js/dashboard/tools.js" %}"></script>
+    <script src="{% static "js/dashboard/releases.js" %}"></script>
 {% endblock %}
 
 {% block content %}
+
+    <!-- Release Modal -->
+    <div class="modal fade" id="releaseModal" tabindex="-1" role="dialog" aria-labelledby="releaseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="releaseModalTitle">Titandash X.X.X</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="releaseModalBody">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Tools Modal -->
     <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -310,8 +331,12 @@
                                         <td><div class="varsItem" id="dashboardBotNextActionRunValue">------</div></td>
                                     </tr>
                                     <tr>
-                                        <td><small>Next Prestige</small></td>
+                                        <td><small>Next Timed Threshold Prestige</small></td>
                                         <td><div class="varsItem" id="dashboardBotNextPrestigeValue">------</div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Randomized Threshold Prestige</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextRandomizedPrestigeValue">------</div></td>
                                     </tr>
                                     <tr>
                                         <td><small>Next Stats Update</small></td>

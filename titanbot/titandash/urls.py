@@ -34,6 +34,7 @@ urlpatterns = [
     path('logs/<pk>/', views.log, name='log'),
 
     # AJAX URLS.
+    path('ajax/release', views.release, name='release'),
     path('ajax/bot_instance/get', views.instance, name='bot_instance'),
     path('ajax/bot_instance/kill', views.kill_instance, name='kill_instance'),
     path('ajax/signal', views.signal, name='signal'),

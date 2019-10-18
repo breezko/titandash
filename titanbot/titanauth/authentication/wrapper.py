@@ -5,7 +5,9 @@ Encapsulating functionality that handles the interactions between the dashboard 
 and the external authentication system.
 """
 from titanauth.models.user_reference import ExternalAuthReference
-from titanauth.authentication.constants import AUTH_AUTHENTICATE_URL, AUTH_STATE_URL
+from titanauth.authentication.constants import (
+    AUTH_AUTHENTICATE_URL, AUTH_STATE_URL, AUTH_RELEASE_URL
+)
 
 import requests
 
@@ -57,3 +59,17 @@ class AuthWrapper(object):
         Attempt to set the current authentication reference to an online state.
         """
         return self._state(state="online")
+
+    def release_information(self, version):
+        """
+        Retrieve the version information for the specified version.
+        """
+        if not self.reference.valid:
+            raise ValueError("Authentication reference: {ref} is invalid.".format(ref=self.reference))
+
+        return requests.get(
+            url=AUTH_RELEASE_URL,
+            params={
+                "version": version
+            }
+        ).json()

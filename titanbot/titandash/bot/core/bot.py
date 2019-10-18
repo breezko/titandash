@@ -465,6 +465,24 @@ class Bot(object):
         - After max stage has been reached.
         - After a percent of max stage has been reached.
         """
+        # Is a randomized threshold prestige already waiting to be executed?
+        if self.configuration.enable_prestige_threshold_randomization:
+            if self.props.next_randomized_prestige:
+                now = timezone.now()
+                if now > self.props.next_randomized_prestige:
+                    self.logger.info("prestige randomization datetime has been surpassed, a prestige will now be executed.")
+                    return True
+
+                # Otherwise, we already know that a prestige is in a ready state...
+                # We are just waiting on our randomization threshold to finish.
+                else:
+                    return False
+
+        # Create a "ready" flag... Setting to true once any of our thresholds are
+        # reached... This also determines whether or not we should generate the random
+        # datetime until the prestige will really take place.
+        ready = False
+
         if self.configuration.prestige_x_minutes != 0:
             now = timezone.now()
             self.logger.info("timed prestige is enabled, and should take place in {time}".format(time=strfdelta(self.props.next_prestige - now)))
@@ -473,48 +491,60 @@ class Bot(object):
             # otherwise, look at the current stage conditionals present and prestige
             # off of those instead.
             if now > self.props.next_prestige:
-                self.logger.debug("timed prestige will happen now.")
-                return True
+                self.logger.info("timed prestige threshold has been reached.")
+                ready = True
 
-        # Current stage must not be None, using time gate before this check. stage == None is only possible when
-        # OCR checks are failing, this can happen when a stage change happens as the check takes place, causing
-        # the image recognition to fail. OR if the parsed text doesn't pass the validation checks when parse is
-        # malformed.
-        if self.props.current_stage is None:
-            self.logger.info("current stage is currently none, no stage conditionals can be checked...")
-            return False
-
-        # Any other conditionals will be using the current stage attribute of the bot.
-        elif self.configuration.prestige_at_stage != 0:
-            self.logger.info("prestige at specific stage: {current}/{needed}.".format(current=strfnumber(self.props.current_stage), needed=strfnumber(self.configuration.prestige_at_stage)))
-            if self.props.current_stage >= self.configuration.prestige_at_stage:
-                self.logger.info("prestige stage has been reached, prestige will happen now.")
-                return True
-            else:
+        # Our first timed threshold is one of our main thresholds, if that has not been reached yet,
+        # then we go ahead and check the rest of our thresholds.
+        if not ready:
+            # Current stage must not be None, using time gate before this check. stage == None is only possible when
+            # OCR checks are failing, this can happen when a stage change happens as the check takes place, causing
+            # the image recognition to fail. OR if the parsed text doesn't pass the validation checks when parse is
+            # malformed.
+            if self.props.current_stage is None:
+                self.logger.info("current stage is currently none, no stage conditionals can be checked...")
                 return False
 
-        # These conditionals are dependant on the highest stage reached taken
-        # from the bot's current game statistics.
-        if self.configuration.prestige_at_max_stage:
-            self.logger.info("prestige at max stage: {current}/{needed}.".format(current=strfnumber(self.props.current_stage), needed=strfnumber(self.stats.highest_stage)))
-            if self.props.current_stage >= self.stats.highest_stage:
-                self.logger.info("max stage has been reached, prestige will happen now.")
-                return True
-            else:
+            # Any other conditionals will be using the current stage attribute of the bot.
+            elif self.configuration.prestige_at_stage != 0:
+                self.logger.info("prestige at specific stage: {current}/{needed}.".format(current=strfnumber(self.props.current_stage), needed=strfnumber(self.configuration.prestige_at_stage)))
+                if self.props.current_stage >= self.configuration.prestige_at_stage:
+                    self.logger.info("prestige stage has been reached, prestige will happen now.")
+                    ready = True
+
+            # These conditionals are dependant on the highest stage reached taken
+            # from the bot's current game statistics.
+            elif self.configuration.prestige_at_max_stage:
+                self.logger.info("prestige at max stage: {current}/{needed}.".format(current=strfnumber(self.props.current_stage), needed=strfnumber(self.stats.highest_stage)))
+                if self.props.current_stage >= self.stats.highest_stage:
+                    self.logger.info("max stage has been reached, prestige will happen now.")
+                    ready = True
+
+            elif self.configuration.prestige_at_max_stage_percent != 0:
+                percent = float(self.configuration.prestige_at_max_stage_percent) / 100
+                threshold = int(self.stats.highest_stage * percent)
+                self.logger.info("prestige at max stage percent ({percent}): {current}/{needed}".format(percent=percent, current=strfnumber(self.props.current_stage), needed=strfnumber(threshold)))
+                if self.props.current_stage >= threshold:
+                    self.logger.info("percent of max stage has been reached, prestige will happen now.")
+                    ready = True
+
+        # Using threshold randomization to ensure that prestiges are quite random.
+        if ready:
+            if self.configuration.enable_prestige_threshold_randomization:
+                now = timezone.now()
+                jitter = random.randint(self.configuration.prestige_random_min_time, self.configuration.prestige_random_max_time)
+                dt = now + datetime.timedelta(minutes=jitter)
+                self.props.next_randomized_prestige = dt
+                self.logger.info("prestige threshold randomization is enabled, and the prestige process will be initiated in {time}".format(time=strfdelta(dt - now)))
+
+                # Return false explicitly now... But our datetime is now set... The next time we enter
+                # this function, we check if we've surpassed this datetime, in which case, we can
+                # then finally initiate a prestige.
                 return False
 
-        elif self.configuration.prestige_at_max_stage_percent != 0:
-            percent = float(self.configuration.prestige_at_max_stage_percent) / 100
-            threshold = int(self.stats.highest_stage * percent)
-            self.logger.info("prestige at max stage percent ({percent}): {current}/{needed}".format(percent=percent, current=strfnumber(self.props.current_stage), needed=strfnumber(threshold)))
-            if self.props.current_stage >= threshold:
-                self.logger.info("percent of max stage has been reached, prestige will happen now.")
-                return True
-            else:
-                return False
-
-        # Otherwise, only a time limit has been set for a prestige and it wasn't reached.
-        return False
+        # If this point is reached, just return whether or not the user has surpassed a threshold,
+        # ignoring our prestige randomization entirely.
+        return ready
 
     @wrap_current_function
     def calculate_next_action_run(self):
@@ -783,6 +813,12 @@ class Bot(object):
                 # Reset the current prestige variables, so that after this prestige is finished,
                 # we perform those functions then disable them when needed.
                 self.current_prestige_master_levelled = False
+
+                # Reset the prestige randomization variable if it is currently
+                # being used, so that our next prestige process is reset.
+                if self.configuration.enable_prestige_threshold_randomization:
+                    if self.props.next_randomized_prestige:
+                        self.props.next_randomized_prestige = None
 
                 tournament = self.check_tournament()
 
