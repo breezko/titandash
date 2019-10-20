@@ -107,6 +107,7 @@ class Bot(object):
         # when actions are performed by the bot.
         self.action_order = self.order_actions()
         self.skill_order = self.order_skill_intervals()
+        self.minigame_order = self.order_minigames()
 
         # Store information about the artifacts in game.
         self.owned_artifacts = None
@@ -330,6 +331,24 @@ class Bot(object):
                 self.logger.info("{index}: {key} ({interval})".format(index=index, key=skill[1], interval=skill[0]))
 
         return sort
+
+    @wrap_current_function
+    def order_minigames(self):
+        """
+        Determine the order of minigame execution.
+        """
+        minigames = []
+
+        if self.configuration.enable_coordinated_offensive:
+            minigames.append("coordinated_offensive")
+        if self.configuration.enable_astral_awakening:
+            minigames.append("astral_awakening")
+        if self.configuration.enable_heart_of_midas:
+            minigames.append("heart_of_midas")
+        if self.configuration.enable_flash_zip:
+            minigames.append("flash_zip")
+
+        return minigames
 
     @wrap_current_function
     @not_in_transition
@@ -1544,22 +1563,48 @@ class Bot(object):
         Perform simple screen tap over entire game area.
         """
         if self.configuration.enable_tapping:
-            self.logger.info("tapping!")
-            taps = 0
-            for point in self.locs.fairies_map:
-                taps += 1
-                if taps == 5:
-                    # Check for an ad as the tapping process occurs. Click and return early if one is available.
-                    if self.grabber.search(self.images.collect_ad, bool_only=True):
-                        self.collect_ad_no_transition()
-                        return
+            self.logger.info("beginning generic tapping process...")
 
-                    # Reset taps counter.
-                    taps = 0
+            # Looping through all of our fairy map locations... Clicking and checking
+            # for ads throughout the process.
+            for index, point in enumerate(self.locs.fairies_map, start=1):
                 self.click(point=point)
+
+                # Every fifth click, we should check to see if an ad is present on the
+                # screen now, since our clicks could potentially trigger a fairy ad.
+                if index % 5 == 0:
+                    self.collect_ad_no_transition()
 
             # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
             # clicked just as the tapping ended.
+            sleep(2)
+
+    @wrap_current_function
+    @not_in_transition
+    def minigames(self):
+        if self.configuration.enable_minigames:
+            self.logger.info("beginning minigame execution process...")
+
+            tapping_map = []
+            # Based on the enabled minigames, additional tapping locations
+            # should be added to our fairy tapping map that's enabled by default.
+            for minigame in self.minigame_order:
+                # Add (str) to the map, we check for this and output a informational
+                # log when the point in our loop is a string. Can only ever be a minigame name.
+                tapping_map += (minigame,)
+                tapping_map += getattr(self.locs, minigame)
+
+            for index, point in enumerate(tapping_map, start=1):
+                if isinstance(point[0], str):
+                    self.logger.info("executing/tapping {minigame}".format(minigame=point))
+                else:
+                    self.click(point=point)
+
+                # Every fifth click, we should check to see if an ad is present on the
+                # screen now, since our clicks could potentially trigger a fairy ad.
+                if index % 5 == 0:
+                    self.collect_ad_no_transition()
+
             sleep(2)
 
     @wrap_current_function
@@ -1802,6 +1847,7 @@ class Bot(object):
                 "fight_boss": True,
                 "clan_crate": True,
                 "tap": self.configuration.enable_tapping,
+                "minigames": self.configuration.enable_minigames,
                 "collect_ad": True,
                 "parse_current_stage": True,
                 "prestige": self.configuration.enable_auto_prestige,
