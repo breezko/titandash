@@ -73,6 +73,22 @@ def record_clicks():
         listener.join()
 
 
+def fix_clicks(fix_x=0, fix_y=34):
+    """
+    Given a set of tuple points (X, Y), fix the locations by subtracting the given amount from the
+    x and y axis.
+
+    from titandash.bot.core.tester import *; fix_clicks()
+    """
+    bot = make_bot()
+
+    new_locs = ()
+    for point in bot.locs.flash_zip:
+        new_locs += ((point[0] - fix_x, point[1] - fix_y,),)
+
+    print(new_locs)
+
+
 def make_prestige(instance_id=None, session_uuid=None):
     """
     Generate a generic prestige instance.
