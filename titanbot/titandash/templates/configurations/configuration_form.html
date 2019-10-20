@@ -177,6 +177,56 @@
     </div>
 </div>
 
+{# Minigame Settings #}
+<div id="accordionMinigameSettings">
+    <div class="card">
+        <div class="card-header" id="configurationMinigameSettingsHeader">
+            <h5 class="modal-title" id="configurationMinigameSettingsTitle">
+                <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseMinigameSettings">Minigame Settings</button>
+            </h5>
+        </div>
+
+        <div id="collapseMinigameSettings" class="collapse show" data-parent="#accordionMinigameSettings">
+            <div id="configurationMinigameSettingsBody" class="card-body">
+                <div class="form-check">
+                    {# Enable Minigames #}
+                    <input {% if config.enable_minigames %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_minigames" name="enable_minigames">
+                    <label class="form-check-label" for="enable_minigames">Enable Minigames</label>
+                    <p class="text-muted">{{ help.enable_minigames }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Enable Coordinated Offensive #}
+                    <input {% if config.enable_coordinated_offensive %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_coordinated_offensive" name="enable_coordinated_offensive">
+                    <label class="form-check-label" for="enable_coordinated_offensive">Enable Coordinated Offensive</label>
+                    <p class="text-muted">{{ help.enable_coordinated_offensive }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Enable Astral Awakening #}
+                    <input {% if config.enable_astral_awakening %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_astral_awakening" name="enable_astral_awakening">
+                    <label class="form-check-label" for="enable_astral_awakening">Enable Astral Awakening</label>
+                    <p class="text-muted">{{ help.enable_astral_awakening }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Enable Heart Of Midas #}
+                    <input {% if config.enable_heart_of_midas %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_heart_of_midas" name="enable_heart_of_midas">
+                    <label class="form-check-label" for="enable_heart_of_midas">Enable Heart Of Midas</label>
+                    <p class="text-muted">{{ help.enable_heart_of_midas }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Enable Flash Zip #}
+                    <input {% if config.enable_flash_zip %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_flash_zip" name="enable_flash_zip">
+                    <label class="form-check-label" for="enable_flash_zip">Enable Flash Zip</label>
+                    <p class="text-muted">{{ help.enable_flash_zip }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {# Breaks Settings #}
 <div id="accordionBreaksSettings">
     <div class="card">

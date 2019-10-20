@@ -189,6 +189,12 @@ class Locs:
         self.fairies_map = None
         self.clan_crate = None
 
+        # MINIGAMES.
+        self.coordinated_offensive = None
+        self.astral_awakening = None
+        self.heart_of_midas = None
+        self.flash_zip = None
+
         # PANELS.
         self.expand_collapse_top = None
         self.expand_collapse_bottom = None
