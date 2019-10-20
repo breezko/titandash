@@ -1586,8 +1586,8 @@ class Bot(object):
             self.logger.info("beginning minigame execution process...")
 
             tapping_map = []
-            # Based on the enabled minigames, additional tapping locations
-            # should be added to our fairy tapping map that's enabled by default.
+            # Based on the enabled minigames, tapping locations are appended
+            # and looped through after to ensure minigames are always up.
             for minigame in self.minigame_order:
                 # Add (str) to the map, we check for this and output a informational
                 # log when the point in our loop is a string. Can only ever be a minigame name.
@@ -1605,6 +1605,8 @@ class Bot(object):
                 if index % 5 == 0:
                     self.collect_ad_no_transition()
 
+            # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
+            # clicked just as the tapping ended.
             sleep(2)
 
     @wrap_current_function
