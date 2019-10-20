@@ -93,6 +93,11 @@ COMPRESSION_KEYS = {
     "enable_prestige_threshold_randomization": 71,
     "prestige_random_min_time": 72,
     "prestige_random_max_time": 73,
+    "enable_minigames": 74,
+    "enable_coordinated_offensive": 75,
+    "enable_astral_awakening": 76,
+    "enable_heart_of_midas": 77,
+    "enable_flash_zip": 78
 }
 
 
@@ -108,6 +113,11 @@ HELP_TEXT = {
     "enable_egg_collection": "Enable the ability to collect and hatch eggs in game.",
     "enable_tapping": "Enable the ability to tap on titans (This also enables the clicking of fairies in game).",
     "enable_tournaments": "Enable the ability to enter and participate in tournaments.",
+    "enable_minigames": "Enable the ability to enable/disable different skill minigames that can be executed.",
+    "enable_coordinated_offensive": "Enable coordinated offensive tapping skill minigame.",
+    "enable_astral_awakening": "Enable astral awakening tapping skill minigame.",
+    "enable_heart_of_midas": "Enable heart of midas tapping skill minigame.",
+    "enable_flash_zip": "Enable flash zip tapping skill minigame.",
     "enable_breaks": "Enable the ability to take breaks in game.",
     "breaks_jitter": "Specify a jitter amount so that breaks take place at different intervals.",
     "breaks_minutes_required": "How many minutes of concurrent playtime is required before a break takes place.",
@@ -204,6 +214,13 @@ class Configuration(ParanoidModel, ExportModelMixin):
     enable_egg_collection = models.BooleanField(verbose_name="Enable Egg Collection", default=True, help_text=HELP_TEXT["enable_egg_collection"])
     enable_tapping = models.BooleanField(verbose_name="Enable Tapping", default=True, help_text=HELP_TEXT["enable_tapping"])
     enable_tournaments = models.BooleanField(verbose_name="Enable Tournaments", default=True, help_text=HELP_TEXT["enable_tournaments"])
+
+    # MINIGAME Settings.
+    enable_minigames = models.BooleanField(verbose_name="Enable Skill Minigames", default=False, help_text=HELP_TEXT["enable_minigames"])
+    enable_coordinated_offensive = models.BooleanField(verbose_name="Enable Coordinated Offensive", default=False, help_text=HELP_TEXT["enable_coordinated_offensive"])
+    enable_astral_awakening = models.BooleanField(verbose_name="Enable Astral Awakening", default=False, help_text=HELP_TEXT["enable_astral_awakening"])
+    enable_heart_of_midas = models.BooleanField(verbose_name="Enable Heart Of Midas", default=False, help_text=HELP_TEXT["enable_heart_of_midas"])
+    enable_flash_zip = models.BooleanField(verbose_name="Enable Flash Zip", default=False, help_text=HELP_TEXT["enable_flash_zip"])
 
     # BREAKS Settings.
     enable_breaks = models.BooleanField(verbose_name="Enable Breaks", default=True, help_text=HELP_TEXT["enable_breaks"])
@@ -409,6 +426,13 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 "enable_egg_collection": self.enable_egg_collection,
                 "enable_tapping": self.enable_tapping,
                 "enable_tournaments": self.enable_tournaments
+            },
+            "Minigames": {
+                "enable_minigames": self.enable_minigames,
+                "enable_coordinated_offensive": self.enable_coordinated_offensive,
+                "enable_astral_awakening": self.enable_astral_awakening,
+                "enable_heart_of_midas": self.enable_heart_of_midas,
+                "enable_flash_zip": self.enable_flash_zip
             },
             "Breaks": {
                 "enable_breaks": self.enable_breaks,
