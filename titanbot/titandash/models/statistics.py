@@ -74,10 +74,16 @@ class GameStatistics(models.Model):
         played = self.play_time if self.play_time else None
 
         if played:
-            if "d" in played:
-                played_hours = int(played.split("d")[0]) * 24
-            else:
-                played_hours = int(played.split(":")[0])
+            try:
+                if "d" in played:
+                    played_hours = int(played.split("d")[0]) * 24
+                else:
+                    played_hours = int(played.split(":")[0])
+
+            # Malformed time played value can cause this fail...
+            # We'll use a base string if we're unable to parse out played hours.
+            except Exception:
+                return "N/A"
         else:
             return 0
 
