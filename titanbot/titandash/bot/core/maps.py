@@ -312,7 +312,7 @@ IMAGES = {
         "fight_boss": IMAGE_DIR + "/no_panels/fight_boss.png",
         "hatch_egg": IMAGE_DIR + "/no_panels/hatch_egg.png",
         "leave_boss": IMAGE_DIR + "/no_panels/leave_boss.png",
-        "settings": IMAGE_DIR + "/no_panels/clan_battle_ready.png",
+        "settings": IMAGE_DIR + "/no_panels/settings.png",
         "tournament": IMAGE_DIR + "/no_panels/tournament.png",
     },
     "PETS": {
@@ -387,6 +387,18 @@ MASTER_COORDS = {
         "war_cry": (0, 502, 480, 573),
         "shadow_clone": (0, 578, 480, 648),
     },
+}
+
+# Regions used to level up skills in game should only take place when our
+# skills are not their specified level or maxed.. We use these regions to grab
+# the current level through an OCR check.
+SKILL_LEVEL_COORDS = {
+    "heavenly_strike": (70, 224, 115, 240),
+    "deadly_strike": (70, 299, 115, 318),
+    "hand_of_midas": (70, 374, 115, 395),
+    "fire_sword": (70, 450, 115, 470),
+    "war_cry": (70, 525, 115, 545),
+    "shadow_clone": (70, 601, 115, 621),
 }
 
 CLAN_COORDS = {
