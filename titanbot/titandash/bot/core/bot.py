@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from titandash.models.queue import Queue
 from titandash.models.clan import Clan, RaidResult
+from titandash.constants import SKILL_MAX_LEVEL
 
 from titanauth.authentication.wrapper import AuthWrapper
 
@@ -105,8 +106,6 @@ class Bot(object):
 
         # Create a list of the functions called in there proper order
         # when actions are performed by the bot.
-        self.action_order = self.order_actions()
-        self.skill_order = self.order_skill_intervals()
         self.minigame_order = self.order_minigames()
 
         # Store information about the artifacts in game.
@@ -118,12 +117,18 @@ class Bot(object):
         # can be performed a number of times, and be disabled when needed.
         self.current_prestige_master_levelled = False
 
+        # Current prestige skill level values. We keep track of these to ensure that we can
+        # very easily enable/disable skill levelling based on the configuration caps and current levels in game.
+        self.current_prestige_skill_levels = {skill: 0 for skill in SKILLS}
+
         # Setup the datetime objects used initially to determine when the bot
         # will perform specific actions in game.
-        self.calculate_next_skill_execution()
         self.calculate_next_prestige()
         self.calculate_next_stats_update()
-        self.calculate_next_action_run()
+        self.calculate_next_master_level()
+        self.calculate_next_heroes_level()
+        self.calculate_next_skills_level()
+        self.calculate_next_skills_activation()
         self.calculate_next_recovery_reset()
         self.calculate_next_daily_achievement_check()
         self.calculate_next_milestone_check()
@@ -254,7 +259,9 @@ class Bot(object):
         When using the attribute, a check should be performed to ensure it isn't None before running
         numeric friendly conditionals.
         """
+        self.ensure_collapsed()
         stage_parsed = self.stats.stage_ocr()
+
         try:
             stage = int(stage_parsed)
             self.logger.info("stage {stage_text} was successfully coerced into an integer: {stage}.".format(
@@ -295,44 +302,6 @@ class Bot(object):
             self.last_stage, self.props.current_stage = None, None
 
     @wrap_current_function
-    def order_actions(self):
-        """
-        Determine order of in game actions. Mapped to their respective functions.
-        """
-        sort = sorted([
-            (self.configuration.order_level_heroes, self.level_heroes, "level_heroes"),
-            (self.configuration.order_level_master, self.level_master, "level_master"),
-            (self.configuration.order_level_skills, self.level_skills, "level_skills"),
-        ], key=lambda x: x[0])
-
-        self.logger.info("actions in game have been ordered successfully.")
-        for action in sort:
-            self.logger.info("{order} : {action_key}.".format(order=action[0], action_key=action[2]))
-
-        return sort
-
-    @wrap_current_function
-    def order_skill_intervals(self):
-        """
-        Determine order of skills with intervals, first index will be the longest interval.
-        """
-        sort = sorted([
-            (self.configuration.interval_heavenly_strike, "heavenly_strike"),
-            (self.configuration.interval_deadly_strike, "deadly_strike"),
-            (self.configuration.interval_fire_sword, "hand_of_midas"),
-            (self.configuration.interval_fire_sword, "fire_sword"),
-            (self.configuration.interval_shadow_clone, "war_cry"),
-            (self.configuration.interval_shadow_clone, "shadow_clone"),
-        ], key=lambda x: x[0], reverse=True)
-
-        self.logger.info("skill intervals have been ordered successfully.")
-        for index, skill in enumerate(sort, start=1):
-            if skill[0] != 0:
-                self.logger.info("{index}: {key} ({interval})".format(index=index, key=skill[1], interval=skill[0]))
-
-        return sort
-
-    @wrap_current_function
     def order_minigames(self):
         """
         Determine the order of minigame execution.
@@ -351,75 +320,23 @@ class Bot(object):
         return minigames
 
     @wrap_current_function
-    @not_in_transition
-    def inactive_skills(self):
-        """
-        Create a list of all skills that are currently inactive.
-        """
-        inactive = []
-        for key, region in MASTER_COORDS["skills"].items():
-            if self.grabber.search(self.images.cancel_active_skill, region, bool_only=True):
-                continue
-            inactive.append(key)
-
-        for key in inactive:
-            self.logger.info("{key} is not currently activated.".format(key=key))
-
-        return inactive
-
-    @wrap_current_function
-    @not_in_transition
-    def not_maxed(self, inactive):
-        """
-        Given a list of inactive skill keys, determine which ones are not maxed.
-        """
-        not_maxed = []
-        for key, region in {k: r for k, r in MASTER_COORDS["skills"].items() if k in inactive}.items():
-            if self.grabber.search(self.images.skill_max_level, region, bool_only=True):
-                continue
-            not_maxed.append(key)
-
-        for key in not_maxed:
-            self.logger.info("{key} is not currently max level.".format(key=key))
-
-        return not_maxed
-
-    @wrap_current_function
-    def calculate_next_skill_execution(self):
+    def calculate_next_skill_execution(self, skill=None):
         """
         Calculate the datetimes that are attached to each skill in game and when they should be activated.
         """
         now = timezone.now()
-        for key in SKILLS:
-            interval_key = "interval_{0}".format(key)
-            next_key = "next_{0}".format(key)
-            interval = getattr(self.configuration, interval_key, 0)
+        calculating = SKILLS if not skill else [skill]
+        interval_key = "interval_{skill}"
+        next_key = "next_{skill}"
+
+        # Loop through all available skills and update their next execution
+        # time as long as the interval is set to a value other than 0.
+        for skill in calculating:
+            interval = getattr(self.configuration, interval_key.format(skill=skill), 0)
             if interval != 0:
                 dt = now + datetime.timedelta(seconds=interval)
-                setattr(self.props, next_key, dt)
-                self.logger.info("{skill} will be activated in {time}.".format(skill=key, time=strfdelta(dt - now)))
-            else:
-                self.logger.info("{skill} has interval set to zero, will not be activated.".format(skill=key))
-
-    @wrap_current_function
-    def calculate_next_prestige(self):
-        """
-        Calculate when the next timed prestige will take place.
-        """
-        now = timezone.now()
-        dt = now + datetime.timedelta(seconds=self.configuration.prestige_x_minutes * 60)
-        self.props.next_prestige = dt
-        self.logger.info("the next timed prestige will take place in {time}".format(time=strfdelta(dt - now)))
-
-    @wrap_current_function
-    def calculate_next_recovery_reset(self):
-        """
-        Calculate when the next recovery reset will take place.
-        """
-        now = timezone.now()
-        dt = now + datetime.timedelta(seconds=self.configuration.recovery_check_interval_minutes * 60)
-        self.props.next_recovery_reset = dt
-        self.logger.info("the next recovery reset will take place in {time}".format(time=strfdelta(dt - now)))
+                setattr(self.props, next_key.format(skill=skill), dt)
+                self.logger.info("{skill} will be activated in {time}.".format(skill=skill, time=strfdelta(dt - now)))
 
     @wrap_current_function
     def bump_timed_variables(self, delta):
@@ -566,14 +483,64 @@ class Bot(object):
         return ready
 
     @wrap_current_function
-    def calculate_next_action_run(self):
+    def calculate_next_prestige(self):
         """
-        Calculate when the next set of actions will be ran.
+        Calculate when the next timed prestige will take place.
         """
         now = timezone.now()
-        dt = now + datetime.timedelta(seconds=self.configuration.run_actions_every_x_seconds)
-        self.props.next_action_run = dt
-        self.logger.info("enabled actions in game will be initiated in {time}".format(time=strfdelta(dt - now)))
+        dt = now + datetime.timedelta(seconds=self.configuration.prestige_x_minutes * 60)
+        self.props.next_prestige = dt
+        self.logger.info("the next timed prestige will take place in {time}".format(time=strfdelta(dt - now)))
+
+    @wrap_current_function
+    def calculate_next_recovery_reset(self):
+        """
+        Calculate when the next recovery reset will take place.
+        """
+        now = timezone.now()
+        dt = now + datetime.timedelta(seconds=self.configuration.recovery_check_interval_minutes * 60)
+        self.props.next_recovery_reset = dt
+        self.logger.info("the next recovery reset will take place in {time}".format(time=strfdelta(dt - now)))
+
+    @wrap_current_function
+    def calculate_next_master_level(self):
+        """
+        Calculate when the next sword master levelling process will be ran.
+        """
+        now = timezone.now()
+        dt = now + datetime.timedelta(seconds=self.configuration.master_level_every_x_seconds)
+        self.props.next_master_level = dt
+        self.logger.info("sword master levelling process will be initiated in {time}".format(time=strfdelta(dt - now)))
+
+    @wrap_current_function
+    def calculate_next_heroes_level(self):
+        """
+        Calculate when the next heroes level process will be ran.
+        """
+        now = timezone.now()
+        dt = now + datetime.timedelta(seconds=self.configuration.hero_level_every_x_seconds)
+        self.props.next_heroes_level = dt
+        self.logger.info("heroes levelling process will be initiated in {time}".format(time=strfdelta(dt - now)))
+
+    @wrap_current_function
+    def calculate_next_skills_level(self):
+        """
+        Calculate when the next skills level process will be ran.
+        """
+        now = timezone.now()
+        dt = now + datetime.timedelta(seconds=self.configuration.level_skills_every_x_seconds)
+        self.props.next_skills_level = dt
+        self.logger.info("skills levelling process will be initiated in {time}".format(time=strfdelta(dt - now)))
+
+    @wrap_current_function
+    def calculate_next_skills_activation(self):
+        """
+        Calculate when the next skills activation process will be ran.
+        """
+        now = timezone.now()
+        dt = now + datetime.timedelta(seconds=self.configuration.activate_skills_every_x_seconds)
+        self.props.next_skills_activation = dt
+        self.logger.info("skills activation process will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     @wrap_current_function
     def calculate_next_stats_update(self):
@@ -653,128 +620,292 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
-    def level_heroes(self):
+    def level_heroes(self, force=False):
         """
         Perform all actions related to the levelling of all heroes in game.
         """
         if self.configuration.enable_heroes:
-            self.logger.info("levelling heroes in game...")
-            if not self.goto_heroes(collapsed=False):
-                return False
+            now = timezone.now()
+            if force or now > self.props.next_heroes_level:
+                self.logger.info("levelling heroes in game...")
+                if not self.goto_heroes(collapsed=False):
+                    return False
 
-            # A quick check can be performed to see if the top of the heroes panel contains
-            # a hero that is already max level, if this is the case, it's safe to assume
-            # that all heroes below have been maxed out. Instead of scrolling and levelling
-            # all heroes, just level the top heroes.
-            if self.grabber.search(self.images.max_level, bool_only=True):
-                self.logger.info("a max levelled hero has been found! Only first set of heroes will be levelled.")
-                for point in HEROES_LOCS["level_heroes"][::-1][1:9]:
+                # A quick check can be performed to see if the top of the heroes panel contains
+                # a hero that is already max level, if this is the case, it's safe to assume
+                # that all heroes below have been maxed out. Instead of scrolling and levelling
+                # all heroes, just level the top heroes.
+                if self.grabber.search(self.images.max_level, bool_only=True):
+                    self.logger.info("a max levelled hero has been found! Only first set of heroes will be levelled.")
+                    for point in HEROES_LOCS["level_heroes"][::-1][1:9]:
+                        self.click(point=point, clicks=self.configuration.hero_level_intensity, interval=0.07)
+
+                    # Early exit as well.
+                    self.calculate_next_heroes_level()
+                    return True
+
+                # Always level the first 5 heroes in the list.
+                self.logger.info("levelling the first five heroes available.")
+                for point in HEROES_LOCS["level_heroes"][::-1][1:6]:
                     self.click(point=point, clicks=self.configuration.hero_level_intensity, interval=0.07)
 
-                # Early exit as well.
-                return
+                # Travel to the bottom of the panel.
+                for i in range(5):
+                    self.drag(start=self.locs.scroll_start, end=self.locs.scroll_bottom_end)
 
-            # Always level the first 5 heroes in the list.
-            self.logger.info("levelling the first five heroes available.")
-            for point in HEROES_LOCS["level_heroes"][::-1][1:6]:
-                self.click(point=point, clicks=self.configuration.hero_level_intensity, interval=0.07)
+                drag_start = HEROES_LOCS["drag_heroes"]["start"]
+                drag_end = HEROES_LOCS["drag_heroes"]["end"]
 
-            # Travel to the bottom of the panel.
-            for i in range(5):
-                self.drag(start=self.locs.scroll_start, end=self.locs.scroll_bottom_end)
+                # Begin level and scrolling process. An assumption is made that all heroes
+                # are unlocked, meaning that some un-necessary scrolls may take place.
+                self.logger.info("scrolling and levelling all heroes present.")
+                for i in range(4):
+                    for point in HEROES_LOCS["level_heroes"]:
+                        self.click(point=point, clicks=self.configuration.hero_level_intensity, interval=0.07)
 
-            drag_start = HEROES_LOCS["drag_heroes"]["start"]
-            drag_end = HEROES_LOCS["drag_heroes"]["end"]
+                    # Skip the last drag since it's un-needed.
+                    if i != 3:
+                        self.drag(start=drag_start, end=drag_end, duration=1, pause=1, tween=easeOutQuad, quick_stop=self.locs.scroll_quick_stop)
 
-            # Begin level and scrolling process. An assumption is made that all heroes
-            # are unlocked, meaning that some un-necessary scrolls may take place.
-            self.logger.info("scrolling and levelling all heroes present.")
-            for i in range(4):
-                for point in HEROES_LOCS["level_heroes"]:
-                    self.click(point=point, clicks=self.configuration.hero_level_intensity, interval=0.07)
-
-                # Skip the last drag since it's un-needed.
-                if i != 3:
-                    self.drag(start=drag_start, end=drag_end, duration=1, pause=1, tween=easeOutQuad, quick_stop=self.locs.scroll_quick_stop)
+                # Recalculate the next heroes level process.
+                self.calculate_next_heroes_level()
+                return True
 
     @wrap_current_function
     @not_in_transition
-    def level_master(self):
+    def level_master(self, force=False):
         """
         Perform all actions related to the levelling of the sword master in game.
         """
         if self.configuration.enable_master:
-            # If the user has specified to only level the sword master once after every prestige
-            # and once at the beginning of their session.
-            if self.configuration.master_level_only_once:
-                if self.current_prestige_master_levelled:
-                    return True
+            now = timezone.now()
+            if force or now > self.props.next_master_level:
+                level = True
+                # If the user has specified to only level the sword master once after every prestige
+                # and once at the beginning of their session.
+                if self.configuration.master_level_only_once:
+                    if self.current_prestige_master_levelled:
+                        level = False
+                    else:
+                        self.logger.info("levelling the sword master once until the next prestige...")
+                        self.current_prestige_master_levelled = True
                 else:
-                    self.logger.info("levelling the sword master once until the next prestige...")
-                    self.click(point=MASTER_LOCS["master_level"], clicks=self.configuration.master_level_intensity)
-                    self.current_prestige_master_levelled = True
-            else:
-                self.logger.info("levelling the sword master {clicks} time(s)".format(clicks=self.configuration.master_level_intensity))
-                if not self.goto_master(collapsed=False):
-                    return False
+                    self.logger.info("levelling the sword master {clicks} time(s)".format(clicks=self.configuration.master_level_intensity))
 
-                self.click(point=MASTER_LOCS["master_level"], clicks=self.configuration.master_level_intensity)
+                # Only actually executing the level process when our level boolean is true.
+                if level:
+                    # Travel to the master panel to allow the levelling up of our sword master.
+                    if not self.goto_master(collapsed=False):
+                        return False
+
+                    # Level our sword master given the specified amount of clicks
+                    # through the users configuration.
+                    self.click(point=MASTER_LOCS["master_level"], clicks=self.configuration.master_level_intensity)
+
+                # Recalculate the next sword master level process.
+                self.calculate_next_master_level()
+                return True
 
     @wrap_current_function
     @not_in_transition
-    def level_skills(self):
+    def parse_current_skills(self):
         """
-        Perform all actions related to the levelling of skills in game.
+        Do an explicit parse of the users current skill levels and assign them to our current prestige
+        information for in game skills.
         """
-        if self.configuration.enable_skills:
-            self.logger.info("levelling up inactive and un-maxed skills in game.")
-            if not self.goto_master(collapsed=False):
+        self.logger.info("parsing out current skill levels...")
+        # Begin by ensuring that the master panel is open and not collapsed.
+        self.goto_master(collapsed=False)
+
+        # Looping through all in game skills, parsing out the current level.
+        for skill in SKILLS:
+            self.current_prestige_skill_levels[skill] = self.stats.skill_ocr(region=SKILL_LEVEL_COORDS[skill])
+            self.logger.info("{skill} parsed as level {level}".format(
+                skill=skill,
+                level=self.current_prestige_skill_levels[skill]
+            ))
+
+    def enabled_skills(self):
+        """
+        Based on the users configurations, determine which skills are currently enabled, and which ones
+        are disabled and should be ignored.
+        """
+        enabled = []
+        interval_key = "interval_{skill}"
+
+        for skill in SKILLS:
+            if getattr(self.configuration, interval_key.format(skill=skill)) != 0:
+                enabled.append(skill)
+
+        return enabled
+
+    def levels_capped(self):
+        """
+        Given the current in game skills list, determine if our levels are currently capped.
+
+        Capped skills means we can skip skill levelling.
+
+        We generate a list of skills that have not yet been capped.
+        """
+        capped, uncapped = {}, {}
+        key = "level_{skill}_cap"
+
+        # Looping through each available skill, comparing the specified cap value chosen by the user,
+        # If "max" is chosen, we can go ahead and set the value to the available max skill level.
+        # If "disabled" is chosen, we can go ahead and skip this key. Since we don't ever want to touch or level it.
+        for skill in SKILLS:
+            chosen = getattr(self.configuration, key.format(skill=skill))
+
+            # Has the user chosen to either disable, or use the max level available?
+            if chosen == "disable":
+                continue
+            elif chosen == "max":
+                chosen = SKILL_MAX_LEVEL
+
+            # Grab the current prestige skill levels value for the current
+            # skill in our iteration.
+            current = self.current_prestige_skill_levels[skill]
+
+            if not isinstance(chosen, int):
+                chosen = int(chosen)
+
+            # Is the user defined cap currently reached?
+            # Additionally, if a user starts a session with skills already levelled,
+            # we treat it as capped if it's greater then the wanted amount. This would be fixed
+            # for the next prestige though.
+            if chosen == current or current > chosen:
+                capped[skill] = {
+                    "current": current,
+                    "chosen": chosen
+                }
+            else:
+                uncapped[skill] = {
+                    "current": current,
+                    "chosen": chosen,
+                    "remaining": chosen - current
+                }
+
+        # Returning our list of capped/uncapped skills currently in game.
+        return capped, uncapped
+
+    @wrap_current_function
+    @not_in_transition
+    def level_skills(self, force=False):
+        """
+        Level in game skills.
+
+        We make use of a current prestige dictionary to only ever attempt to level skills if uncapped skills
+        are present, an uncapped skill means we need to add more levels, these are defined by the user.
+
+        Some skills may also be disabled, in which case, we don't even bother dealing with these skills at all.
+        """
+        def level_skill(key, max_skill=False, clicks=1):
+            """
+            Helper method to perform the actual levelling process of the skill specified.
+
+            We can choose to max a skill, which will perform the required color point checks
+            to click the maximum purchase button when levelling skills.
+            """
+            point = MASTER_LOCS["skills"][key]
+            color = MASTER_LOCS["skill_level_max"][key]
+
+            # Click on our point top begin the level process
+            # for the current in game skill.
+            self.click(point=point, pause=1, clicks=clicks, interval=0.3)
+
+            # Should the skill in question be levelled to it's maximum amount available?
+            if max_skill:
+                if self.grabber.point_is_color(point=color, color=self.colors.WHITE):
+                    self.click(point=color, pause=0.5)
+
+        def active(key):
+            """
+            Check to see if a skill is currently active or not.
+            """
+            if self.grabber.search(image=self.images.cancel_active_skill, region=MASTER_COORDS["skills"][key], bool_only=True):
+                return True
+            else:
                 return False
 
-            # Looping through each skill coord, clicking to level up.
-            for skill in self.not_maxed(self.inactive_skills()):
-                point = MASTER_LOCS["skills"].get(skill)
+        # Actual skill levelling process begins here.
+        if self.configuration.enable_level_skills:
+            now = timezone.now()
+            if force or now > self.props.next_skills_level:
+                capped, uncapped = self.levels_capped()
 
-                # Should the bot upgrade the max amount of upgrades available for the current skill?
-                if self.configuration.max_skill_if_possible:
-                    # Retrieve the pixel location where the color should be the proper max level
-                    # color once a single click takes place.
-                    color_point = MASTER_LOCS["skill_level_max"].get(skill)
-                    self.click(point=point, pause=1)
+                # Do we have any uncapped skills yet? If so, we should begin
+                # the process to level those skills specifically to their specified level cap.
+                if uncapped:
+                    # Travelling to the master panel in a non collapsed state
+                    # for use with the skill levelling events.
+                    self.goto_master(collapsed=False)
 
-                    # Determine if after our click, the ability to max the skills is available.
-                    if self.grabber.point_is_color(point=color_point, color=self.colors.WHITE):
-                        self.click(point=color_point, pause=0.5)
+                    # Looping through all available uncapped skills.
+                    for skill, values in uncapped.items():
+                        if active(key=skill):
+                            self.logger.info("{skill} is currently active and will not be levelled yet.".format(skill=skill))
+                            continue
 
-                # Otherwise, just level up the skills normally using the intensity setting.
-                else:
-                    self.logger.info("levelling skill: {skill} {intensity} time(s).".format(skill=skill, intensity=self.configuration.skill_level_intensity))
-                    self.click(point=MASTER_LOCS["skills"].get(skill), clicks=self.configuration.skill_level_intensity)
+                        # We first want to check to see if the skill that we are
+                        # about to level should be levelled to it's max level. Which we can
+                        # determine based on the chosen value == SKILL_MAX_LEVEL.
+                        if values["chosen"] == SKILL_MAX_LEVEL:
+                            level_skill(key=skill, max_skill=True)
 
+                        # Otherwise, we want to level the current skill upto the
+                        # cap set by our user.
+                        else:
+                            level_skill(key=skill, clicks=values["remaining"])
+
+                        # After we have levelled our skill to it's appropriate values.
+                        # We need to perform an OCR check on the skill in it's current state
+                        # so that our current prestige level information is up to date.
+                        self.current_prestige_skill_levels[skill] = self.stats.skill_ocr(region=SKILL_LEVEL_COORDS[skill])
+
+                # Recalculate the next skill level process.
+                self.calculate_next_skills_level()
+                return True
+
+    @wrap_current_function
     @not_in_transition
-    def actions(self, force=False):
+    def activate_skills(self, force=False):
         """
-        Perform bot actions in game.
+        Activate in game skills.
+
+        Based on our available skills (not disabled), we can determine whether or not we should activate certain
+        skills.
+
+        We also only want to activate skills based on the interval chosen by the user.
+
+        If chosen, skills should also wait to be activated until the longest interval is reached.
         """
-        now = timezone.now()
-        if force or now > self.props.next_action_run:
-            self.logger.info("{force_or_initiate} in game actions now.".format(
-                force_or_initiate="forcing" if force else "beginning"))
-            if not self.goto_master(collapsed=False):
-                return
+        if self.configuration.enable_activate_skills:
+            now = timezone.now()
+            if force or now > self.props.next_skills_activation:
+                # Skill activation will take place now, we need to determine whether or not any skills
+                # are enabled and ready to be activated.
+                enabled = self.enabled_skills()
 
-            for action in self.action_order:
-                action[1]()
+                # If we have enabled skills, begin our loop to activate them
+                # if the intervals are correct.
+                if enabled:
+                    self.no_panel()
 
-                # The end of each action should send the game back to the expanded
-                # sword master panel, regardless of the order of actions to ensure
-                # normalized instructions each time an action ends.
-                self.goto_master(collapsed=False)
+                    next_key = "next_{skill}"
 
-            # Recalculate the time for the next set of actions to take place.
-            self.calculate_next_action_run()
-            self.stats.statistics.bot_statistics.actions += 1
-            self.stats.statistics.bot_statistics.save()
+                    # Looping through each skill that's enabled to be activated.
+                    # Some skills are disabled based on their interval.
+                    for skill in self.enabled_skills():
+                        prop = getattr(self.props, next_key.format(skill=skill))
+
+                        # Is this skill ready to be activated?
+                        if force or now > prop:
+                            self.click(point=getattr(self.locs, skill), pause=0.2)
+                            self.calculate_next_skill_execution(skill=skill)
+
+                # Recalculate the next skill activation process.
+                self.calculate_next_skills_activation()
+                return True
 
     @wrap_current_function
     @not_in_transition
@@ -829,6 +960,10 @@ class Bot(object):
                 self.logger.info("{begin_force} prestige process in game now.".format(
                     begin_force="beginning" if not force else "forcing"))
 
+                # Reset the current prestige skill level values, since they all go back to
+                # zero on a prestige, We can reset and be sure they're all zero.
+                self.current_prestige_skill_levels = {skill: 0 for skill in SKILLS}
+
                 # Reset the current prestige variables, so that after this prestige is finished,
                 # we perform those functions then disable them when needed.
                 self.current_prestige_master_levelled = False
@@ -867,11 +1002,26 @@ class Bot(object):
                     if self.configuration.prestige_x_minutes != 0:
                         self.calculate_next_prestige()
 
+                    # Ensure an artifact purchase check is performed so that an upgrade takes
+                    # place properly once the prestige is complete.
+                    self.artifacts()
+
                     # After a prestige, run all actions instantly to ensure that initial levels are gained.
                     # Also attempt to activate skills afterwards so that stage progression is started before
                     # any other actions or logic takes place in game.
-                    self.actions(force=True)
+                    self.level_master(force=True)
+                    self.level_skills(force=True)
                     self.activate_skills(force=True)
+
+                    # Shimming in a small wait period, so that our level heroes
+                    # process has a second to let the bot deal damage.
+                    # When all skills are active, it's likely that heroes will
+                    # become available shortly after.
+                    sleep(2)
+
+                    # Level heroes last, once our master is levelled,
+                    # and skills have been activated, saving some time here.
+                    self.level_heroes(force=True)
 
                     # If the current stage currently is greater than the current max stage, lets update our stats
                     # to reflect that a new max stage has been reached. This allows for
@@ -882,11 +1032,6 @@ class Bot(object):
                                 self.update_stats(force=True)
 
                     self.props.current_stage = self.ADVANCED_START
-
-                    # Additional checks can take place during a prestige.
-                    self.artifacts()
-                    self.daily_rewards()
-                    self.hatch_eggs()
 
     @wrap_current_function
     @not_in_transition
@@ -1067,7 +1212,7 @@ class Bot(object):
         Collect any daily gifts if they're available.
         """
         self.logger.info("checking if any daily rewards are currently available to collect.")
-        if not self.goto_master():
+        if not self.ensure_collapsed():
             return False
 
         reward_found = self.grabber.search(self.images.daily_reward, bool_only=True)
@@ -1088,7 +1233,7 @@ class Bot(object):
         """
         if self.configuration.enable_egg_collection:
             self.logger.info("checking if any eggs are available to be hatched in game.")
-            if not self.goto_master():
+            if not self.ensure_collapsed():
                 return False
 
             egg_found = self.grabber.search(self.images.hatch_egg, bool_only=True)
@@ -1105,7 +1250,7 @@ class Bot(object):
         """
         Check if a clan crate is currently available and collect it if one is.
         """
-        if not self.goto_master():
+        if not self.ensure_collapsed():
             return False
 
         self.click(point=self.locs.clan_crate, pause=0.5)
@@ -1565,6 +1710,9 @@ class Bot(object):
         if self.configuration.enable_tapping:
             self.logger.info("beginning generic tapping process...")
 
+            # Ensure the game screen is currently displaying the titan correctly.
+            self.ensure_collapsed()
+
             # Looping through all of our fairy map locations... Clicking and checking
             # for ads throughout the process.
             for index, point in enumerate(self.locs.fairies_map, start=1):
@@ -1584,6 +1732,9 @@ class Bot(object):
     def minigames(self):
         if self.configuration.enable_minigames:
             self.logger.info("beginning minigame execution process...")
+
+            # Ensure the game screen is currently displaying the titan correctly.
+            self.ensure_collapsed()
 
             tapping_map = []
             # Based on the enabled minigames, tapping locations are appended
@@ -1609,40 +1760,43 @@ class Bot(object):
             # clicked just as the tapping ended.
             sleep(2)
 
-    @wrap_current_function
     @not_in_transition
-    def activate_skills(self, force=False):
+    def ensure_collapsed(self):
         """
-        Activate any skills off of cooldown, and determine if waiting for longest cd to be done.
+        Ensure that regardless of the current panel that is active, our game screen is present.
+
+        We can do this by simply making sure that our settings icon is available on the screen,
+        since this button is ALWAYS visible as long as no panel is expanded currently.
         """
-        if self.configuration.enable_skills:
-            if not self.goto_master():
-                return False
-
-            # Datetime to determine skill intervals.
-            now = timezone.now()
-            skills = [s for s in self.skill_order if s[0] != 0]
-            next_key = "next_"
-
-            if self.configuration.force_enabled_skills_wait and not force:
-                attr = getattr(self.props, next_key + skills[0][1])
-                if not now > attr:
-                    self.logger.info("skills will only be activated once {key} is ready.".format(key=skills[0][1]))
-                    self.logger.info("{key} will be ready in {time}.".format(key=skills[0][1], time=strfdelta(attr - now)))
-                    return
-
-            # If this point is reached, ensure no panel is currently active, and begin skill activation.
-            if not self.no_panel():
-                return False
-
-            self.logger.info("activating skills in game now.")
-            for skill in skills:
-                self.logger.info("activating {skill} now.".format(skill=skill[1]))
-                self.click(point=getattr(self.locs, skill[1]), pause=0.2)
-
-            # Recalculate all skill execution times.
-            self.calculate_next_skill_execution()
+        if self.grabber.search(image=self.images.settings, bool_only=True):
             return True
+
+        # If we reach this point, it means our settings are not yet available, let's minimize
+        # the panel that's currently expanded.
+        while self.grabber.search(image=self.images.collapse_panel, bool_only=True):
+            found, pos = self.grabber.search(image=self.images.collapse_panel)
+
+            # The collapse button is found, let's click it and wait shortly before continuing.
+            if found:
+                click_on_image(
+                    image=self.images.collapse_panel,
+                    pos=pos,
+                    pause=1
+                )
+                return True
+
+        # Additionally, maybe the shop panel was opened for some reason. We should also
+        # handle this edge case by closing it if the collapse panel is not visible.
+        while self.grabber.search(image=self.images.exit_panel, bool_only=True):
+            found, pos = self.grabber.search(image=self.images.exit_panel)
+
+            if found:
+                click_on_image(
+                    image=self.images.exit_panel,
+                    pos=pos,
+                    pause=1
+                )
+                return True
 
     @not_in_transition
     def goto_panel(self, panel, icon, top_find, bottom_find, collapsed=True, top=True):
@@ -1779,13 +1933,9 @@ class Bot(object):
                 self.ERRORS += 1
                 return False
 
-            self.click(point=self.locs.close_bottom, offset=2, pause=1)
-            if not self.grabber.search(self.images.exit_panel, bool_only=True):
-                break
-
-            self.click(point=self.locs.close_top, offset=2, pause=1)
-            if not self.grabber.search(self.images.exit_panel, bool_only=True):
-                break
+            found, pos = self.grabber.search(image=self.images.exit_panel)
+            if found:
+                click_on_image(image=self.images.exit_panel, pos=pos, pause=0.5)
 
         return True
 
@@ -1845,20 +1995,22 @@ class Bot(object):
         """
         lst = [
             k for k, v in {
-                "goto_master": True,
                 "fight_boss": True,
-                "clan_crate": True,
+                "clan_crate": self.configuration.enable_clan_crates,
+                "hatch_eggs": self.configuration.enable_egg_collection,
+                "daily_rewards": self.configuration.enable_daily_rewards,
                 "tap": self.configuration.enable_tapping,
                 "minigames": self.configuration.enable_minigames,
-                "collect_ad": True,
                 "parse_current_stage": True,
+                "level_master": self.configuration.enable_master,
+                "level_heroes": self.configuration.enable_heroes,
+                "level_skills": self.configuration.enable_level_skills,
+                "activate_skills": self.configuration.enable_activate_skills,
                 "prestige": self.configuration.enable_auto_prestige,
                 "daily_achievement_check": self.configuration.enable_daily_achievements,
                 "milestone_check": self.configuration.enable_milestones,
                 "raid_notifications": self.configuration.enable_raid_notifications,
                 "clan_results_parse": self.configuration.enable_clan_results_parse,
-                "actions": True,
-                "activate_skills": self.configuration.enable_skills,
                 "update_stats": self.configuration.enable_stats,
                 "recover": True,
                 "breaks": self.configuration.enable_breaks
@@ -1925,10 +2077,23 @@ class Bot(object):
         """
         Run any initial functions as soon as a session is started.
         """
+        # Parse current skill levels, done once on initialization
+        # and taken care of by our prestige function for every prestige.
+        self.parse_current_skills()
+
+        # Initial skill execution calculation, ensuring that all
+        # skills with interval > 0 have a next execution datetime.
+        self.calculate_next_skill_execution()
+
+        # Conditionally checked for functions to run on session start.
+        if self.configuration.master_level_on_start:
+            self.level_master(force=True)
+        if self.configuration.hero_level_on_start:
+            self.level_heroes(force=True)
+        if self.configuration.level_skills_on_start:
+            self.level_skills(force=True)
         if self.configuration.activate_skills_on_start:
             self.activate_skills(force=True)
-        if self.configuration.run_actions_on_start:
-            self.actions(force=True)
         if self.configuration.update_stats_on_start:
             self.update_stats(force=True)
         if self.configuration.daily_achievements_check_on_start:
