@@ -250,6 +250,26 @@ class Stats:
 
         self.artifact_statistics.artifacts.filter(artifact__name__in=_found).update(owned=True)
 
+    def skill_ocr(self, region):
+        """
+        Parse out a skills current level when given the region of the levels text on screen.
+        """
+        self.grabber.snapshot(region=region)
+
+        text = pytesseract.image_to_string(image=self._process(), config="--psm 7")
+
+        if "," in text:
+            text = text.split(",")[1]
+        elif "." in text:
+            text = text.split(".")[1]
+
+        text = text.lstrip().rstrip()
+        try:
+            return int(text)
+        except ValueError:
+            self.logger.warning("skill was parsed incorrectly, returning level 0.")
+            return 0
+
     def update_ocr(self, test_set=None):
         """
         Update the stats by parsing and extracting the text from the games stats page using the
