@@ -1,7 +1,3 @@
-from django.conf import settings
-import pytz
-
-
 # Generate constants to determine a Bot instance's state.
 RUNNING = "running"
 PAUSED = "paused"
@@ -27,6 +23,17 @@ EMULATOR_CHOICES = (
     ("nox", "Nox Emulator"),
     ("memu", "MEmu Emulator"),
 )
+
+SKILL_MAX_LEVEL = 30
+SKILL_MAX_CHOICE = "max"
+SKILL_DISABLE_CHOICE = "disable"
+SKILL_LEVEL_CHOICES = (
+    (SKILL_MAX_CHOICE, "Max Level"),
+    (SKILL_DISABLE_CHOICE, "Disable"),
+)
+
+for i in range(1, SKILL_MAX_LEVEL + 1):
+    SKILL_LEVEL_CHOICES += ((str(i), str(i)),)
 
 # Convert datetimes into human readable strings...
 DATETIME_FMT = "%m/%d/%Y %I:%M:%S %p"
