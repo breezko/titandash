@@ -87,6 +87,10 @@ class BotInstance(models.Model):
     log = models.ForeignKey(verbose_name="Current Log", to=Log, on_delete=models.CASCADE, blank=True, null=True)
     current_stage = models.PositiveIntegerField(verbose_name="Current Stage", blank=True, null=True)
     next_action_run = models.DateTimeField(verbose_name="Next Action Run", blank=True, null=True)
+    next_master_level = models.DateTimeField(verbose_name="Next Master Level", blank=True, null=True)
+    next_heroes_level = models.DateTimeField(verbose_name="Next Heroes Level", blank=True, null=True)
+    next_skills_level = models.DateTimeField(verbose_name="Next Skills Level", blank=True, null=True)
+    next_skills_activation = models.DateTimeField(verbose_name="Next Skills Activation", blank=True, null=True)
     next_prestige = models.DateTimeField(verbose_name="Next Timed Prestige", blank=True, null=True)
     next_randomized_prestige = models.DateTimeField(verbose_name="Next Randomized Prestige", blank=True, null=True)
     next_stats_update = models.DateTimeField(verbose_name="Next Stats Update", blank=True, null=True)
@@ -186,9 +190,21 @@ class BotInstance(models.Model):
                 "title": title(self.next_artifact_upgrade) if self.next_artifact_upgrade else None,
                 "image": "{dir}{path}".format(dir=settings.STATIC_URL, path=Artifact.objects.get(name=self.next_artifact_upgrade).image) if self.next_artifact_upgrade else None
             },
-            "next_action_run": {
-                "datetime": str(self.next_action_run) if self.next_action_run else None,
-                "formatted": self.next_action_run.astimezone().strftime(DATETIME_FMT) if self.next_action_run else None
+            "next_master_level": {
+                "datetime": str(self.next_master_level) if self.next_master_level else None,
+                "formatted": self.next_master_level.astimezone().strftime(DATETIME_FMT) if self.next_master_level else None
+            },
+            "next_heroes_level": {
+                "datetime": str(self.next_heroes_level) if self.next_heroes_level else None,
+                "formatted": self.next_heroes_level.astimezone().strftime(DATETIME_FMT) if self.next_heroes_level else None
+            },
+            "next_skills_level": {
+                "datetime": str(self.next_skills_level) if self.next_skills_level else None,
+                "formatted": self.next_skills_level.astimezone().strftime(DATETIME_FMT) if self.next_skills_level else None
+            },
+            "next_skills_activation": {
+                "datetime": str(self.next_skills_activation) if self.next_skills_activation else None,
+                "formatted": self.next_skills_activation.astimezone().strftime(DATETIME_FMT) if self.next_skills_activation else None
             },
             "next_prestige": {
                 "datetime": str(self.next_prestige) if self.next_prestige else None,
@@ -285,7 +301,10 @@ class BotInstance(models.Model):
         self.window = None
         self.log_file = None
         self.current_stage = None
-        self.next_action_run = None
+        self.next_master_level = None
+        self.next_heroes_level = None
+        self.next_skills_level = None
+        self.next_skills_activation = None
         self.next_prestige = None
         self.next_randomized_prestige = None
         self.next_stats_update = None
