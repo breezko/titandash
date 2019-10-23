@@ -133,7 +133,6 @@ class GameStatistics(models.Model):
 
 BOT_STATISTICS_HELP_TEXT = {
     "ads": "How many ads have been earned and tracked by the bot.",
-    "actions": "How many sets of actions have been ran by the bot.",
     "updates": "How many times has bot statistics been updated.",
     "instance": "The bot instance associated with these game statistics."
 }
@@ -151,7 +150,6 @@ class BotStatistics(models.Model):
 
     # Game actions.
     ads = models.PositiveIntegerField(verbose_name="Premium Ads", default=0, help_text=BOT_STATISTICS_HELP_TEXT["ads"])
-    actions = models.PositiveIntegerField(verbose_name="Actions", default=0, help_text=BOT_STATISTICS_HELP_TEXT["actions"])
     updates = models.PositiveIntegerField(verbose_name="Updates", default=0, help_text=BOT_STATISTICS_HELP_TEXT["updates"])
 
     instance = models.ForeignKey(verbose_name="Instance", to="BotInstance", null=True, on_delete=models.CASCADE, help_text=BOT_STATISTICS_HELP_TEXT["instance"])
@@ -176,7 +174,6 @@ class BotStatistics(models.Model):
     def json(self):
         return {
             "ads": self.ads,
-            "actions": self.actions,
             "updates": self.updates,
             "prestiges": self.prestiges,
             "sessions": self.sessions

@@ -5,7 +5,10 @@ from titandash.models.mixins import ExportModelMixin
 from titandash.models.artifact import Artifact
 from titandash.models.artifact import Tier
 from titandash.utils import import_model_kwargs
-from titandash.constants import INFO, LOGGING_LEVEL_CHOICES, EMULATOR_CHOICES, GENERIC_BLACKLIST, DATETIME_FMT
+from titandash.constants import (
+    INFO, LOGGING_LEVEL_CHOICES, EMULATOR_CHOICES, SKILL_LEVEL_CHOICES,
+    SKILL_MAX_CHOICE, GENERIC_BLACKLIST, DATETIME_FMT
+)
 
 EXPORT_BLACKLIST = [
     "raid_notifications_twilio_account_sid",
@@ -48,16 +51,10 @@ COMPRESSION_KEYS = {
     "raid_notifications_twilio_auth_token": 26,
     "raid_notifications_twilio_from_number": 27,
     "raid_notifications_twilio_to_number": 28,
-    "run_actions_every_x_seconds": 29,
-    "run_actions_on_start": 30,
-    "order_level_heroes": 31,
-    "order_level_master": 32,
-    "order_level_skills": 33,
     "enable_master": 34,
     "master_level_intensity": 35,
     "enable_heroes": 36,
     "hero_level_intensity": 37,
-    "enable_skills": 38,
     "activate_skills_on_start": 39,
     "interval_heavenly_strike": 40,
     "interval_deadly_strike": 41,
@@ -65,8 +62,6 @@ COMPRESSION_KEYS = {
     "interval_fire_sword": 43,
     "interval_war_cry": 44,
     "interval_shadow_clone": 45,
-    "force_enabled_skills_wait": 46,
-    "max_skill_if_possible": 47,
     "skill_level_intensity": 48,
     "enable_auto_prestige": 49,
     "prestige_x_minutes": 50,
@@ -97,9 +92,25 @@ COMPRESSION_KEYS = {
     "enable_coordinated_offensive": 75,
     "enable_astral_awakening": 76,
     "enable_heart_of_midas": 77,
-    "enable_flash_zip": 78
+    "enable_flash_zip": 78,
+    "enable_daily_rewards": 79,
+    "enable_clan_crates": 80,
+    "master_level_every_x_seconds": 81,
+    "hero_level_every_x_seconds": 82,
+    "enable_level_skills": 83,
+    "level_skills_every_x_seconds": 84,
+    "level_heavenly_strike_cap": 85,
+    "level_deadly_strike_cap": 86,
+    "level_hand_of_midas_cap": 87,
+    "level_fire_sword_cap": 88,
+    "level_war_cry_cap": 89,
+    "level_shadow_clone_cap": 90,
+    "enable_activate_skills": 91,
+    "master_level_on_start": 92,
+    "hero_level_on_start": 93,
+    "level_skills_on_start": 94,
+    "activate_skills_every_x_seconds": 95,
 }
-
 
 HELP_TEXT = {
     "name": "Specify a name for this configuration.",
@@ -110,8 +121,10 @@ HELP_TEXT = {
     "emulator": "Which emulator service is being used?",
     "enable_ad_collection": "Enable to ability to collect ads in game.",
     "enable_premium_ad_collect": "Enable the premium ad collection, Note: This will only work if you have unlocked the ability to skip ads, leave disabled to watch ads.",
-    "enable_egg_collection": "Enable the ability to collect and hatch eggs in game.",
     "enable_tapping": "Enable the ability to tap on titans (This also enables the clicking of fairies in game).",
+    "enable_daily_rewards": "Enable the ability to collect daily rewards in game when they become available.",
+    "enable_clan_crates": "Enable the ability to collect clan crates in game when they are available.",
+    "enable_egg_collection": "Enable the ability to collect and hatch eggs in game.",
     "enable_tournaments": "Enable the ability to enter and participate in tournaments.",
     "enable_minigames": "Enable the ability to enable/disable different skill minigames that can be executed.",
     "enable_coordinated_offensive": "Enable coordinated offensive tapping skill minigame.",
@@ -136,17 +149,26 @@ HELP_TEXT = {
     "raid_notifications_twilio_auth_token": "Specify the auth token associated with your twilio account.",
     "raid_notifications_twilio_from_number": "Specify the from number associated with your twilio account",
     "raid_notifications_twilio_to_number": "Specify the phone number you would like to receive notifications at (ex: +19991234567)",
-    "run_actions_every_x_seconds": "Determine how many seconds between each execution of all in game actions.",
-    "run_actions_on_start": "Should all enabled actions be executed once when a session is started.",
-    "order_level_heroes": "Select the order that heroes will be levelled in game (1, 2, 3).",
-    "order_level_master": "Select the order that the sword master will be levelled in game (1, 2, 3).",
-    "order_level_skills": "Select the order that skills will be levelled in game (1, 2, 3).",
     "enable_master": "Enable the ability to level the sword master in game.",
+    "master_level_every_x_seconds": "Specify the amount of seconds to wait in between each sword master level process.",
+    "master_level_on_start": "Should the sword master be levelled once when a session is started.",
     "master_level_only_once": "Enable the option to only level the sword master once at the beginning of a session, and once after every prestige.",
     "master_level_intensity": "Determine the amount of clicks performed whenever the sword master is levelled.",
     "enable_heroes": "Enable the ability level heroes in game.",
+    "hero_level_every_x_seconds": "Specify the amount of seconds to wait in between each heroes level process.",
+    "hero_level_on_start": "Should heroes be levelled once when a session is started.",
     "hero_level_intensity": "Determine the amount of clicks performed on each hero when they are levelled.",
-    "enable_skills": "Enable the ability to level and activate skills in game.",
+    "enable_level_skills": "Enable the ability to level skills in game.",
+    "level_skills_every_x_seconds": "Specify the amount of seconds to wait in between each skills level process.",
+    "level_skills_on_start": "Should skills be levelled once when a session is started.",
+    "level_heavenly_strike_cap": "Choose the level cap for the heavenly strike skill.",
+    "level_deadly_strike_cap": "Choose the level cap for the deadly strike skill.",
+    "level_hand_of_midas_cap": "Choose the level cap for the hand of midas skill.",
+    "level_fire_sword_cap": "Choose the level cap for the fire sword skill.",
+    "level_war_cry_cap": "Choose the level cap for the war cry skill.",
+    "level_shadow_clone_cap": "Choose the level cap for the shadow clone skill.",
+    "enable_activate_skills": "Enable the ability to activate skills in game.",
+    "activate_skills_every_x_seconds": "Specify the amount of seconds to wait in between each skills activation process.",
     "activate_skills_on_start": "Should skills be activated once when a session is started.",
     "interval_heavenly_strike": "How many seconds between each activation of the heavenly strike skill.",
     "interval_deadly_strike": "How many seconds between each activation of the deadly strike skill.",
@@ -154,8 +176,6 @@ HELP_TEXT = {
     "interval_fire_sword": "How many seconds between each activation of the fire sword skill.",
     "interval_war_cry": "How many seconds between each activation of the war cry skill.",
     "interval_shadow_clone": "How many seconds between each activation of the shadow clone skill.",
-    "force_enabled_skills_wait": "Based on the intervals determined above, should skill activation wait until the largest interval is surpassed.",
-    "max_skill_if_possible": "Should a skill be levelled to it's maximum available amount if the option is present when levelling.",
     "skill_level_intensity": "Determine the amount of clicks performed on each skill when levelled.",
     "enable_auto_prestige": "Enable the ability to automatically prestige in game.",
     "enable_prestige_threshold_randomization": "Enable the ability to add additional time to a prestige once one of the thresholds below are reached. For example, if this setting is enabled and you choose to prestige every 30 minutes, the actual prestige may take place in 33 minutes depending on the settings below. Additionally, if you choose to prestige at a percent, once you reach your percentage, the bot will wait the calculated amount of time before prestiging.",
@@ -211,8 +231,10 @@ class Configuration(ParanoidModel, ExportModelMixin):
     enable_premium_ad_collect = models.BooleanField(verbose_name="Enable Premium Ad Collection", default=False, help_text=HELP_TEXT["enable_premium_ad_collect"])
 
     # GENERIC Settings.
-    enable_egg_collection = models.BooleanField(verbose_name="Enable Egg Collection", default=True, help_text=HELP_TEXT["enable_egg_collection"])
     enable_tapping = models.BooleanField(verbose_name="Enable Tapping", default=True, help_text=HELP_TEXT["enable_tapping"])
+    enable_daily_rewards = models.BooleanField(verbose_name="Enable Daily Rewards", default=True, help_text=HELP_TEXT["enable_daily_rewards"])
+    enable_clan_crates = models.BooleanField(verbose_name="Enable Clan Crates", default=True, help_text=HELP_TEXT["enable_clan_crates"])
+    enable_egg_collection = models.BooleanField(verbose_name="Enable Egg Collection", default=True, help_text=HELP_TEXT["enable_egg_collection"])
     enable_tournaments = models.BooleanField(verbose_name="Enable Tournaments", default=True, help_text=HELP_TEXT["enable_tournaments"])
 
     # MINIGAME Settings.
@@ -249,24 +271,33 @@ class Configuration(ParanoidModel, ExportModelMixin):
     raid_notifications_twilio_from_number = models.CharField(verbose_name="Raid Notifications Twilio From Number", blank=True, null=True, max_length=255, help_text=HELP_TEXT["raid_notifications_twilio_from_number"])
     raid_notifications_twilio_to_number = models.CharField(verbose_name="Raid Notifications Twilio To Number", blank=True, null=True, max_length=255, help_text=HELP_TEXT["raid_notifications_twilio_to_number"])
 
-    # GENERAL ACTION Settings.
-    run_actions_every_x_seconds = models.PositiveIntegerField(verbose_name="Run Actions Every X Seconds", default=25, help_text=HELP_TEXT["run_actions_every_x_seconds"])
-    run_actions_on_start = models.BooleanField(verbose_name="Run Actions On Session Start", default=False, help_text=HELP_TEXT["run_actions_on_start"])
-    order_level_heroes = models.PositiveIntegerField(choices=((1, "1",), (2, "2",), (3, "3")), default=1, help_text=HELP_TEXT["order_level_heroes"])
-    order_level_master = models.PositiveIntegerField(choices=((1, "1",), (2, "2",), (3, "3")), default=2, help_text=HELP_TEXT["order_level_master"])
-    order_level_skills = models.PositiveIntegerField(choices=((1, "1",), (2, "2",), (3, "3")), default=3, help_text=HELP_TEXT["order_level_skills"])
-
     # MASTER ACTION Settings.
     enable_master = models.BooleanField(verbose_name="Enable Master", default=True, help_text=HELP_TEXT["enable_master"])
+    master_level_every_x_seconds = models.PositiveIntegerField(verbose_name="Level Sword Master Every X Seconds", default=60, help_text=HELP_TEXT["master_level_every_x_seconds"])
+    master_level_on_start = models.BooleanField(verbose_name="Level Sword Master On Session Start", default=True, help_text=HELP_TEXT["master_level_on_start"])
     master_level_only_once = models.BooleanField(verbose_name="Level Sword Master Once Per Prestige", default=False, help_text=HELP_TEXT["master_level_only_once"])
     master_level_intensity = models.PositiveIntegerField(verbose_name="Master Level Intensity", default=5, help_text=HELP_TEXT["master_level_intensity"])
 
     # HEROES ACTION Settings.
     enable_heroes = models.BooleanField(verbose_name="Enable Heroes", default=True, help_text=HELP_TEXT["enable_heroes"])
+    hero_level_every_x_seconds = models.PositiveIntegerField(verbose_name="Level Heroes Every X Seconds", default=60, help_text=HELP_TEXT["hero_level_every_x_seconds"])
+    hero_level_on_start = models.BooleanField(verbose_name="Level Heroes On Session Start", default=True, help_text=HELP_TEXT["hero_level_on_start"])
     hero_level_intensity = models.PositiveIntegerField(verbose_name="Hero Level Intensity", default=3, help_text=HELP_TEXT["hero_level_intensity"])
 
-    # SKILLS ACTION Settings.
-    enable_skills = models.BooleanField(verbose_name="Enable Skills", default=True, help_text=HELP_TEXT["enable_skills"])
+    # SKILLS LEVEL ACTION Settings
+    enable_level_skills = models.BooleanField(verbose_name="Enable Level Skills", default=True, help_text=HELP_TEXT["enable_level_skills"])
+    level_skills_every_x_seconds = models.PositiveIntegerField(verbose_name="Level Skills Every X Seconds", default=120, help_text=HELP_TEXT["level_skills_every_x_seconds"])
+    level_skills_on_start = models.BooleanField(verbose_name="Level Skills On Session Start", default=True, help_text=HELP_TEXT["level_skills_on_start"])
+    level_heavenly_strike_cap = models.CharField(verbose_name="Heavenly Strike Level Cap", choices=SKILL_LEVEL_CHOICES, max_length=255, default=SKILL_MAX_CHOICE, help_text=HELP_TEXT["level_heavenly_strike_cap"])
+    level_deadly_strike_cap = models.CharField(verbose_name="Deadly Strike Level Cap", choices=SKILL_LEVEL_CHOICES, max_length=255, default=SKILL_MAX_CHOICE, help_text=HELP_TEXT["level_deadly_strike_cap"])
+    level_hand_of_midas_cap = models.CharField(verbose_name="Hand Of Midas Level Cap", choices=SKILL_LEVEL_CHOICES, max_length=255, default=SKILL_MAX_CHOICE, help_text=HELP_TEXT["level_hand_of_midas_cap"])
+    level_fire_sword_cap = models.CharField(verbose_name="Fire Sword Level Cap", choices=SKILL_LEVEL_CHOICES, max_length=255, default=SKILL_MAX_CHOICE, help_text=HELP_TEXT["level_fire_sword_cap"])
+    level_war_cry_cap = models.CharField(verbose_name="War Cry Level Cap", choices=SKILL_LEVEL_CHOICES, max_length=255, default=SKILL_MAX_CHOICE, help_text=HELP_TEXT["level_war_cry_cap"])
+    level_shadow_clone_cap = models.CharField(verbose_name="Shadow Clone Level Cap", choices=SKILL_LEVEL_CHOICES, max_length=255, default=SKILL_MAX_CHOICE, help_text=HELP_TEXT["level_shadow_clone_cap"])
+
+    # SKILLS ACTIVATE ACTION Settings.
+    enable_activate_skills = models.BooleanField(verbose_name="Enable Activate Skills", default=True, help_text=HELP_TEXT["enable_activate_skills"])
+    activate_skills_every_x_seconds = models.PositiveIntegerField(verbose_name="Activate Skills Every X Seconds", default=30, help_text=HELP_TEXT["activate_skills_every_x_seconds"])
     activate_skills_on_start = models.BooleanField(verbose_name="Activate Skills On Session Start", default=True, help_text=HELP_TEXT["activate_skills_on_start"])
     interval_heavenly_strike = models.PositiveIntegerField(verbose_name="Heavenly Strike Interval", default=0, help_text=HELP_TEXT["interval_heavenly_strike"])
     interval_deadly_strike = models.PositiveIntegerField(verbose_name="Deadly Strike Interval", default=20, help_text=HELP_TEXT["interval_deadly_strike"])
@@ -274,9 +305,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
     interval_fire_sword = models.PositiveIntegerField(verbose_name="Fire Sword Interval", default=40, help_text=HELP_TEXT["interval_fire_sword"])
     interval_war_cry = models.PositiveIntegerField(verbose_name="War Cry Interval", default=50, help_text=HELP_TEXT["interval_war_cry"])
     interval_shadow_clone = models.PositiveIntegerField(verbose_name="Shadow Clone Interval", default=60, help_text=HELP_TEXT["interval_shadow_clone"])
-    force_enabled_skills_wait = models.BooleanField(verbose_name="Force Enabled Skills Wait", default=False, help_text=HELP_TEXT["force_enabled_skills_wait"])
-    max_skill_if_possible = models.BooleanField(verbose_name="Max Skill If Possible", default=True, help_text=HELP_TEXT["max_skill_if_possible"])
-    skill_level_intensity = models.PositiveIntegerField(verbose_name="Skill Level Intensity", default=10, help_text=HELP_TEXT["skill_level_intensity"])
 
     # PRESTIGE ACTION Settings.
     enable_auto_prestige = models.BooleanField(verbose_name="Enable Auto Prestige", default=True, help_text=HELP_TEXT["enable_auto_prestige"])
@@ -392,6 +420,7 @@ class Configuration(ParanoidModel, ExportModelMixin):
             "config": self,
             "help": HELP_TEXT,
             "choices": {
+                "skill_levels": SKILL_LEVEL_CHOICES,
                 "emulator": EMULATOR_CHOICES,
                 "logging_level": LOGGING_LEVEL_CHOICES,
                 "artifacts": Artifact.objects.all(),
@@ -423,8 +452,10 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 "enable_premium_ad_collect": self.enable_premium_ad_collect,
             },
             "Generic": {
-                "enable_egg_collection": self.enable_egg_collection,
                 "enable_tapping": self.enable_tapping,
+                "enable_daily_rewards": self.enable_daily_rewards,
+                "enable_clan_crates": self.enable_clan_crates,
+                "enable_egg_collection": self.enable_egg_collection,
                 "enable_tournaments": self.enable_tournaments
             },
             "Minigames": {
@@ -455,24 +486,33 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 "raid_notifications_twilio_from_number": self.raid_notifications_twilio_from_number,
                 "raid_notifications_twilio_to_number": self.raid_notifications_twilio_to_number
             },
-            "General Actions": {
-                "run_actions_every_x_seconds": self.run_actions_every_x_seconds,
-                "run_actions_on_start": self.run_actions_on_start,
-                "order_level_heroes": self.order_level_heroes,
-                "order_level_master": self.order_level_master,
-                "order_level_skills": self.order_level_skills
-            },
-            "Master Actions": {
+            "Master Action": {
                 "enable_master": self.enable_master,
+                "master_level_every_x_seconds": self.master_level_every_x_seconds,
+                "master_level_on_start": self.master_level_on_start,
                 "master_level_only_once": self.master_level_only_once,
                 "master_level_intensity": self.master_level_intensity
             },
-            "Heroes": {
+            "Heroes Action": {
                 "enable_heroes": self.enable_heroes,
+                "hero_level_every_x_seconds": self.hero_level_every_x_seconds,
+                "hero_level_on_start": self.hero_level_on_start,
                 "hero_level_intensity": self.hero_level_intensity
             },
-            "Skills": {
-                "enable_skills": self.enable_skills,
+            "Level Skills Action": {
+                "enable_level_skills": self.enable_level_skills,
+                "level_skills_every_x_seconds": self.level_skills_every_x_seconds,
+                "level_skills_on_start": self.level_skills_on_start,
+                "level_heavenly_strike_cap": self.level_heavenly_strike_cap,
+                "level_deadly_strike_cap": self.level_deadly_strike_cap,
+                "level_hand_of_midas_cap": self.level_hand_of_midas_cap,
+                "level_fire_sword_cap": self.level_fire_sword_cap,
+                "level_war_cry_cap": self.level_war_cry_cap,
+                "level_shadow_clone_cap": self.level_shadow_clone_cap,
+            },
+            "Activate Skills Action": {
+                "enable_activate_skills": self.enable_activate_skills,
+                "activate_skills_every_x_seconds": self.activate_skills_every_x_seconds,
                 "activate_skills_on_start": self.activate_skills_on_start,
                 "interval_heavenly_strike": self.interval_heavenly_strike,
                 "interval_deadly_strike": self.interval_deadly_strike,
@@ -480,9 +520,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 "interval_fire_sword": self.interval_fire_sword,
                 "interval_war_cry": self.interval_war_cry,
                 "interval_shadow_clone": self.interval_shadow_clone,
-                "force_enabled_skills_wait": self.force_enabled_skills_wait,
-                "max_skill_if_possible": self.max_skill_if_possible,
-                "skill_level_intensity": self.skill_level_intensity
             },
             "Prestige Action": {
                 "enable_auto_prestige": self.enable_auto_prestige,

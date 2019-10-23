@@ -62,8 +62,10 @@ FUNCTION_LOOP_TIMEOUT = 40
 BOSS_LOOP_TIMEOUT = int(FUNCTION_LOOP_TIMEOUT / 2)
 
 # Specify any functions that may be forced.
-FORCEABLE_FUNCTIONS = ["recover", "actions", "update_stats", "prestige", "daily_achievement_check", "milestone_check",
-                       "raid_notifications", "activate_skills", "clan_results_parse", "breaks"]
+FORCEABLE_FUNCTIONS = [
+    "recover", "level_master", "level_heroes", "level_skills", "update_stats", "prestige", "daily_achievement_check",
+    "milestone_check", "raid_notifications", "activate_skills", "clan_results_parse", "breaks"
+]
 
 # Specify functions that can be activated through keyboard shortcuts.
 # The key present should represent a function that's present on the Bot.
@@ -100,16 +102,20 @@ FUNCTION_SHORTCUTS = {v: k for k, v in SHORTCUT_FUNCTIONS.items()}
 # Specify any functions that be queued. These will be grabbed by the TitanDashboard to provide a user
 # with the ability to manually add functions that will be executed by the Bot.
 QUEUEABLE_FUNCTIONS = FORCEABLE_FUNCTIONS + [
-    "calculate_next_action_run", "calculate_next_stats_update", "calculate_next_daily_achievement_check", "calculate_next_raid_notifications_check",
-    "calculate_next_skill_execution", "calculate_next_prestige", "calculate_next_recovery_reset", "update_next_artifact_upgrade", "calculate_next_break",
-    "parse_current_stage", "level_heroes", "level_master", "level_skills", "artifacts", "parse_artifacts", "check_tournament",
-    "daily_rewards", "hatch_eggs", "clan_crate", "collect_ad", "fight_boss", "leave_boss", "tap",
+    "calculate_next_master_level", "calculate_next_heroes_level", "calculate_next_skills_level", "calculate_next_skills_activation",
+    "calculate_next_stats_update", "calculate_next_daily_achievement_check", "calculate_next_raid_notifications_check",
+    "calculate_next_skill_execution",  "calculate_next_prestige", "calculate_next_recovery_reset", "update_next_artifact_upgrade", "calculate_next_break",
+    "parse_current_stage", "artifacts", "parse_artifacts", "check_tournament",
+    "daily_rewards", "hatch_eggs", "clan_crate", "collect_ad", "fight_boss", "leave_boss", "tap", "minigames",
     "pause", "resume", "terminate", "soft_terminate"
 ]
 
 # Also generating a dictionary of tooltips or help texts associated with each queueable function.
 QUEUEABLE_TOOLTIPS = {
-    "calculate_next_action_run": "Calculate the next time that an action run will take place.",
+    "calculate_next_master_level": "Calculate the next time that the master level process will take place.",
+    "calculate_next_heroes_level": "Calculate the next time that the heroes level process will take place.",
+    "calculate_next_skills_level": "Calculate the next time that the skills level process will take place.",
+    "calculate_next_skills_activation": "Calculate the next time that the skills activation process will take place.",
     "calculate_next_stats_update": "Calculate the next time a statistics update will take place.",
     "calculate_next_daily_achievement_check": "Calculate the next time a daily achievement check will take place",
     "calculate_next_raid_notifications_check": "Calculate the next time raid notification check will take place.",
@@ -122,7 +128,7 @@ QUEUEABLE_TOOLTIPS = {
     "level_heroes": "Level heroes in game.",
     "level_master": "Level sword master in game.",
     "level_skills": "Level skills in game.",
-    "artifacts": "Upgrade the specified next artifact upgrade in game.",
+    "artifacts": "Begin the upgrade discover/enchant/purchase process in game.",
     "parse_artifacts": "Begin a parse of all owned artifacts in game.",
     "check_tournament": "Check for a tournament and join/prestige if one is available.",
     "daily_rewards": "Check for daily rewards in game and collect if available.",
@@ -131,7 +137,8 @@ QUEUEABLE_TOOLTIPS = {
     "collect_ad": "Collect an ad in game if one is available.",
     "fight_boss": "Attempt to begin the boss fight in game.",
     "leave_boss": "Attempt to leave the boss fight in game.",
-    "tap": "Begin tapping process in game.",
+    "tap": "Begin generic tapping process in game.",
+    "minigames": "Begin minigame tapping process in game.",
     "pause": "Pause all bot functionality.",
     "resume": "Resume all bot functionality.",
     "terminate": "Terminate all bot functionality.",
@@ -155,6 +162,7 @@ PROPERTIES = [
     "current_stage", "current_function", "last_prestige", "next_action_run", "next_prestige", "next_randomized_prestige",
     "next_stats_update", "next_recovery_reset", "next_daily_achievement_check", "next_milestone_check", "next_break",
     "resume_from_break", "next_raid_notifications_check", "next_raid_attack_reset", "next_clan_results_parse",
+    "next_master_level", "next_heroes_level", "next_skills_level", "next_skills_activation",
     "next_heavenly_strike", "next_deadly_strike", "next_hand_of_midas", "next_fire_sword", "next_war_cry", "next_shadow_clone"
 ]
 
