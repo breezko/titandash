@@ -153,13 +153,6 @@
         <div id="collapseGenericSettings" class="collapse show" data-parent="#accordionGenericSettings">
             <div id="configurationGenericSettingsBody" class="card-body">
                 <div class="form-check">
-                    {# Enable Egg Collection #}
-                    <input {% if config.enable_egg_collection %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_egg_collection" name="enable_egg_collection">
-                    <label class="form-check-label" for="enable_egg_collection">Enable Egg Collection</label>
-                    <p class="text-muted">{{ help.enable_egg_collection }}</p>
-                </div>
-
-                <div class="form-check">
                     {# Enable Tapping #}
                     <input {% if config.enable_tapping %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_tapping" name="enable_tapping">
                     <label class="form-check-label" for="enable_tapping">Enable Tapping</label>
@@ -167,10 +160,81 @@
                 </div>
 
                 <div class="form-check">
+                    {# Enable Daily Rewards #}
+                    <input {% if config.enable_daily_rewards %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_daily_rewards" name="enable_daily_rewards">
+                    <label class="form-check-label" for="enable_daily_rewards">Enable Daily Rewards</label>
+                    <p class="text-muted">{{ help.enable_daily_rewards }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Enable Clan Crates #}
+                    <input {% if config.enable_clan_crates %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_clan_crates" name="enable_clan_crates">
+                    <label class="form-check-label" for="enable_clan_crates">Enable Clan Crates</label>
+                    <p class="text-muted">{{ help.enable_clan_crates }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Enable Egg Collection #}
+                    <input {% if config.enable_egg_collection %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_egg_collection" name="enable_egg_collection">
+                    <label class="form-check-label" for="enable_egg_collection">Enable Egg Collection</label>
+                    <p class="text-muted">{{ help.enable_egg_collection }}</p>
+                </div>
+
+                <div class="form-check">
                     {# Enable Tournaments #}
                     <input {% if config.enable_tournaments %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_tournaments" name="enable_tournaments">
                     <label class="form-check-label" for="enable_tournaments">Enable Tournaments</label>
                     <p class="text-muted">{{ help.enable_tournaments }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Minigame Settings #}
+<div id="accordionMinigameSettings">
+    <div class="card">
+        <div class="card-header" id="configurationMinigameSettingsHeader">
+            <h5 class="modal-title" id="configurationMinigameSettingsTitle">
+                <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseMinigameSettings">Minigame Settings</button>
+            </h5>
+        </div>
+
+        <div id="collapseMinigameSettings" class="collapse show" data-parent="#accordionMinigameSettings">
+            <div id="configurationMinigameSettingsBody" class="card-body">
+                <div class="form-check">
+                    {# Enable Minigames #}
+                    <input {% if config.enable_minigames %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_minigames" name="enable_minigames">
+                    <label class="form-check-label" for="enable_minigames">Enable Minigames</label>
+                    <p class="text-muted">{{ help.enable_minigames }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Enable Coordinated Offensive #}
+                    <input {% if config.enable_coordinated_offensive %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_coordinated_offensive" name="enable_coordinated_offensive">
+                    <label class="form-check-label" for="enable_coordinated_offensive">Enable Coordinated Offensive</label>
+                    <p class="text-muted">{{ help.enable_coordinated_offensive }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Enable Astral Awakening #}
+                    <input {% if config.enable_astral_awakening %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_astral_awakening" name="enable_astral_awakening">
+                    <label class="form-check-label" for="enable_astral_awakening">Enable Astral Awakening</label>
+                    <p class="text-muted">{{ help.enable_astral_awakening }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Enable Heart Of Midas #}
+                    <input {% if config.enable_heart_of_midas %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_heart_of_midas" name="enable_heart_of_midas">
+                    <label class="form-check-label" for="enable_heart_of_midas">Enable Heart Of Midas</label>
+                    <p class="text-muted">{{ help.enable_heart_of_midas }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Enable Flash Zip #}
+                    <input {% if config.enable_flash_zip %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_flash_zip" name="enable_flash_zip">
+                    <label class="form-check-label" for="enable_flash_zip">Enable Flash Zip</label>
+                    <p class="text-muted">{{ help.enable_flash_zip }}</p>
                 </div>
             </div>
         </div>
@@ -365,68 +429,6 @@
     </div>
 </div>
 
-{# General Action Settings #}
-<div id="accordionGeneralActionSettings">
-    <div class="card">
-        <div class="card-header" id="configurationGeneralActionSettingsHeader">
-            <h5 class="modal-title" id="configurationGeneralActionSettingsTitle">
-                <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseGeneralActionSettings">General Action Settings</button>
-            </h5>
-        </div>
-
-        <div id="collapseGeneralActionSettings" class="collapse show" data-parent="#accordionGeneralActionSettings">
-            <div id="configurationGeneralActionSettingsBody" class="card-body">
-                <div class="form-group">
-                    {# Run Actions Every X Seconds #}
-                    <label for="run_actions_every_x_seconds">Run Actions Every X Seconds:</label>
-                    <input value="{{ config.run_actions_every_x_seconds|default_if_none:"" }}" type="number" class="form-control" id="run_actions_every_x_seconds" name="run_actions_every_x_seconds">
-                    <p style="padding: 3px;" class="text-muted">{{ help.run_actions_every_x_seconds }}</p>
-                </div>
-
-                <div class="form-check">
-                    {# Run Actions On Start #}
-                    <input {% if config.run_actions_on_start %}checked{% endif %} type="checkbox" class="form-check-input" id="run_actions_on_start" name="run_actions_on_start">
-                    <label class="form-check-label" for="run_actions_on_start">Run Actions On Session Start</label>
-                    <p class="text-muted">{{ help.run_actions_on_start }}</p>
-                </div>
-
-                <div class="form-group">
-                    {# Order Level Heroes #}
-                    <label for="order_level_heroes">Order Level Heroes:</label>
-                    <select id="order_level_heroes" class="form-control" name="order_level_heroes">
-                        {% for val in "123"|make_list %}
-                            <option {% if config.order_level_heroes == forloop.counter %}selected{% endif %} data-value="{{ forloop.counter }}">{{ forloop.counter }}</option>
-                        {% endfor %}
-                    </select>
-                    <p style="padding: 3px;" class="text-muted">{{ help.order_level_heroes }}</p>
-                </div>
-
-                <div class="form-group">
-                    {# Order Level Master #}
-                    <label for="order_level_master">Order Level Master:</label>
-                    <select id="order_level_master" class="form-control" name="order_level_master">
-                        {% for val in "123"|make_list %}
-                            <option {% if config.order_level_master == forloop.counter %}selected{% endif %} data-value="{{ forloop.counter }}">{{ forloop.counter }}</option>
-                        {% endfor %}
-                    </select>
-                    <p style="padding: 3px;" class="text-muted">{{ help.order_level_master }}</p>
-                </div>
-
-                <div class="form-group">
-                    {# Order Level Skills #}
-                    <label for="order_level_skills">Order Level Skills:</label>
-                    <select id="order_level_skills" class="form-control" name="order_level_skills">
-                        {% for val in "123"|make_list %}
-                            <option {% if config.order_level_skills == forloop.counter %}selected{% endif %} data-value="{{ forloop.counter }}">{{ forloop.counter }}</option>
-                        {% endfor %}
-                    </select>
-                    <p style="padding: 3px;" class="text-muted">{{ help.order_level_skills }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 {# Master Action Settings #}
 <div id="accordionMasterActionSettings">
     <div class="card">
@@ -443,6 +445,20 @@
                     <input {% if config.enable_master %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_master" name="enable_master">
                     <label class="form-check-label" for="enable_master">Enable Master</label>
                     <p class="text-muted">{{ help.enable_master }}</p>
+                </div>
+
+                <div class="form-group">
+                    {# Master Level Every X Seconds #}
+                    <label for="master_level_every_x_seconds">Master Level Every X Seconds:</label>
+                    <input value="{{ config.master_level_every_x_seconds|default_if_none:"" }}" type="number" class="form-control" id="master_level_every_x_seconds" name="master_level_every_x_seconds">
+                    <p style="padding: 3px;" class="text-muted">{{ help.master_level_every_x_seconds }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Master Level On Start #}
+                    <input {% if config.master_level_on_start %}checked{% endif %} type="checkbox" class="form-check-input" id="master_level_on_start" name="master_level_on_start">
+                    <label class="form-check-label" for="master_level_on_start">Level Sword Master On Session Start</label>
+                    <p class="text-muted">{{ help.master_level_on_start }}</p>
                 </div>
 
                 <div class="form-check">
@@ -475,14 +491,28 @@
         <div id="collapseHeroesActionSettings" class="collapse show" data-parent="#accordionHeroesActionSettings">
             <div id="configurationHeroesActionSettingsBody" class="card-body">
                 <div class="form-check">
-                    {# Enable Master #}
+                    {# Enable Heroes #}
                     <input {% if config.enable_heroes %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_heroes" name="enable_heroes">
                     <label class="form-check-label" for="enable_heroes">Enable Heroes</label>
                     <p class="text-muted">{{ help.enable_heroes }}</p>
                 </div>
 
                 <div class="form-group">
-                    {# Master Level Intensity #}
+                    {# Hero Level Every X Seconds #}
+                    <label for="hero_level_every_x_seconds">Hero Level Every X Seconds:</label>
+                    <input value="{{ config.hero_level_every_x_seconds|default_if_none:"" }}" type="number" class="form-control" id="hero_level_every_x_seconds" name="hero_level_every_x_seconds">
+                    <p style="padding: 3px;" class="text-muted">{{ help.hero_level_every_x_seconds }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Hero Level On Start #}
+                    <input {% if config.hero_level_on_start %}checked{% endif %} type="checkbox" class="form-check-input" id="hero_level_on_start" name="hero_level_on_start">
+                    <label class="form-check-label" for="hero_level_on_start">Level Heroes On Session Start</label>
+                    <p class="text-muted">{{ help.hero_level_on_start }}</p>
+                </div>
+
+                <div class="form-group">
+                    {# Hero Level Intensity #}
                     <label for="hero_level_intensity">Hero Level Intensity:</label>
                     <input value="{{ config.hero_level_intensity|default_if_none:"" }}" type="number" class="form-control" id="hero_level_intensity" name="hero_level_intensity">
                     <p style="padding: 3px;" class="text-muted">{{ help.hero_level_intensity }}</p>
@@ -492,22 +522,132 @@
     </div>
 </div>
 
-{# Skills Action Settings #}
-<div id="accordionSkillsActionSettings">
+{# Skills Level Action Settings #}
+<div id="accordionSkillsLevelSettings">
     <div class="card">
-        <div class="card-header" id="configurationSkillsActionSettingsHeader">
-            <h5 class="modal-title" id="configurationSkillsActionSettingsTitle">
-                <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseSkillsActionSettings">Skills Action Settings</button>
+        <div class="card-header" id="configurationSkillsLevelSettingsHeader">
+            <h5 class="modal-title" id="configurationSkillsLevelSettingsTitle">
+                <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseSkillsLevelSettings">Skills Level Action Settings</button>
             </h5>
         </div>
 
-        <div id="collapseSkillsActionSettings" class="collapse show" data-parent="#accordionSkillsActionSettings">
-            <div id="configurationSkillsActionSettingsBody" class="card-body">
+        <div id="collapseSkillsLevelSettings" class="collapse show" data-parent="#accordionSkillsLevelSettings">
+            <div id="configurationSkillsLevelSettingsBody" class="card-body">
                 <div class="form-check">
-                    {# Enable Master #}
-                    <input {% if config.enable_skills %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_skills" name="enable_skills">
-                    <label class="form-check-label" for="enable_skills">Enable Skills</label>
-                    <p class="text-muted">{{ help.enable_skills }}</p>
+                    {# Enable Level Skills #}
+                    <input {% if config.enable_level_skills %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_level_skills" name="enable_level_skills">
+                    <label class="form-check-label" for="enable_level_skills">Enable Level Skills</label>
+                    <p class="text-muted">{{ help.enable_level_skills }}</p>
+                </div>
+
+                <div class="form-group">
+                    {# Level Skills Every X Seconds #}
+                    <label for="level_skills_every_x_seconds">Level Skills Every X Seconds:</label>
+                    <input value="{{ config.level_skills_every_x_seconds|default_if_none:"" }}" type="number" class="form-control" id="level_skills_every_x_seconds" name="level_skills_every_x_seconds">
+                    <p style="padding: 3px;" class="text-muted">{{ help.level_skills_every_x_seconds }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Level Skills On Start #}
+                    <input {% if config.level_skills_on_start %}checked{% endif %} type="checkbox" class="form-check-input" id="level_skills_on_start" name="level_skills_on_start">
+                    <label class="form-check-label" for="level_skills_on_start">Level Skills On Session Start</label>
+                    <p class="text-muted">{{ help.level_skills_on_start }}</p>
+                </div>
+
+                <div class="form-group">
+                    {# Level Heavenly Strike Cap #}
+                    <label for="level_heavenly_strike_cap">Heavenly Strike Level Cap:</label>
+                    <select id="level_heavenly_strike_cap" class="form-control">
+                        {% for skill in choices.skill_levels %}
+                            <option {% if config.level_heavenly_strike_cap == skill.0 %}selected{% endif %} data-value="{{ skill.0 }}">{{ skill.1 }}</option>
+                        {% endfor %}
+                    </select>
+                    <p style="padding: 3px;" class="text-muted">{{ help.level_heavenly_strike_cap }}</p>
+                </div>
+
+                <div class="form-group">
+                    {# Level Deadly Strike Cap #}
+                    <label for="level_deadly_strike_cap">Deadly Strike Level Cap:</label>
+                    <select id="level_deadly_strike_cap" class="form-control">
+                        {% for skill in choices.skill_levels %}
+                            <option {% if config.level_deadly_strike_cap == skill.0 %}selected{% endif %} data-value="{{ skill.0 }}">{{ skill.1 }}</option>
+                        {% endfor %}
+                    </select>
+                    <p style="padding: 3px;" class="text-muted">{{ help.level_deadly_strike_cap }}</p>
+                </div>
+
+                <div class="form-group">
+                    {# Level Hand Of Midas Cap #}
+                    <label for="level_hand_of_midas_cap">Hand Of Midas Level Cap:</label>
+                    <select id="level_hand_of_midas_cap" class="form-control">
+                        {% for skill in choices.skill_levels %}
+                            <option {% if config.level_hand_of_midas_cap == skill.0 %}selected{% endif %} data-value="{{ skill.0 }}">{{ skill.1 }}</option>
+                        {% endfor %}
+                    </select>
+                    <p style="padding: 3px;" class="text-muted">{{ help.level_hand_of_midas_cap }}</p>
+                </div>
+
+                <div class="form-group">
+                    {# Level Fire Sword Cap #}
+                    <label for="level_fire_sword_cap">Hand Of Midas Level Cap:</label>
+                    <select id="level_fire_sword_cap" class="form-control">
+                        {% for skill in choices.skill_levels %}
+                            <option {% if config.level_fire_sword_cap == skill.0 %}selected{% endif %} data-value="{{ skill.0 }}">{{ skill.1 }}</option>
+                        {% endfor %}
+                    </select>
+                    <p style="padding: 3px;" class="text-muted">{{ help.level_fire_sword_cap }}</p>
+                </div>
+
+                <div class="form-group">
+                    {# Level War Cry Cap #}
+                    <label for="level_war_cry_cap">War Cry Level Cap:</label>
+                    <select id="level_war_cry_cap" class="form-control">
+                        {% for skill in choices.skill_levels %}
+                            <option {% if config.level_war_cry_cap == skill.0 %}selected{% endif %} data-value="{{ skill.0 }}">{{ skill.1 }}</option>
+                        {% endfor %}
+                    </select>
+                    <p style="padding: 3px;" class="text-muted">{{ help.level_war_cry_cap }}</p>
+                </div>
+
+                <div class="form-group">
+                    {# Level Shadow Clone Cap #}
+                    <label for="level_shadow_clone_cap">Shadow Clone Level Cap:</label>
+                    <select id="level_shadow_clone_cap" class="form-control">
+                        {% for skill in choices.skill_levels %}
+                            <option {% if config.level_shadow_clone_cap == skill.0 %}selected{% endif %} data-value="{{ skill.0 }}">{{ skill.1 }}</option>
+                        {% endfor %}
+                    </select>
+                    <p style="padding: 3px;" class="text-muted">{{ help.level_shadow_clone_cap }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{# Skills Activate Action Settings #}
+<div id="accordionSkillsActivateSettings">
+    <div class="card">
+        <div class="card-header" id="configurationSkillsActivateSettingsHeader">
+            <h5 class="modal-title" id="configurationSkillsActivateSettingsTitle">
+                <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseSkillsActivateSettings">Skills Activate Action Settings</button>
+            </h5>
+        </div>
+
+        <div id="collapseSkillsActivateSettings" class="collapse show" data-parent="#accordionSkillsActivateSettings">
+            <div id="configurationSkillsActivateSettingsBody" class="card-body">
+                <div class="form-check">
+                    {# Enable Activate Skills #}
+                    <input {% if config.enable_activate_skills %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_activate_skills" name="enable_activate_skills">
+                    <label class="form-check-label" for="enable_activate_skills">Enable Activate Skills</label>
+                    <p class="text-muted">{{ help.enable_activate_skills }}</p>
+                </div>
+
+                <div class="form-group">
+                    {# Activate Skills Every X Seconds #}
+                    <label for="activate_skills_every_x_seconds">Activate Skills Every X Seconds:</label>
+                    <input value="{{ config.activate_skills_every_x_seconds|default_if_none:"" }}" type="number" class="form-control" id="activate_skills_every_x_seconds" name="activate_skills_every_x_seconds">
+                    <p style="padding: 3px;" class="text-muted">{{ help.activate_skills_every_x_seconds }}</p>
                 </div>
 
                 <div class="form-check">
@@ -557,27 +697,6 @@
                     <label for="interval_shadow_clone">Shadow Clone Interval:</label>
                     <input value="{{ config.interval_shadow_clone|default_if_none:"" }}" type="number" class="form-control" id="interval_shadow_clone" name="interval_shadow_clone">
                     <p style="padding: 3px;" class="text-muted">{{ help.interval_shadow_clone }}</p>
-                </div>
-
-                <div class="form-check">
-                    {# Force Enabled Skills Wait #}
-                    <input {% if config.force_enabled_skills_wait %}checked{% endif %} type="checkbox" class="form-check-input" id="force_enabled_skills_wait" name="force_enabled_skills_wait">
-                    <label class="form-check-label" for="force_enabled_skills_wait">Force Enabled Skills Wait</label>
-                    <p class="text-muted">{{ help.force_enabled_skills_wait }}</p>
-                </div>
-
-                <div class="form-check">
-                    {# Max Skill If Possible #}
-                    <input {% if config.max_skill_if_possible %}checked{% endif %} type="checkbox" class="form-check-input" id="max_skill_if_possible" name="max_skill_if_possible">
-                    <label class="form-check-label" for="max_skill_if_possible">Max Skill If Possible</label>
-                    <p class="text-muted">{{ help.max_skill_if_possible }}</p>
-                </div>
-
-                <div class="form-group">
-                    {# Skill Level Intensity #}
-                    <label for="skill_level_intensity">Skill Level Intensity:</label>
-                    <input value="{{ config.skill_level_intensity|default_if_none:"" }}" type="number" class="form-control" id="skill_level_intensity" name="skill_level_intensity">
-                    <p style="padding: 3px;" class="text-muted">{{ help.skill_level_intensity }}</p>
                 </div>
             </div>
         </div>

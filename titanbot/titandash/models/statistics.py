@@ -74,10 +74,16 @@ class GameStatistics(models.Model):
         played = self.play_time if self.play_time else None
 
         if played:
-            if "d" in played:
-                played_hours = int(played.split("d")[0]) * 24
-            else:
-                played_hours = int(played.split(":")[0])
+            try:
+                if "d" in played:
+                    played_hours = int(played.split("d")[0]) * 24
+                else:
+                    played_hours = int(played.split(":")[0])
+
+            # Malformed time played value can cause this fail...
+            # We'll use a base string if we're unable to parse out played hours.
+            except Exception:
+                return "N/A"
         else:
             return 0
 
@@ -127,7 +133,6 @@ class GameStatistics(models.Model):
 
 BOT_STATISTICS_HELP_TEXT = {
     "ads": "How many ads have been earned and tracked by the bot.",
-    "actions": "How many sets of actions have been ran by the bot.",
     "updates": "How many times has bot statistics been updated.",
     "instance": "The bot instance associated with these game statistics."
 }
@@ -145,7 +150,6 @@ class BotStatistics(models.Model):
 
     # Game actions.
     ads = models.PositiveIntegerField(verbose_name="Premium Ads", default=0, help_text=BOT_STATISTICS_HELP_TEXT["ads"])
-    actions = models.PositiveIntegerField(verbose_name="Actions", default=0, help_text=BOT_STATISTICS_HELP_TEXT["actions"])
     updates = models.PositiveIntegerField(verbose_name="Updates", default=0, help_text=BOT_STATISTICS_HELP_TEXT["updates"])
 
     instance = models.ForeignKey(verbose_name="Instance", to="BotInstance", null=True, on_delete=models.CASCADE, help_text=BOT_STATISTICS_HELP_TEXT["instance"])
@@ -170,7 +174,6 @@ class BotStatistics(models.Model):
     def json(self):
         return {
             "ads": self.ads,
-            "actions": self.actions,
             "updates": self.updates,
             "prestiges": self.prestiges,
             "sessions": self.sessions

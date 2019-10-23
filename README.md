@@ -51,9 +51,12 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 ### Bot
 - Activate chosen in game skills on a specified cooldown, with the option to wait for a specific skill before activating others.
 - Activate specific functions using keyboard shortcuts.
-- Automatically level up the sword master, skills and heroes in game with a specific intensity (clicks).
+- Automatically tap on the screen, activating and collecting fairies if they're triggered.
+- Automatically tap skill minigames on the screen (coordinated offensive, astral awakening, etc), activating and collecting fairies if they're triggered.
+- Automatically level up the sword master, skills and heroes in game with specific intervals for the activation of each.
+- Automatically level up skills to a specified level cap.
 - Automatically prestige after a threshold has been reached (stage, percent of max stage, max stage, time limit).
-- Automatically add random padding to prestige times to improve realistic use.
+- Automatically add random padding to prestige times to ensure they look less robotic.
 - Automatically parse out clan raid results from in game.
 - Automatically take breaks in game after random intervals of game time.
 - Receive text notifications when your raid attacks timer has reset and the titan can be attacked.

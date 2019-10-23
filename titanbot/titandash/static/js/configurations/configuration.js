@@ -45,7 +45,14 @@ let ConfigurationController = function() {
 
             /* Select Elements */
             emulator: $("#emulator"),
-            logging_level: $("#logging_level")
+            logging_level: $("#logging_level"),
+            /* Action Level Caps */
+            level_heavenly_strike_cap: $("#level_heavenly_strike_cap"),
+            level_deadly_strike_cap: $("#level_deadly_strike_cap"),
+            level_hand_of_midas_cap: $("#level_hand_of_midas_cap"),
+            level_fire_sword_cap: $("#level_fire_sword_cap"),
+            level_war_cry_cap: $("#level_war_cry_cap"),
+            level_shadow_clone_cap: $("#level_shadow_clone_cap"),
         }
     };
 
@@ -72,20 +79,22 @@ let ConfigurationController = function() {
             raid_notifications_check_every_x_minutes: $("#raid_notifications_check_every_x_minutes"),
             /* Clan Parsing */
             parse_clan_results_every_x_minutes: $("#parse_clan_results_every_x_minutes"),
-            /* General */
-            run_actions_every_x_seconds: $("#run_actions_every_x_seconds"),
             /* Master */
+            master_level_every_x_seconds: $("#master_level_every_x_seconds"),
             master_level_intensity: $("#master_level_intensity"),
             /* Heroes */
+            hero_level_every_x_seconds: $("#hero_level_every_x_seconds"),
             hero_level_intensity: $("#hero_level_intensity"),
-            /* Skills */
+            /* Level Skills */
+            level_skills_every_x_seconds: $("#level_skills_every_x_seconds"),
+            /* Activate Skills */
+            activate_skills_every_x_seconds: $("#activate_skills_every_x_seconds"),
             interval_heavenly_strike: $("#interval_heavenly_strike"),
             interval_deadly_strike: $("#interval_deadly_strike"),
             interval_hand_of_midas: $("#interval_hand_of_midas"),
             interval_fire_sword: $("#interval_fire_sword"),
             interval_war_cry: $("#interval_war_cry"),
             interval_shadow_clone: $("#interval_shadow_clone"),
-            skill_level_intensity: $("#skill_level_intensity"),
             /* Prestige */
             prestige_x_minutes: $("#prestige_x_minutes"),
             prestige_at_stage: $("#prestige_at_stage"),
@@ -168,6 +177,13 @@ let ConfigurationController = function() {
         // Grabbing the select box values.
         serialized.push({name: "emulator", value: elements.emulator.find(":selected").data("value")});
         serialized.push({name: "logging_level", value: elements.logging_level.find(":selected").data("value")});
+        // Action level caps.
+        serialized.push({name: "level_heavenly_strike_cap", value: elements.level_heavenly_strike_cap.find(":selected").data("value")});
+        serialized.push({name: "level_deadly_strike_cap", value: elements.level_deadly_strike_cap.find(":selected").data("value")});
+        serialized.push({name: "level_hand_of_midas_cap", value: elements.level_hand_of_midas_cap.find(":selected").data("value")});
+        serialized.push({name: "level_fire_sword_cap", value: elements.level_fire_sword_cap.find(":selected").data("value")});
+        serialized.push({name: "level_war_cry_cap", value: elements.level_war_cry_cap.find(":selected").data("value")});
+        serialized.push({name: "level_shadow_clone_cap", value: elements.level_shadow_clone_cap.find(":selected").data("value")});
 
         serialized.push({name: "upgrade_owned_tier", value: m2m.upgrade_owned_tier});
         serialized.push({name: "upgrade_artifacts", value: m2m.upgrade_artifacts});
@@ -191,6 +207,7 @@ let ConfigurationController = function() {
         $.each(required, function (index, value) {
             if (value.val() === "" || !value.val()) {
                 // INVALID.
+                debugger;
                 generateInvalidAlert(value);
                 valid = false;
             } else {
