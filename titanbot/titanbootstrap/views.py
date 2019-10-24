@@ -151,6 +151,12 @@ def perform_update(request):
                 )
             })
 
+        # After an update is successful, we perform both the node install,
+        # and the static files collection process. Since cache busting can break
+        # after an update is complete, since all files are purged.
+        perform_node_packages(request)
+        perform_static(request)
+
         # We were able to successfully synchronize the newest codebase into our main directory.
         # We should now return some useful information to the bootstrapping javascript
         # to let the user know that it has been updated successfully, and that they should
