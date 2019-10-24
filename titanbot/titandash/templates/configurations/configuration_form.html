@@ -589,7 +589,7 @@
 
                 <div class="form-group">
                     {# Level Fire Sword Cap #}
-                    <label for="level_fire_sword_cap">Hand Of Midas Level Cap:</label>
+                    <label for="level_fire_sword_cap">Fire Sword Level Cap:</label>
                     <select id="level_fire_sword_cap" class="form-control">
                         {% for skill in choices.skill_levels %}
                             <option {% if config.level_fire_sword_cap == skill.0 %}selected{% endif %} data-value="{{ skill.0 }}">{{ skill.1 }}</option>
@@ -623,7 +623,6 @@
         </div>
     </div>
 </div>
-
 
 {# Skills Activate Action Settings #}
 <div id="accordionSkillsActivateSettings">
