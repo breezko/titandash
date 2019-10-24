@@ -151,10 +151,6 @@ def perform_update(request):
                 )
             })
 
-        # Ensure static files are collected after an update so that cache busting
-        # does not break our files.
-        call_command("collectstatic", interactive=False)
-
         # We were able to successfully synchronize the newest codebase into our main directory.
         # We should now return some useful information to the bootstrapping javascript
         # to let the user know that it has been updated successfully, and that they should
