@@ -80,8 +80,6 @@ COMPRESSION_KEYS = {
     "enable_clan_results_parse": 63,
     "parse_clan_results_on_start": 64,
     "parse_clan_results_every_x_minutes": 65,
-    "recovery_check_interval_minutes": 66,
-    "recovery_allowed_failures": 67,
     "enable_logging": 68,
     "logging_level": 69,
     "master_level_only_once": 70,
@@ -197,8 +195,6 @@ HELP_TEXT = {
     "enable_clan_results_parse": "Enable the ability to have the bot attempt to parse out clan raid results.",
     "parse_clan_results_on_start": "Should clan results be parsed when a session is started.",
     "parse_clan_results_every_x_minutes": "Determine how many minutes between each clan results parse attempt.",
-    "recovery_check_interval_minutes": "Determine how many minutes between each check that determines if the game has crashed/broke.",
-    "recovery_allowed_failures": "How many failures are allowed before the recovery process is started.",
     "enable_logging": "Enable logging of information during sessions.",
     "logging_level": "Determine the logging level used during sessions."
 }
@@ -333,10 +329,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
     enable_clan_results_parse = models.BooleanField(verbose_name="Enable Clan Results Parsing", default=True, help_text=HELP_TEXT["enable_clan_results_parse"])
     parse_clan_results_on_start = models.BooleanField(verbose_name="Parse Clan Results On Session Start", default=False, help_text=HELP_TEXT["parse_clan_results_on_start"])
     parse_clan_results_every_x_minutes = models.PositiveIntegerField(verbose_name="Attempt To Parse Clan Results Every X Minutes", default=300, help_text=HELP_TEXT["parse_clan_results_every_x_minutes"])
-
-    # RECOVERY Settings.
-    recovery_check_interval_minutes = models.PositiveIntegerField(verbose_name="Recovery Check Interval Minutes", default=5, help_text=HELP_TEXT["recovery_check_interval_minutes"])
-    recovery_allowed_failures = models.PositiveIntegerField(verbose_name="Recovery Allowed Failures", default=45, help_text=HELP_TEXT["recovery_allowed_failures"])
 
     # LOGGING Settings.
     enable_logging = models.BooleanField(verbose_name="Enable Logging", default=True, help_text=HELP_TEXT["enable_logging"])
@@ -548,10 +540,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 "enable_clan_results_parse": self.enable_clan_results_parse,
                 "parse_clan_results_on_start": self.parse_clan_results_on_start,
                 "parse_clan_results_every_x_minutes": self.parse_clan_results_every_x_minutes
-            },
-            "Recovery": {
-                "recovery_check_interval_minutes": self.recovery_check_interval_minutes,
-                "recovery_allowed_failures": self.recovery_allowed_failures
             },
             "Logging": {
                 "enable_logging": self.enable_logging,
