@@ -230,12 +230,22 @@ ARTIFACTS_LOCS = {
     "percent_toggle": (303, 506),
 }
 
+SKILL_CAN_LEVEL_LOCS = {
+    "heavenly_strike": (460, 218),
+    "deadly_strike": (459, 293),
+    "hand_of_midas": (460, 369),
+    "fire_sword": (459, 444),
+    "war_cry": (461, 520),
+    "shadow_clone": (459, 594)
+}
+
 # Store any colors used (RGB) by the bot to determine so things in game.
 GAME_COLORS = {
     "WHITE": (255, 255, 255),
     "DISCOVER": (60, 185, 174),
     "ENCHANT": (235, 167, 12),
     "COLLECT_GREEN": (101, 155, 28),
+    "SKILL_CANT_LEVEL": (73, 72, 73),
 }
 
 # All images should have their names mapped to the file path within the module.

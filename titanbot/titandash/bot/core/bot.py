@@ -785,6 +785,15 @@ class Bot(object):
                 if self.grabber.point_is_color(point=color, color=self.colors.WHITE):
                     self.click(point=color, pause=0.5)
 
+        def can_level(key):
+            """
+            Check to see if a skill can currently be levelled or not.
+            """
+            if self.grabber.point_is_color(point=SKILL_CAN_LEVEL_LOCS[key], color=self.colors.SKILL_CANT_LEVEL):
+                return False
+            else:
+                return True
+
         def active(key):
             """
             Check to see if a skill is currently active or not.
@@ -814,6 +823,11 @@ class Bot(object):
                     for skill, values in uncapped.items():
                         if active(key=skill):
                             self.logger.info("{skill} is currently active and will not be levelled yet.".format(skill=skill))
+                            continue
+                        # Can the skill even be levelled at this point?
+                        # If we do not have enough gold, we should just skip this process.
+                        if not can_level(key=skill):
+                            self.logger.info("{skill} can not be levelled currently and will not be levelled yet.".format(skill=skill))
                             continue
 
                         # We first want to check to see if the skill that we are
