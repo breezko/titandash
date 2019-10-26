@@ -215,6 +215,13 @@ def click_on_image(window, image=None, pos=None, button="left", pause=0.0):
     """
     Click on the specified image on the screen.
     """
+    # Since our emulator window can be technically anywhere, we should subtract whatever the x, y
+    # is, since our clicks are relative to the window being clicked anyways...
+    pos = (
+        pos[0] - window.x,
+        pos[1] - window.y
+    )
+
     logger.debug("{button} clicking on {image} located at {pos} with {pause}s pause".format(button=button, image=image, pos=pos, pause=pause))
     click_image(
         window=window,
