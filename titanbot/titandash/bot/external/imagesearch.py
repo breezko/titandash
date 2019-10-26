@@ -61,7 +61,7 @@ def imagesearcharea(image, x1, y1, x2, y2, precision=0.8, im=None):
     return max_loc
 
 
-def click_image(image, pos, action, timestamp, offset=5, pause=0):
+def click_image(window, image, pos, action, timestamp, offset=5, pause=0):
     """
     Click on the center of an image with a bit of random.
     eg, if an image is 100*100 with an offset of 5 it may click at 52,50 the first time and then 55,53 etc
@@ -77,8 +77,9 @@ def click_image(image, pos, action, timestamp, offset=5, pause=0):
     """
     img = cv2.imread(image)
     height, width, channels = img.shape
-    pyautogui.moveTo(pos[0] + r(width / 2, offset), pos[1] + r(height / 2, offset), timestamp)
-    pyautogui.click(button=action, pause=pause)
+
+    point = int(pos[0] + r(width / 2, offset)), int(pos[1] + r(height / 2, offset))
+    window.click(point=point, button=action, pause=pause, disable_padding=True)
 
 
 def imagesearch(image, precision=0.8):
