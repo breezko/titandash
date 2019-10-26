@@ -10,7 +10,7 @@ from titandash.models.prestige import Prestige
 from titandash.models.artifact import Artifact
 from titandash.models.statistics import Session
 from titandash.models.bot import BotInstance
-from titandash.utils import WindowHandler
+from titandash.bot.core.window import WindowHandler
 from titandash.bot.core.bot import Bot
 
 from pynput.mouse import Listener, Button
