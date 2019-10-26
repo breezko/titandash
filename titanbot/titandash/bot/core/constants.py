@@ -63,7 +63,7 @@ BOSS_LOOP_TIMEOUT = int(FUNCTION_LOOP_TIMEOUT / 2)
 
 # Specify any functions that may be forced.
 FORCEABLE_FUNCTIONS = [
-    "recover", "level_master", "level_heroes", "level_skills", "update_stats", "prestige", "daily_achievement_check",
+    "level_master", "level_heroes", "level_skills", "update_stats", "prestige", "daily_achievement_check",
     "milestone_check", "raid_notifications", "activate_skills", "clan_results_parse", "breaks"
 ]
 
@@ -104,7 +104,7 @@ FUNCTION_SHORTCUTS = {v: k for k, v in SHORTCUT_FUNCTIONS.items()}
 QUEUEABLE_FUNCTIONS = FORCEABLE_FUNCTIONS + [
     "calculate_next_master_level", "calculate_next_heroes_level", "calculate_next_skills_level", "calculate_next_skills_activation",
     "calculate_next_stats_update", "calculate_next_daily_achievement_check", "calculate_next_raid_notifications_check",
-    "calculate_next_skill_execution",  "calculate_next_prestige", "calculate_next_recovery_reset", "update_next_artifact_upgrade", "calculate_next_break",
+    "calculate_next_skill_execution",  "calculate_next_prestige", "update_next_artifact_upgrade", "calculate_next_break",
     "parse_current_stage", "artifacts", "parse_artifacts", "check_tournament",
     "daily_rewards", "hatch_eggs", "clan_crate", "collect_ad", "fight_boss", "leave_boss", "tap", "minigames",
     "pause", "resume", "terminate", "soft_terminate"
@@ -121,7 +121,6 @@ QUEUEABLE_TOOLTIPS = {
     "calculate_next_raid_notifications_check": "Calculate the next time raid notification check will take place.",
     "calculate_next_skill_execution": "Calculate the next time a skill execution will take place.",
     "calculate_next_prestige": "Calculate the next time a prestige will take place.",
-    "calculate_next_recovery_reset": "Calculate the next time a recovery reset will take place.",
     "calculate_next_break": "Calculate the next time a break will take place.",
     "update_next_artifact_upgrade": "Update the next artifact that will be upgraded.",
     "parse_current_stage": "Parse the current stage in game.",
@@ -143,7 +142,6 @@ QUEUEABLE_TOOLTIPS = {
     "resume": "Resume all bot functionality.",
     "terminate": "Terminate all bot functionality.",
     "soft_terminate": "Perform a soft termination of all bot functionality.",
-    "recover": "Force a recovery in game.",
     "actions": "Force all actions to be executed in game.",
     "update_stats": "Force a statistics update in game.",
     "prestige": "Force a prestige in game.",
@@ -159,8 +157,8 @@ QUEUEABLE_TOOLTIPS = {
 # simultaneously, this is required to allow the Bot to update the value and at the
 # same time, update the current BotInstance and send out socket updates to the dashboard.
 PROPERTIES = [
-    "current_stage", "current_function", "last_prestige", "next_action_run", "next_prestige", "next_randomized_prestige",
-    "next_stats_update", "next_recovery_reset", "next_daily_achievement_check", "next_milestone_check", "next_break",
+    "current_stage", "current_function", "last_prestige", "next_prestige", "next_randomized_prestige",
+    "next_stats_update", "next_daily_achievement_check", "next_milestone_check", "next_break",
     "resume_from_break", "next_raid_notifications_check", "next_raid_attack_reset", "next_clan_results_parse",
     "next_master_level", "next_heroes_level", "next_skills_level", "next_skills_activation",
     "next_heavenly_strike", "next_deadly_strike", "next_hand_of_midas", "next_fire_sword", "next_war_cry", "next_shadow_clone"
