@@ -31,6 +31,8 @@ from .constants import (
     BREAK_NEXT_PROPS_ALL
 )
 
+from pyautogui import FailSafeException
+
 import datetime
 import random
 import keyboard
@@ -2028,6 +2030,8 @@ class Bot(object):
 
         except TerminationEncountered:
             self.logger.info("manual termination encountered... terminating!")
+        except FailSafeException:
+            self.logger.info("failsafe termination encountered: terminating!")
         except Exception as exc:
             self.logger.critical("critical error encountered: {exc}".format(exc=exc), exc_info=True)
             self.logger.info("terminating!")

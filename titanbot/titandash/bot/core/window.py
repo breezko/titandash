@@ -2,6 +2,8 @@ from .constants import (
     MEMU_WINDOW_FILTER, NOX_WINDOW_FILTER
 )
 
+from pyautogui import _failSafeCheck
+
 import win32gui
 import win32api
 import win32con
@@ -69,6 +71,7 @@ class Window(object):
         Sending a message to the specified window so the click takes place
         whether the window is visible or not.
         """
+        _failSafeCheck()
         evt_d = self.SUPPORTED_CLICK_EVENTS[button][0]
         evt_u = self.SUPPORTED_CLICK_EVENTS[button][1]
 
@@ -88,6 +91,7 @@ class Window(object):
 
         # Loop through all clicks that should take place.
         for x in range(clicks):
+            _failSafeCheck()
             win32api.SendMessage(self.hwnd, evt_d, 1, param)
             win32api.SendMessage(self.hwnd, evt_u, 0, param)
 
@@ -106,6 +110,7 @@ class Window(object):
         Sending a message to the specified window so the drag can take place whether
         the window is visible or not.
         """
+        _failSafeCheck()
         evt_d = self.SUPPORTED_CLICK_EVENTS[button][0]
         evt_u = self.SUPPORTED_CLICK_EVENTS[button][1]
 
