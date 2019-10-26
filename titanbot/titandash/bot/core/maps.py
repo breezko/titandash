@@ -6,34 +6,6 @@ and mapping the proper values and coordinates to their respective keys.
 """
 from settings import IMAGE_DIR
 
-# Emulator specific locations will match up with the supported emulator
-# choices available in our configurations. We can use this to derive the location
-# of elements within the screen.
-EMULATOR_LOCS = {
-    "nox": {
-        "close_emulator": (465, -17),
-        "restart": (296, 438),
-        "back": (504, 699),
-    },
-    "memu": {
-        "close_emulator": (463, -20),
-        "restart": (327, 391),
-        "back": (500, 666),
-
-    }
-}
-
-EMULATOR_IMAGES = {
-    "nox": {
-        "tap_titans_2": IMAGE_DIR + "/emulator/tap_titans_2_nox.png",
-        "restart": IMAGE_DIR + "/emulator/restart_nox.png",
-    },
-    "memu": {
-        "tap_titans_2": IMAGE_DIR + "/emulator/tap_titans_2_memu.png",
-        "restart": IMAGE_DIR + "/emulator/restart_memu.png",
-    }
-}
-
 # All points in game that are relevant to the given resolution can be stored here.
 # Not all locations need to be stored here, only locations that otherwise would be
 # more of an issue trying to click on after looking for a different image.
@@ -149,7 +121,6 @@ GAME_LOCS = {
     },
     "AD": {
         "collect_ad": (365, 616),
-        "collect_ad_after_watch": (256, 601),
         "no_thanks": (135, 616),
     },
     "ARTIFACTS": {
@@ -158,6 +129,30 @@ GAME_LOCS = {
         "purchase": (254, 554)
     },
 }
+
+# When an ad is finished, the exit button is likely going to be in the
+# top left or top right corner of the screen... We can click through these
+# safely and it should close the ad for us.
+AD_EXIT_LOCS = [
+    (5, 36),
+    (23, 54),
+    (43, 74),
+    (45, 77),
+    (21, 77),
+    (7, 77),
+    (29, 49),
+    (41, 43),
+    (47, 40),
+    (469, 38),
+    (456, 48),
+    (434, 71),
+    (412, 85),
+    (397, 47),
+    (413, 44),
+    (427, 67),
+    (444, 79),
+    (463, 91),
+]
 
 # Points used when clicking on locations present on the master panel.
 MASTER_LOCS = {
@@ -196,18 +191,27 @@ HEROES_LOCS = {
         "start": (328, 51),
         # End is quite finicky, be sure to experiment with the y
         # value if using different resolutions.
-        "end": (328, 886),
+        "end": (328, 610),
     },
     "level_heroes": (
         (405, 736),
+        (405, 702),
         (405, 656),
+        (405, 623),
         (405, 581),
+        (405, 547),
         (405, 506),
+        (405, 470),
         (405, 431),
+        (405, 394),
         (405, 356),
+        (405, 320),
         (405, 276),
+        (405, 244),
         (405, 206),
+        (405, 167),
         (405, 126),
+        (405, 96),
         (405, 51),
     ),
     "stats_collapsed": (135, 506),
@@ -245,7 +249,6 @@ IMAGES = {
         "collect_ad": IMAGE_DIR + "/ads/collect.png",
         "watch_ad": IMAGE_DIR + "/ads/watch.png",
         "no_thanks": IMAGE_DIR + "/ads/no_thanks.png",
-        "prompt_resume_01": IMAGE_DIR + "/ads/prompt_resume_01.png",
     },
     "ARTIFACTS": {
         "artifacts_discovered": IMAGE_DIR + "/artifacts/artifacts_discovered.png",

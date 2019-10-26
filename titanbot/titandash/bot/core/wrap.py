@@ -7,15 +7,15 @@ Place all helper/wrapper classes here that are used to specify coords/images and
 
 class Images:
     """Images class wraps all images used by the bot into a helpful wrapper class."""
-    def __init__(self, images, logger, emulator_images):
-        self._base(emulator_images=emulator_images)
+    def __init__(self, images, logger):
+        self._base()
         self.logger = logger
         for group, d in images.items():
             for key, value in d.items():
                 setattr(self, key, value)
                 self.logger.debug("images.{attr}: {value}".format(attr=key, value=value))
 
-    def _base(self, emulator_images):
+    def _base(self):
         """
         Manually set every expected value, allows for easier access later on.
         """
@@ -28,7 +28,6 @@ class Images:
         self.collect_ad = None
         self.watch_ad = None
         self.no_thanks = None
-        self.prompt_resume_01 = None
 
         # ARTIFACTS.
         self.artifacts_discovered = None
@@ -126,10 +125,6 @@ class Images:
         # CLAN CRATE.
         self.okay = None
 
-        # EMULATOR.
-        self.tap_titans_2 = emulator_images["tap_titans_2"]
-        self.restart = emulator_images["restart"]
-
         # WELCOME
         self.welcome_header = None
         self.welcome_collect_no_vip = None
@@ -141,15 +136,15 @@ class Images:
 
 class Locs:
     """Locs class wraps all location points into a friendly wrapper class for use with the bot."""
-    def __init__(self, locs, logger, emulator_locs):
-        self._base(emulator_locs=emulator_locs)
+    def __init__(self, locs, logger):
+        self._base()
         self.logger = logger
         for group, d in locs.items():
             for key, value in d.items():
                 setattr(self, key, value)
                 self.logger.debug("locs.{attr}: {value}".format(attr=key, value=value))
 
-    def _base(self, emulator_locs):
+    def _base(self):
         """
         Manually set every expected value.
         """
@@ -221,18 +216,12 @@ class Locs:
 
         # AD.
         self.collect_ad = None
-        self.collect_ad_after_watch = None
         self.no_thanks = None
 
         # ARTIFACTS
         self.discover_point = None
         self.enchant_point = None
         self.purchase = None
-
-        # EMULATOR.
-        self.close_emulator = emulator_locs["close_emulator"]
-        self.restart_emulator = emulator_locs["restart"]
-        self.back_emulator = emulator_locs["back"]
 
 
 class Colors:

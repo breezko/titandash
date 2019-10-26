@@ -101,9 +101,6 @@ let ConfigurationController = function() {
             prestige_at_max_stage_percent: $("#prestige_at_max_stage_percent"),
             /* Stats */
             update_stats_every_x_minutes: $("#update_stats_every_x_minutes"),
-            /* Recovery */
-            recovery_check_interval_minutes: $("#recovery_check_interval_minutes"),
-            recovery_allowed_failures: $("#recovery_allowed_failures")
         }
     };
 

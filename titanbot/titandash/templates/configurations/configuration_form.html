@@ -112,35 +112,6 @@
     </div>
 </div>
 
-{# Ad Settings #}
-<div id="accordionAdSettings">
-    <div class="card">
-        <div class="card-header" id="configurationAdSettingsHeader">
-            <h5 class="modal-title" id="configurationAdSettingsTitle">
-                <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseAdSettings">Ad Settings</button>
-            </h5>
-        </div>
-
-        <div id="collapseAdSettings" class="collapse show" data-parent="#accordionAdSettings">
-            <div id="configurationAdSettingsBody" class="card-body">
-                <div class="form-check">
-                    {# Enable Ad Collection #}
-                    <input {% if config.enable_ad_collection %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_ad_collection" name="enable_ad_collection">
-                    <label class="form-check-label" for="enable_ad_collection">Enable Ad Collection</label>
-                    <p class="text-muted">{{ help.enable_ad_collection }}</p>
-                </div>
-
-                <div class="form-check">
-                    {# Enable Premium Ad Collect #}
-                    <input {% if config.enable_premium_ad_collect %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_premium_ad_collect" name="enable_premium_ad_collect">
-                    <label class="form-check-label" for="enable_premium_ad_collect">Enable Premium Ad Collection</label>
-                    <p class="text-muted">{{ help.enable_premium_ad_collect }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 {# Generic Settings #}
 <div id="accordionGenericSettings">
     <div class="card">
@@ -910,35 +881,6 @@
                     <label for="parse_clan_results_every_x_minutes">Parse Clan Results Every X Minutes:</label>
                     <input value="{{ config.parse_clan_results_every_x_minutes|default_if_none:0 }}" type="number" class="form-control" id="parse_clan_results_every_x_minutes" name="parse_clan_results_every_x_minutes">
                     <p style="padding: 3px;" class="text-muted">{{ help.parse_clan_results_every_x_minutes }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{# Recovery Settings #}
-<div id="accordionRecoverySettings">
-    <div class="card">
-        <div class="card-header" id="configurationRecoverySettingsHeader">
-            <h5 class="modal-title" id="configurationRecoverySettingsTitle">
-                <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseRecoverySettings">Recovery Settings</button>
-            </h5>
-        </div>
-
-        <div id="collapseRecoverySettings" class="collapse show" data-parent="#accordionRecoverySettings">
-            <div id="configurationRecoverySettingsBody" class="card-body">
-                <div class="form-group">
-                    {# Recovery Check Interval Minutes #}
-                    <label for="recovery_check_interval_minutes">Recovery Check Interval Minutes:</label>
-                    <input value="{{ config.recovery_check_interval_minutes|default_if_none:0 }}" type="number" class="form-control" id="recovery_check_interval_minutes" name="recovery_check_interval_minutes">
-                    <p style="padding: 3px;" class="text-muted">{{ help.recovery_check_interval_minutes }}</p>
-                </div>
-
-                <div class="form-group">
-                    {# Recovery Allowed Failures #}
-                    <label for="recovery_allowed_failures">Recovery Allowed Failures:</label>
-                    <input value="{{ config.recovery_allowed_failures|default_if_none:0 }}" type="number" class="form-control" id="recovery_allowed_failures" name="recovery_allowed_failures">
-                    <p style="padding: 3px;" class="text-muted">{{ help.recovery_allowed_failures }}</p>
                 </div>
             </div>
         </div>

@@ -94,7 +94,6 @@ class BotInstance(models.Model):
     next_prestige = models.DateTimeField(verbose_name="Next Timed Prestige", blank=True, null=True)
     next_randomized_prestige = models.DateTimeField(verbose_name="Next Randomized Prestige", blank=True, null=True)
     next_stats_update = models.DateTimeField(verbose_name="Next Stats Update", blank=True, null=True)
-    next_recovery_reset = models.DateTimeField(verbose_name="Next Recovery Reset", blank=True, null=True)
     next_daily_achievement_check = models.DateTimeField(verbose_name="Next Daily Achievement Check", blank=True, null=True)
     next_milestone_check = models.DateTimeField(verbose_name="Next Milestone Check", blank=True, null=True)
     next_raid_notifications_check = models.DateTimeField(verbose_name="Next Raid Notifications Check", blank=True, null=True)
@@ -218,10 +217,6 @@ class BotInstance(models.Model):
                 "datetime": str(self.next_stats_update) if self.next_stats_update else None,
                 "formatted": self.next_stats_update.astimezone().strftime(DATETIME_FMT) if self.next_stats_update else None
             },
-            "next_recovery_reset": {
-                "datetime": str(self.next_recovery_reset) if self.next_recovery_reset else None,
-                "formatted": self.next_recovery_reset.astimezone().strftime(DATETIME_FMT) if self.next_recovery_reset else None
-            },
             "next_daily_achievement_check": {
                 "datetime": str(self.next_daily_achievement_check) if self.next_daily_achievement_check else None,
                 "formatted": self.next_daily_achievement_check.astimezone().strftime(DATETIME_FMT) if self.next_daily_achievement_check else None
@@ -308,7 +303,6 @@ class BotInstance(models.Model):
         self.next_prestige = None
         self.next_randomized_prestige = None
         self.next_stats_update = None
-        self.next_recovery_reset = None
         self.next_daily_achievement_check = None
         self.next_milestone_check = None
         self.next_raid_notifications_check = None

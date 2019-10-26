@@ -31,7 +31,7 @@ from .constants import (
     BREAK_NEXT_PROPS_ALL
 )
 
-from pyautogui import easeOutQuad, FailSafeException, linear
+from pyautogui import FailSafeException
 
 import datetime
 import random
@@ -82,8 +82,8 @@ class Bot(object):
         # Statistics handles Log instance creation... Set BotInstance now.
         self.instance.log = self.stats.session.log
         # Data containers.
-        self.images = Images(IMAGES, self.logger, emulator_images=EMULATOR_IMAGES[self.configuration.emulator])
-        self.locs = Locs(GAME_LOCS, self.logger, emulator_locs=EMULATOR_LOCS[self.configuration.emulator])
+        self.images = Images(IMAGES, self.logger)
+        self.locs = Locs(GAME_LOCS, self.logger)
         self.colors = Colors(GAME_COLORS, self.logger)
 
         self.instance.start(session=self.stats.session)
@@ -129,7 +129,6 @@ class Bot(object):
         self.calculate_next_heroes_level()
         self.calculate_next_skills_level()
         self.calculate_next_skills_activation()
-        self.calculate_next_recovery_reset()
         self.calculate_next_daily_achievement_check()
         self.calculate_next_milestone_check()
         self.calculate_next_raid_notifications_check()
@@ -145,11 +144,17 @@ class Bot(object):
         """
         click_on_point(point=point, window=self.window, clicks=clicks, interval=interval, button=button, pause=pause, offset=offset, disable_padding=disable_padding)
 
-    def drag(self, start, end, button="left", duration=0.3, pause=0.5, tween=linear, quick_stop=None):
+    def click_image(self, image, pos, button="left", pause=0.0):
+        """
+        Local image click method for use with the bot, ensuring we pass the window being used into the image click function.
+        """
+        click_on_image(window=self.window, image=image, pos=pos, button=button, pause=pause)
+
+    def drag(self, start, end, button="left", pause=0.5):
         """
         Local drag method for use with the bot, ensuring we pass the window being used into the drag function.
         """
-        drag_mouse(start=start, end=end, window=self.window, button=button, duration=duration, pause=pause, tween=tween, quick_stop=quick_stop)
+        drag_mouse(start=start, end=end, window=self.window, button=button, pause=pause)
 
     @wrap_current_function
     def get_upgrade_artifacts(self, testing=False):
@@ -352,45 +357,6 @@ class Bot(object):
             if getattr(self.props, attr):
                 setattr(self.props, attr, getattr(self.props, attr) + delta)
 
-    @wrap_current_function
-    def recover(self, force=False):
-        """
-        Begin the process to recover the game if necessary.
-
-        Recovering the game requires the following steps:
-            - Press the exit button within the Nox emulator.
-            - Press the 'exit and restart' button within Nox.
-            - Wait for a decent amount of time for the emulator to start.
-            - Find the TapTitans2 app icon.
-            - Start TapTitans2 and wait for a while for the game to start.
-        """
-        if self.ERRORS >= self.configuration.recovery_allowed_failures or force:
-            # Too many errors have occurred... Resetting the count and attempting to completely
-            # restart TapTitans 2.
-            self.ERRORS = 0
-            if force:
-                self.logger.info("forcing an in game recovery now and attempting to restart the game.")
-            else:
-                self.logger.info("{amount} errors have occurred before a reset, attempting to restart the game now...".format(amount=self.ERRORS))
-
-            sleep(3)
-            # Restart the emulator and wait for a while for it to boot up...
-            self.restart_emulator()
-            self.open_game()
-
-            self.calculate_next_recovery_reset()
-            return
-
-        # Otherwise, determine if the error counter should be reset at this point.
-        # To ensure an un-necessary recovery doesn't take place.
-        else:
-            now = timezone.now()
-            if now > self.props.next_recovery_reset:
-                self.logger.info("{amount}/{needed} errors occurred before reset, recovery will not take place.".format(amount=self.ERRORS, needed=self.configuration.recovery_allowed_failures))
-                self.logger.info("resetting error count now...")
-                self.ERRORS = 0
-                self.calculate_next_recovery_reset()
-
     def should_prestige(self):
         """
         Determine if prestige will take place. This value is based off of the configuration
@@ -491,16 +457,6 @@ class Bot(object):
         dt = now + datetime.timedelta(seconds=self.configuration.prestige_x_minutes * 60)
         self.props.next_prestige = dt
         self.logger.info("the next timed prestige will take place in {time}".format(time=strfdelta(dt - now)))
-
-    @wrap_current_function
-    def calculate_next_recovery_reset(self):
-        """
-        Calculate when the next recovery reset will take place.
-        """
-        now = timezone.now()
-        dt = now + datetime.timedelta(seconds=self.configuration.recovery_check_interval_minutes * 60)
-        self.props.next_recovery_reset = dt
-        self.logger.info("the next recovery reset will take place in {time}".format(time=strfdelta(dt - now)))
 
     @wrap_current_function
     def calculate_next_master_level(self):
@@ -627,7 +583,9 @@ class Bot(object):
         if self.configuration.enable_heroes:
             now = timezone.now()
             if force or now > self.props.next_heroes_level:
-                self.logger.info("levelling heroes in game...")
+                self.logger.info("{begin_force} heroes levelling process in game now.".format(
+                    begin_force="beginning" if not force else "forcing"))
+
                 if not self.goto_heroes(collapsed=False):
                     return False
 
@@ -646,11 +604,11 @@ class Bot(object):
 
                 # Always level the first 5 heroes in the list.
                 self.logger.info("levelling the first five heroes available.")
-                for point in HEROES_LOCS["level_heroes"][::-1][1:6]:
+                for point in HEROES_LOCS["level_heroes"][::-1][1:10]:
                     self.click(point=point, clicks=self.configuration.hero_level_intensity, interval=0.07)
 
                 # Travel to the bottom of the panel.
-                for i in range(5):
+                for i in range(6):
                     self.drag(start=self.locs.scroll_start, end=self.locs.scroll_bottom_end)
 
                 drag_start = HEROES_LOCS["drag_heroes"]["start"]
@@ -659,13 +617,18 @@ class Bot(object):
                 # Begin level and scrolling process. An assumption is made that all heroes
                 # are unlocked, meaning that some un-necessary scrolls may take place.
                 self.logger.info("scrolling and levelling all heroes present.")
-                for i in range(4):
+                while not self.grabber.search(image=self.images.masteries, bool_only=True):
+                    self.logger.info("levelling heroes on screen...")
                     for point in HEROES_LOCS["level_heroes"]:
                         self.click(point=point, clicks=self.configuration.hero_level_intensity, interval=0.07)
 
-                    # Skip the last drag since it's un-needed.
-                    if i != 3:
-                        self.drag(start=drag_start, end=drag_end, duration=1, pause=1, tween=easeOutQuad, quick_stop=self.locs.scroll_quick_stop)
+                    self.logger.info("dragging hero panel to next set of heroes...")
+                    self.drag(start=drag_start, end=drag_end, pause=1)
+
+                # Performing one additional heroes level after the top
+                # has been reached...
+                for point in HEROES_LOCS["level_heroes"]:
+                    self.click(point=point, clicks=self.configuration.hero_level_intensity, interval=0.07)
 
                 # Recalculate the next heroes level process.
                 self.calculate_next_heroes_level()
@@ -680,6 +643,9 @@ class Bot(object):
         if self.configuration.enable_master:
             now = timezone.now()
             if force or now > self.props.next_master_level:
+                self.logger.info("{begin_force} master levelling process in game now.".format(
+                    begin_force="beginning" if not force else "forcing"))
+
                 level = True
                 # If the user has specified to only level the sword master once after every prestige
                 # and once at the beginning of their session.
@@ -811,6 +777,7 @@ class Bot(object):
 
             # Click on our point top begin the level process
             # for the current in game skill.
+            self.logger.info("levelling {skill} {clicks} time(s) now...".format(skill=key, clicks=clicks))
             self.click(point=point, pause=1, clicks=clicks, interval=0.3)
 
             # Should the skill in question be levelled to it's maximum amount available?
@@ -831,6 +798,9 @@ class Bot(object):
         if self.configuration.enable_level_skills:
             now = timezone.now()
             if force or now > self.props.next_skills_level:
+                self.logger.info("{begin_force} skills levelling process in game now.".format(
+                    begin_force="beginning" if not force else "forcing"))
+
                 capped, uncapped = self.levels_capped()
 
                 # Do we have any uncapped skills yet? If so, we should begin
@@ -882,6 +852,9 @@ class Bot(object):
         if self.configuration.enable_activate_skills:
             now = timezone.now()
             if force or now > self.props.next_skills_activation:
+                self.logger.info("{begin_force} skills activation process in game now.".format(
+                    begin_force="beginning" if not force else "forcing"))
+
                 # Skill activation will take place now, we need to determine whether or not any skills
                 # are enabled and ready to be activated.
                 enabled = self.enabled_skills()
@@ -900,8 +873,11 @@ class Bot(object):
 
                         # Is this skill ready to be activated?
                         if force or now > prop:
+                            self.logger.info("activating {skill} now...".format(skill=skill))
                             self.click(point=getattr(self.locs, skill), pause=0.2)
                             self.calculate_next_skill_execution(skill=skill)
+                        else:
+                            self.logger.info("{skill} will be activated in {time}".format(skill=skill, time=strfdelta(prop - now)))
 
                 # Recalculate the next skill activation process.
                 self.calculate_next_skills_activation()
@@ -1135,7 +1111,7 @@ class Bot(object):
                     self.ERRORS += 1
                     return False
 
-                self.drag(start=self.locs.scroll_start, end=self.locs.scroll_bottom_end, quick_stop=self.locs.scroll_quick_stop)
+                self.drag(start=self.locs.scroll_start, end=self.locs.scroll_bottom_end, pause=0.5)
 
             # Making it here means the artifact in question has been found.
             found, position = self.grabber.search(ARTIFACT_MAP.get(artifact))
@@ -1257,7 +1233,7 @@ class Bot(object):
         found, pos = self.grabber.search(self.images.okay)
         if found:
             self.logger.info("clan crate is available, collecting!")
-            click_on_image(image=self.images.okay, pos=pos, pause=1)
+            self.click_image(image=self.images.okay, pos=pos, pause=1)
 
         return found
 
@@ -1275,12 +1251,6 @@ class Bot(object):
             now = timezone.now()
             if force or now > self.props.next_break:
                 # A break can now take place...
-                # Begin by completely restarting the emulator.
-                # After that has been completed, we will initiate a while loop
-                # that keeps the bot here until the break has ended.
-                if not self.restart_emulator():
-                    return False
-
                 time_break = self.props.next_break - now
                 time_resume = self.props.resume_from_break - now
                 delta = time_resume - time_break
@@ -1306,9 +1276,6 @@ class Bot(object):
                     now = timezone.now()
                     if now > self.props.resume_from_break:
                         self.logger.info("break has ended... opening game now.")
-                        if not self.open_game():
-                            return False
-
                         self.calculate_next_break()
                         return True
 
@@ -1339,27 +1306,14 @@ class Bot(object):
                 self.click(point=MASTER_LOCS["achievements"], pause=2)
 
                 # Are there any completed daily achievements?
+                # Note: The single "ad watch" daily is not completed here
+                # unless a user explicitly goes in and watches the ad.
                 while self.grabber.search(self.images.daily_collect, bool_only=True):
                     found, pos = self.grabber.search(self.images.daily_collect)
                     if found:
                         # Collect the achievement reward here.
                         self.logger.info("completed daily achievement found, collecting now.")
-                        click_on_image(image=self.images.daily_collect, pos=pos)
-
-                # Check for the single ad watching daily achievement.
-                # This only is ever present when a user does not have the
-                # vip ad collection feature unlocked.
-                if self.configuration.enable_ad_collection:
-                    found, pos = self.grabber.search(self.images.daily_watch)
-                    if found:
-                        self.logger.info("watching daily achievement ad.")
-                        click_on_image(image=self.images.daily_watch, pos=pos)
-                        self.watch_ad(stop_image=self.images.achievements_title)
-
-                        # Attempt to collect the ad.
-                        found, pos = self.grabber.search(self.images.daily_collect)
-                        if found:
-                            click_on_image(image=self.images.daily_collect, pos=pos)
+                        self.click_image(image=self.images.daily_collect, pos=pos)
 
                 # Exiting achievements screen now.
                 self.calculate_next_daily_achievement_check()
@@ -1562,11 +1516,11 @@ class Bot(object):
         if self.grabber.search(self.images.welcome_header, bool_only=True):
             found, pos = self.grabber.search(self.images.welcome_collect_no_vip)
             if found:
-                click_on_image(image=self.images.welcome_collect_no_vip, pos=pos, pause=1)
+                self.click_image(image=self.images.welcome_collect_no_vip, pos=pos, pause=1)
             else:
                 found, pos = self.grabber.search(self.images.welcome_collect_vip)
                 if found:
-                    click_on_image(image=self.images.welcome_collect_vip, pos=pos, pause=1)
+                    self.click_image(image=self.images.welcome_collect_vip, pos=pos, pause=1)
 
     def rate_screen_check(self):
         """
@@ -1575,48 +1529,7 @@ class Bot(object):
         if self.grabber.search(self.images.rate_icon, bool_only=True):
             found, pos = self.grabber.search(self.images.large_exit_panel)
             if found:
-                click_on_image(image=self.images.large_exit_panel, pos=pos, pause=1)
-
-    def watch_ad(self, stop_image, wait_time=10):
-        """
-        Use this function while an ad is being watched.
-
-        Waiting until the specified stop_image is found on the screen. We click on the back button
-        continuously until the image is found. Then leaving the function.
-        """
-        self.logger.info("attempting to watch and collect ad...")
-        # Initial sleep for five seconds...
-        # Ensure we dont begin clicking before the ad starts,
-        # lag could cause the ad to be delayed.
-        sleep(5)
-
-        # Looping while the image specified is not found. Allows this function
-        # to be used by any location that launches an ad. We currently only
-        # use it for the daily achievement ad, and the fairy ads.
-        while not self.grabber.search(image=stop_image, bool_only=True):
-            # Wait a bit before attempting to close the ad.
-            self.logger.info("waiting for {time}s before trying to close ad.".format(time=wait_time))
-            sleep(wait_time)
-            self.bump_timed_variables(datetime.timedelta(seconds=wait_time))
-
-            # Attempt to close the ad after waiting for a bit...
-            self.logger.info("attempting to close the active ad...")
-            self.click(point=self.locs.back_emulator, pause=1)
-
-            # Perform a quick check to see if a prompt is available
-            # that would otherwise block the ad from finishing.
-            for possible in [self.images.prompt_resume_01]:
-                found, pos = self.grabber.search(image=possible)
-                if found:
-                    click_on_image(image=possible, pos=pos, pause=0.5)
-
-            # Check for the welcome screen being visible, this may occur if that ad is
-            # longer than usual... Ensuring that we don't get stuck on the screen.
-            self.welcome_screen_check()
-
-        # Reaching this point means that we've found the image specified to
-        # be visible once the ad is closed.
-        self.logger.info("ad has now been closed!")
+                self.click_image(image=self.images.large_exit_panel, pos=pos, pause=1)
 
     def ad(self):
         """
@@ -1630,22 +1543,14 @@ class Bot(object):
            - The other one allows the function to be called directly without decorators added.
         """
         while self.grabber.search(self.images.collect_ad, bool_only=True) or self.grabber.search(self.images.watch_ad, bool_only=True):
-            if self.configuration.enable_ad_collection:
-                if self.configuration.enable_premium_ad_collect:
-                    self.logger.info("collecting premium ad!")
-                    self.click(point=self.locs.collect_ad, pause=1, offset=1)
-                else:
-                    self.logger.info("watching normal ad!")
-                    self.click(point=self.locs.collect_ad, offset=1)
-                    self.watch_ad(stop_image=self.images.collect_ad)
-
-                    # Collect the ad after it's been watched.
-                    self.click(point=self.locs.collect_ad_after_watch, pause=2)
-
-                self.stats.statistics.bot_statistics.ads += 1
-                self.stats.statistics.bot_statistics.save()
-            else:
-                self.click(point=self.locs.no_thanks, pause=1, offset=1)
+            # VIP Unlocked...
+            if self.grabber.search(self.images.collect_ad, bool_only=True):
+                self.logger.info("collecting vip ad now...")
+                self.click(point=self.locs.collect_ad, pause=1, offset=5)
+            # No VIP...
+            if self.grabber.search(self.images.watch_ad, bool_only=True):
+                self.logger.info("declining fairy ad now...")
+                self.click(point=self.locs.no_thanks, pause=1, offset=5)
 
     @wrap_current_function
     @not_in_transition
@@ -1768,7 +1673,7 @@ class Bot(object):
         We can do this by simply making sure that our settings icon is available on the screen,
         since this button is ALWAYS visible as long as no panel is expanded currently.
         """
-        if self.grabber.search(image=self.images.settings, bool_only=True):
+        if self.grabber.search(image=[self.images.settings, self.images.clan_raid_ready, self.images.clan_no_raid], bool_only=True):
             return True
 
         # If we reach this point, it means our settings are not yet available, let's minimize
@@ -1778,7 +1683,7 @@ class Bot(object):
 
             # The collapse button is found, let's click it and wait shortly before continuing.
             if found:
-                click_on_image(
+                self.click_image(
                     image=self.images.collapse_panel,
                     pos=pos,
                     pause=1
@@ -1791,7 +1696,7 @@ class Bot(object):
             found, pos = self.grabber.search(image=self.images.exit_panel)
 
             if found:
-                click_on_image(
+                self.click_image(
                     image=self.images.exit_panel,
                     pos=pos,
                     pause=1
@@ -1823,24 +1728,6 @@ class Bot(object):
 
             self.click(point=getattr(self.locs, panel), pause=1)
 
-        # At this point, the panel should at least be opened.
-        find = top_find if top or bottom_find is None else bottom_find
-
-        # Trying to travel to the top or bottom of the specified panel, trying a set number of times
-        # before giving up and breaking out of loop.
-        loops = 0
-        end_drag = self.locs.scroll_top_end if top else self.locs.scroll_bottom_end
-        while not self.grabber.search(find, bool_only=True):
-            loops += 1
-            if loops == FUNCTION_LOOP_TIMEOUT:
-                self.logger.warning("error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
-                self.ERRORS += 1
-                return False
-
-            # Manually wrap self.drag function in the not_in_transition call, ensure that
-            # un-necessary mouse drags are not performed.
-            self.drag(start=self.locs.scroll_start, end=end_drag, pause=1)
-
         # The shop panel may not be expanded/collapsed. Skip when travelling to shop panel.
         if panel != "shop":
             # Ensure the panel is expanded/collapsed appropriately.
@@ -1861,6 +1748,24 @@ class Bot(object):
                         self.ERRORS += 1
                         return False
                     self.click(point=self.locs.expand_collapse_bottom, pause=1, offset=1)
+
+        # At this point, the panel should at least be opened.
+        find = top_find if top or bottom_find is None else bottom_find
+
+        # Trying to travel to the top or bottom of the specified panel, trying a set number of times
+        # before giving up and breaking out of loop.
+        loops = 0
+        end_drag = self.locs.scroll_top_end if top else self.locs.scroll_bottom_end
+        while not self.grabber.search(find, bool_only=True):
+            loops += 1
+            if loops == FUNCTION_LOOP_TIMEOUT:
+                self.logger.warning(
+                    "error occurred while travelling to {panel} panel, exiting function early.".format(
+                        panel=panel))
+                self.ERRORS += 1
+                return False
+
+            self.drag(start=self.locs.scroll_start, end=end_drag, pause=0.5)
 
         # Reaching this point represents a successful panel travel to.
         return True
@@ -1935,7 +1840,7 @@ class Bot(object):
 
             found, pos = self.grabber.search(image=self.images.exit_panel)
             if found:
-                click_on_image(image=self.images.exit_panel, pos=pos, pause=0.5)
+                self.click_image(image=self.images.exit_panel, pos=pos, pause=0.5)
 
         return True
 
@@ -2012,7 +1917,6 @@ class Bot(object):
                 "raid_notifications": self.configuration.enable_raid_notifications,
                 "clan_results_parse": self.configuration.enable_clan_results_parse,
                 "update_stats": self.configuration.enable_stats,
-                "recover": True,
                 "breaks": self.configuration.enable_breaks
             }.items() if v
         ]
@@ -2020,57 +1924,6 @@ class Bot(object):
         self.logger.info("loop functions have been setup...")
         self.logger.info("{loop_funcs}".format(loop_funcs=", ".join(lst)))
         return lst
-
-    @wrap_current_function
-    def restart_emulator(self, wait=30):
-        """
-        Restart the emulator.
-        """
-        self.logger.info("attempting to restart the emulator...")
-        self.click(point=self.locs.close_emulator, pause=1)
-
-        loops = 0
-        while self.grabber.search(self.images.restart, bool_only=True):
-            loops += 1
-            found, pos = self.grabber.search(self.images.restart)
-            if found:
-                self.logger.info("restarting emulator now...")
-                click_on_image(image=self.images.restart, pos=pos)
-                sleep(wait)
-                return True
-
-            if loops == FUNCTION_LOOP_TIMEOUT:
-                self.logger.warn("unable to restart emulator...")
-                return False
-
-    @wrap_current_function
-    def open_game(self, wait=40):
-        """
-        Open the game from the main emulator screen.
-        """
-        self.logger.info("opening tap titans 2 now...")
-
-        loops = 0
-        while not self.grabber.search(image=self.images.tap_titans_2, bool_only=True):
-            loops += 1
-            if loops == FUNCTION_LOOP_TIMEOUT:
-                self.logger.warn("unable to open game...")
-                return False
-
-            # Sleep for a while after each check...
-            sleep(2)
-
-        found, pos = self.grabber.search(image=self.images.tap_titans_2)
-        if found:
-            self.logger.info("game launcher was found, starting game...")
-            click_on_image(image=self.images.tap_titans_2, pos=pos)
-            sleep(wait)
-
-            # Check for welcome/rate screens.
-            self.welcome_screen_check()
-            self.rate_screen_check()
-
-            return True
 
     @wrap_current_function
     def initialize(self):

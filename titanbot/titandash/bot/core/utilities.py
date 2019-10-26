@@ -197,54 +197,53 @@ def click_on_point(point, window, clicks=1, interval=0.0, button="left", pause=0
     """
     Click on the specified X, Y value based on the point passed along as a parameter.
     """
-    if not disable_padding:
-        padded = window.y + window.y_padding
-        point = (point[0] + window.x, point[1] + padded)
-
     if offset != 0:
         point = gen_offset(point, offset)
 
     logger.debug("{button} clicking {point} on screen {clicks} time(s) with {interval} interval and {pause} pause".format(button=button, point=point, clicks=clicks, interval=interval, pause=pause))
-    click((point[0], point[1]), clicks=clicks, interval=interval, button=button, pause=pause)
+    window.click(
+        point=(point[0], point[1]),
+        clicks=clicks,
+        interval=interval,
+        button=button,
+        pause=pause,
+        disable_padding=disable_padding
+    )
 
 
-def move_to_point(point, window, pause=0.0):
-    """
-    Move the mouse to the specified X, Y values based on the point passed along as a parameter.
-    """
-    padded = window.y + window.y_padding
-    point = (point[0] + window.x, point[1] + padded)
-
-    moveTo(point[0], point[1], pause=pause)
-
-
-def click_on_image(image=None, pos=None, button="left", pause=0.0):
+def click_on_image(window, image=None, pos=None, button="left", pause=0.0):
     """
     Click on the specified image on the screen.
     """
+    # Since our emulator window can be technically anywhere, we should subtract whatever the x, y
+    # is, since our clicks are relative to the window being clicked anyways...
+    pos = (
+        pos[0] - window.x,
+        pos[1] - window.y
+    )
+
     logger.debug("{button} clicking on {image} located at {pos} with {pause}s pause".format(button=button, image=image, pos=pos, pause=pause))
-    click_image(image=image, pos=pos, action=button, timestamp=0, pause=pause)
+    click_image(
+        window=window,
+        image=image,
+        pos=pos,
+        action=button,
+        timestamp=0,
+        pause=pause
+    )
 
 
-def drag_mouse(start, end, window, button="left", duration=0.3, pause=0.5, tween=linear, quick_stop=None):
+def drag_mouse(start, end, window, button="left", pause=0.5):
     """
     Drag the mouse from the starting position, to the end position.
     """
-    logger.debug("{button} clicking and dragging mouse from {start} to {end} over {duration}s with quick stop {quick}".format(button=button, start=start, end=end, duration=duration, quick="enabled" if quick_stop else "disabled"))
-
-    padded = window.y + window.y_padding
-    start = (start[0] + window.x, start[1] + padded)
-    end = (end[0] + window.x, end[1] + padded)
-    moveTo(start[0], start[1])
-
-    # Determine pause amount tween. Tweening may be useful for specific actions
-    # since dragging may continue after drag is finished.
-    pause = pause if not quick_stop else 0
-
-    dragTo(end[0], end[1], duration=duration, button=button, pause=pause, tween=tween)
-
-    if quick_stop:
-        click_on_point((quick_stop[0], quick_stop[1]), window=window, pause=0.5, offset=0)
+    logger.debug("{button} clicking and dragging mouse from {start} to {end}".format(button=button, start=start, end=end))
+    window.drag_mouse(
+        start=start,
+        end=end,
+        button=button,
+        pause=pause
+    )
 
 
 def in_transition_func(*args, max_loops):
@@ -263,18 +262,22 @@ def in_transition_func(*args, max_loops):
         # panels that may of been opened on accident.
         found, pos = _self.grabber.search(_self.images.large_exit_panel)
         if found:
-            click_on_image(image=_self.images.large_exit_panel, pos=pos, pause=0.5)
+            click_on_image(window=_self.window, image=_self.images.large_exit_panel, pos=pos, pause=0.5)
 
         # Is an ad panel open that should be accepted/declined?
         _self.collect_ad_no_transition()
 
-        # At least one of these three generic images should be on the screen
-        # if the game is not in a transition state.
-        if _self.grabber.search(_self.images.exit_panel, bool_only=True):
-            break
-        if _self.grabber.search(_self.images.clan_no_raid, bool_only=True):
-            break
-        if _self.grabber.search(_self.images.clan_raid_ready, bool_only=True):
+        if _self.grabber.search(image=[
+            _self.images.exit_panel,
+            _self.images.clan_raid_ready,
+            _self.images.clan_no_raid,
+            _self.images.daily_reward,
+            _self.images.fight_boss,
+            _self.images.hatch_egg,
+            _self.images.leave_boss,
+            _self.images.settings,
+            _self.images.tournament
+        ], bool_only=True):
             break
 
         # Can a stage be parsed out in the game?
@@ -291,8 +294,8 @@ def in_transition_func(*args, max_loops):
         if loops == max_loops:
             # In this case, the game may of broke? A crash may of occurred. It's safe to attempt to restart the
             # game at this point.
-            _self.logger.error("unable to resolve transition state of game, attempting to restart game.")
-            _self.recover(force=True)
+            _self.logger.error("unable to resolve transition state of game, exiting...")
+            _self.terminate()
 
 
 class TitanBotHandler(logging.StreamHandler):
