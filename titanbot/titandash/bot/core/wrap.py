@@ -238,3 +238,4 @@ class Colors:
         self.DISCOVER = None
         self.ENCHANT = None
         self.COLLECT_GREEN = None
+        self.SKILL_CANT_LEVEL = None
