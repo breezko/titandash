@@ -260,13 +260,17 @@ def in_transition_func(*args, max_loops):
         # Is an ad panel open that should be accepted/declined?
         _self.collect_ad_no_transition()
 
-        # At least one of these three generic images should be on the screen
-        # if the game is not in a transition state.
-        if _self.grabber.search(_self.images.exit_panel, bool_only=True):
-            break
-        if _self.grabber.search(_self.images.clan_no_raid, bool_only=True):
-            break
-        if _self.grabber.search(_self.images.clan_raid_ready, bool_only=True):
+        if _self.grabber.search(image=[
+            _self.images.exit_panel,
+            _self.images.clan_raid_ready,
+            _self.images.clan_no_raid,
+            _self.images.daily_reward,
+            _self.images.fight_boss,
+            _self.images.hatch_egg,
+            _self.images.leave_boss,
+            _self.images.settings,
+            _self.images.tournament
+        ], bool_only=True):
             break
 
         # Can a stage be parsed out in the game?
@@ -283,8 +287,8 @@ def in_transition_func(*args, max_loops):
         if loops == max_loops:
             # In this case, the game may of broke? A crash may of occurred. It's safe to attempt to restart the
             # game at this point.
-            _self.logger.error("unable to resolve transition state of game, attempting to restart game.")
-            _self.recover(force=True)
+            _self.logger.error("unable to resolve transition state of game, exiting...")
+            _self.terminate()
 
 
 class TitanBotHandler(logging.StreamHandler):
