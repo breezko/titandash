@@ -581,7 +581,9 @@ class Bot(object):
         if self.configuration.enable_heroes:
             now = timezone.now()
             if force or now > self.props.next_heroes_level:
-                self.logger.info("levelling heroes in game...")
+                self.logger.info("{begin_force} heroes levelling process in game now.".format(
+                    begin_force="beginning" if not force else "forcing"))
+
                 if not self.goto_heroes(collapsed=False):
                     return False
 
@@ -639,6 +641,9 @@ class Bot(object):
         if self.configuration.enable_master:
             now = timezone.now()
             if force or now > self.props.next_master_level:
+                self.logger.info("{begin_force} master levelling process in game now.".format(
+                    begin_force="beginning" if not force else "forcing"))
+
                 level = True
                 # If the user has specified to only level the sword master once after every prestige
                 # and once at the beginning of their session.
@@ -770,6 +775,7 @@ class Bot(object):
 
             # Click on our point top begin the level process
             # for the current in game skill.
+            self.logger.info("levelling {skill} {clicks} time(s) now...".format(skill=key, clicks=clicks))
             self.click(point=point, pause=1, clicks=clicks, interval=0.3)
 
             # Should the skill in question be levelled to it's maximum amount available?
@@ -790,6 +796,9 @@ class Bot(object):
         if self.configuration.enable_level_skills:
             now = timezone.now()
             if force or now > self.props.next_skills_level:
+                self.logger.info("{begin_force} skills levelling process in game now.".format(
+                    begin_force="beginning" if not force else "forcing"))
+
                 capped, uncapped = self.levels_capped()
 
                 # Do we have any uncapped skills yet? If so, we should begin
@@ -841,6 +850,9 @@ class Bot(object):
         if self.configuration.enable_activate_skills:
             now = timezone.now()
             if force or now > self.props.next_skills_activation:
+                self.logger.info("{begin_force} skills activation process in game now.".format(
+                    begin_force="beginning" if not force else "forcing"))
+
                 # Skill activation will take place now, we need to determine whether or not any skills
                 # are enabled and ready to be activated.
                 enabled = self.enabled_skills()
@@ -859,8 +871,11 @@ class Bot(object):
 
                         # Is this skill ready to be activated?
                         if force or now > prop:
+                            self.logger.info("activating {skill} now...".format(skill=skill))
                             self.click(point=getattr(self.locs, skill), pause=0.2)
                             self.calculate_next_skill_execution(skill=skill)
+                        else:
+                            self.logger.info("{skill} will be activated in {time}".format(skill=skill, time=strfdelta(prop - now)))
 
                 # Recalculate the next skill activation process.
                 self.calculate_next_skills_activation()
