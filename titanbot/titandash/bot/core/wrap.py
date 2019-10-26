@@ -148,7 +148,7 @@ class Locs:
                 setattr(self, key, value)
                 self.logger.debug("locs.{attr}: {value}".format(attr=key, value=value))
 
-    def _base(self, emulator_locs):
+    def _base(self):
         """
         Manually set every expected value.
         """
