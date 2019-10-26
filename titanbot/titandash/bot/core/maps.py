@@ -121,7 +121,6 @@ GAME_LOCS = {
     },
     "AD": {
         "collect_ad": (365, 616),
-        "collect_ad_after_watch": (256, 601),
         "no_thanks": (135, 616),
     },
     "ARTIFACTS": {
@@ -250,10 +249,6 @@ IMAGES = {
         "collect_ad": IMAGE_DIR + "/ads/collect.png",
         "watch_ad": IMAGE_DIR + "/ads/watch.png",
         "no_thanks": IMAGE_DIR + "/ads/no_thanks.png",
-        "ad_close_01": IMAGE_DIR + "/ads/ad_close_01.png",
-        "ad_close_02": IMAGE_DIR + "/ads/ad_close_02.png",
-        "ad_close_03": IMAGE_DIR + "/ads/ad_close_03.png",
-        "ad_close_04": IMAGE_DIR + "/ads/ad_close_04.png",
     },
     "ARTIFACTS": {
         "artifacts_discovered": IMAGE_DIR + "/artifacts/artifacts_discovered.png",

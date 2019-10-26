@@ -28,10 +28,6 @@ class Images:
         self.collect_ad = None
         self.watch_ad = None
         self.no_thanks = None
-        self.ad_close_01 = None
-        self.ad_close_02 = None
-        self.ad_close_03 = None
-        self.ad_close_04 = None
 
         # ARTIFACTS.
         self.artifacts_discovered = None
@@ -220,7 +216,6 @@ class Locs:
 
         # AD.
         self.collect_ad = None
-        self.collect_ad_after_watch = None
         self.no_thanks = None
 
         # ARTIFACTS
