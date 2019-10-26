@@ -28,8 +28,6 @@ COMPRESSION_KEYS = {
     "post_action_min_wait_time": 3,
     "post_action_max_wait_time": 4,
     "emulator": 5,
-    "enable_ad_collection": 6,
-    "enable_premium_ad_collect": 7,
     "enable_egg_collection": 8,
     "enable_tapping": 9,
     "enable_tournaments": 10,
@@ -117,8 +115,6 @@ HELP_TEXT = {
     "post_action_min_wait_time": "Determine the minimum amount of seconds to wait after an in game function is finished executing.",
     "post_action_max_wait_time": "Determine the maximum amount of seconds to wait after an in game function is finished executing.",
     "emulator": "Which emulator service is being used?",
-    "enable_ad_collection": "Enable to ability to collect ads in game.",
-    "enable_premium_ad_collect": "Enable the premium ad collection, Note: This will only work if you have unlocked the ability to skip ads, leave disabled to watch ads.",
     "enable_tapping": "Enable the ability to tap on titans (This also enables the clicking of fairies in game).",
     "enable_daily_rewards": "Enable the ability to collect daily rewards in game when they become available.",
     "enable_clan_crates": "Enable the ability to collect clan crates in game when they are available.",
@@ -221,10 +217,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
 
     # DEVICE Settings.
     emulator = models.CharField(verbose_name="Emulator", choices=EMULATOR_CHOICES, default=EMULATOR_CHOICES[0][0], max_length=255, help_text=HELP_TEXT["emulator"])
-
-    # AD Settings.
-    enable_ad_collection = models.BooleanField(verbose_name="Enable Ad Collection", default=True, help_text=HELP_TEXT["enable_ad_collection"])
-    enable_premium_ad_collect = models.BooleanField(verbose_name="Enable Premium Ad Collection", default=False, help_text=HELP_TEXT["enable_premium_ad_collect"])
 
     # GENERIC Settings.
     enable_tapping = models.BooleanField(verbose_name="Enable Tapping", default=True, help_text=HELP_TEXT["enable_tapping"])
@@ -438,10 +430,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
             },
             "Device": {
                 "emulator": self.emulator
-            },
-            "Ad": {
-                "enable_ad_collection": self.enable_ad_collection,
-                "enable_premium_ad_collect": self.enable_premium_ad_collect,
             },
             "Generic": {
                 "enable_tapping": self.enable_tapping,

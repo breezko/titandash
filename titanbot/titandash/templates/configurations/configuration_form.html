@@ -112,35 +112,6 @@
     </div>
 </div>
 
-{# Ad Settings #}
-<div id="accordionAdSettings">
-    <div class="card">
-        <div class="card-header" id="configurationAdSettingsHeader">
-            <h5 class="modal-title" id="configurationAdSettingsTitle">
-                <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseAdSettings">Ad Settings</button>
-            </h5>
-        </div>
-
-        <div id="collapseAdSettings" class="collapse show" data-parent="#accordionAdSettings">
-            <div id="configurationAdSettingsBody" class="card-body">
-                <div class="form-check">
-                    {# Enable Ad Collection #}
-                    <input {% if config.enable_ad_collection %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_ad_collection" name="enable_ad_collection">
-                    <label class="form-check-label" for="enable_ad_collection">Enable Ad Collection</label>
-                    <p class="text-muted">{{ help.enable_ad_collection }}</p>
-                </div>
-
-                <div class="form-check">
-                    {# Enable Premium Ad Collect #}
-                    <input {% if config.enable_premium_ad_collect %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_premium_ad_collect" name="enable_premium_ad_collect">
-                    <label class="form-check-label" for="enable_premium_ad_collect">Enable Premium Ad Collection</label>
-                    <p class="text-muted">{{ help.enable_premium_ad_collect }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 {# Generic Settings #}
 <div id="accordionGenericSettings">
     <div class="card">
