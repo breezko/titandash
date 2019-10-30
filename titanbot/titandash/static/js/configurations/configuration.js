@@ -66,6 +66,10 @@ let ConfigurationController = function() {
             /* Runtime */
             post_action_min_wait_time: $("#post_action_min_wait_time"),
             post_action_max_wait_time: $("#post_action_max_wait_time"),
+            /* Generic Settings */
+            tapping_repeat: $("#tapping_repeat"),
+            /* Minigames */
+            minigames_repeat: $("#minigames_repeat"),
             /* Breaks */
             breaks_jitter: $("#breaks_jitter"),
             breaks_minutes_required: $("#breaks_minutes_required"),
@@ -101,9 +105,6 @@ let ConfigurationController = function() {
             prestige_at_max_stage_percent: $("#prestige_at_max_stage_percent"),
             /* Stats */
             update_stats_every_x_minutes: $("#update_stats_every_x_minutes"),
-            /* Recovery */
-            recovery_check_interval_minutes: $("#recovery_check_interval_minutes"),
-            recovery_allowed_failures: $("#recovery_allowed_failures")
         }
     };
 

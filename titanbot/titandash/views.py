@@ -10,7 +10,6 @@ from titanauth.authentication.wrapper import AuthWrapper
 from titanauth.models.release_info import ReleaseInfo
 
 from titandash.utils import start, pause, stop, resume, title
-from titandash.utils import WindowHandler
 from titandash.constants import RUNNING, PAUSED, STOPPED, CACHE_TIMEOUT
 from titandash.models.bot import BotInstance
 from titandash.models.statistics import Session, Statistics, Log, ArtifactStatistics
@@ -19,6 +18,7 @@ from titandash.models.artifact import Artifact, Tier
 from titandash.models.configuration import Configuration, ThemeConfig
 from titandash.models.prestige import Prestige
 from titandash.models.queue import Queue
+from titandash.bot.core.window import WindowHandler
 from titandash.bot.core.constants import QUEUEABLE_FUNCTIONS, QUEUEABLE_TOOLTIPS, SHORTCUT_FUNCTIONS
 
 from io import BytesIO

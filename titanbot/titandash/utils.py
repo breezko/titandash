@@ -1,12 +1,11 @@
 from .constants import *
 
 from titandash.models.queue import Queue
+from titandash.bot.core.window import WindowHandler
 from titandash.bot.core.bot import Bot
-from titandash.bot.core.constants import NOX_WINDOW_FILTER, MEMU_WINDOW_FILTER
 
 from threading import Thread
 
-import win32gui
 import time
 import string
 
@@ -80,122 +79,6 @@ def resume(instance):
         return
 
     Queue.objects.add(function="resume", instance=instance)
-
-
-class Window(object):
-    """Window can be used to define a single window/process."""
-    def __init__(self, hwnd, text, rectangle):
-        self.hwnd = hwnd
-        self.text = text
-        self.x = rectangle[0]
-        self.y = rectangle[1]
-        self.width = rectangle[2] - self.x
-        self.height = rectangle[3] - self.y
-
-        # Depending on the type of emulator being used (and support), some
-        # differences in the way their window object is defined.
-        # Nox: X Axis is not included in window rectangle.
-        # MEmu: X Axis is included.
-        # Based on these differences, we should modify appropriately
-        # the width and height values before calculating padding.
-        if self.text.lower() in MEMU_WINDOW_FILTER:
-            self.width -= 38
-
-        # Additionally, based on the size of the emulator, we want
-        # to ensure we can pad the x, y value so the title bar is taken
-        # into account when things are clicked or searched for...
-        # We expect the emulator size to be 480x800, so we can get
-        # the padding from this value.
-        self.x_padding = self.width - 480
-        self.y_padding = self.height - 800
-
-    def __str__(self):
-        return "{text} ({x}, {y}, {w}, {h})".format(
-            text=self.text, x=self.x, y=self.y, w=self.width, h=self.height)
-
-    def __repr__(self):
-        return "<Window: {window}>".format(window=self)
-
-    def find(self, search):
-        """
-        Check if the specified search key is present in the windows text.
-        """
-        if type(search) == str:
-            search = [search]
-
-        for s in search:
-            if self.text.lower().find(s.lower()) != -1:
-                return True
-
-        return False
-
-    def json(self):
-        """Convert window instance to a json compliant dictionary."""
-        return {
-            "hwnd": self.hwnd,
-            "text": self.text,
-            "x": self.x,
-            "y": self.y,
-            "width": self.width,
-            "height": self.height,
-            "formatted": str(self)
-        }
-
-
-class WindowNotFoundError(Exception):
-    pass
-
-
-class InvalidHwndValue(Exception):
-    pass
-
-
-class WindowHandler(object):
-    """Window handle encapsulates all functionality for handling windows and processes needed."""
-    def __init__(self):
-        self.filter_lst = MEMU_WINDOW_FILTER + NOX_WINDOW_FILTER
-        self.windows = dict()
-
-    def _cb(self, hwnd, extra):
-        """Callback handler used when current windows are enumerated."""
-        if hwnd in self.windows:
-            pass
-
-        window = Window(
-            hwnd=hwnd,
-            text=win32gui.GetWindowText(hwnd),
-            rectangle=win32gui.GetWindowRect(hwnd))
-
-        self.windows[hwnd] = window
-
-    def enum(self):
-        """Begin enumerating windows and generate windows objects."""
-        win32gui.EnumWindows(self._cb, None)
-
-    def grab(self, hwnd):
-        self.enum()
-
-        try:
-            return self.windows[int(hwnd)]
-        except KeyError:
-            raise WindowNotFoundError()
-        except ValueError:
-            raise InvalidHwndValue()
-
-    def filter(self, ignore_hidden=True, ignore_smaller=(480, 800)):
-        """
-        Filter the currently available windows to ones that contain the specified text.
-
-        Hidden (ie: 0x0 sized windows are ignored by default).
-        Smaller: (ie: Windows smaller than the specified amount).
-        """
-        dct = {hwnd: window for hwnd, window in self.windows.items() if window.find(self.filter_lst)}
-        if ignore_hidden:
-            dct = {hwnd: window for hwnd, window in dct.items() if window.width != 0 and window.height != 0}
-        if ignore_smaller:
-            dct = {hwnd: window for hwnd, window in dct.items() if window.width > 480 and window.height > 800}
-
-        return dct
 
 
 # Import/Export Functionality.

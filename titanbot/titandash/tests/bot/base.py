@@ -9,7 +9,7 @@ from django.test import TestCase
 from titandash.models.bot import BotInstance
 from titandash.models.configuration import Configuration
 from titandash.bot.core.bot import Bot
-from titandash.utils import Window
+from titandash.bot.core.window import Window
 from titandash.bot.core.maps import IMAGES as BOT_IMAGES
 from titandash.tests.bot.maps import IMAGES as TEST_IMAGES
 

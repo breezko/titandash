@@ -91,10 +91,10 @@ class BotInstance(models.Model):
     next_heroes_level = models.DateTimeField(verbose_name="Next Heroes Level", blank=True, null=True)
     next_skills_level = models.DateTimeField(verbose_name="Next Skills Level", blank=True, null=True)
     next_skills_activation = models.DateTimeField(verbose_name="Next Skills Activation", blank=True, null=True)
+    next_miscellaneous_actions = models.DateTimeField(verbose_name="Next Miscellaneous Actions", blank=True, null=True)
     next_prestige = models.DateTimeField(verbose_name="Next Timed Prestige", blank=True, null=True)
     next_randomized_prestige = models.DateTimeField(verbose_name="Next Randomized Prestige", blank=True, null=True)
     next_stats_update = models.DateTimeField(verbose_name="Next Stats Update", blank=True, null=True)
-    next_recovery_reset = models.DateTimeField(verbose_name="Next Recovery Reset", blank=True, null=True)
     next_daily_achievement_check = models.DateTimeField(verbose_name="Next Daily Achievement Check", blank=True, null=True)
     next_milestone_check = models.DateTimeField(verbose_name="Next Milestone Check", blank=True, null=True)
     next_raid_notifications_check = models.DateTimeField(verbose_name="Next Raid Notifications Check", blank=True, null=True)
@@ -206,6 +206,10 @@ class BotInstance(models.Model):
                 "datetime": str(self.next_skills_activation) if self.next_skills_activation else None,
                 "formatted": self.next_skills_activation.astimezone().strftime(DATETIME_FMT) if self.next_skills_activation else None
             },
+            "next_miscellaneous_actions": {
+                "datetime": str(self.next_miscellaneous_actions) if self.next_miscellaneous_actions else None,
+                "formatted": self.next_miscellaneous_actions.astimezone().strftime(DATETIME_FMT) if self.next_miscellaneous_actions else None
+            },
             "next_prestige": {
                 "datetime": str(self.next_prestige) if self.next_prestige else None,
                 "formatted": self.next_prestige.astimezone().strftime(DATETIME_FMT) if self.next_prestige else None
@@ -217,10 +221,6 @@ class BotInstance(models.Model):
             "next_stats_update": {
                 "datetime": str(self.next_stats_update) if self.next_stats_update else None,
                 "formatted": self.next_stats_update.astimezone().strftime(DATETIME_FMT) if self.next_stats_update else None
-            },
-            "next_recovery_reset": {
-                "datetime": str(self.next_recovery_reset) if self.next_recovery_reset else None,
-                "formatted": self.next_recovery_reset.astimezone().strftime(DATETIME_FMT) if self.next_recovery_reset else None
             },
             "next_daily_achievement_check": {
                 "datetime": str(self.next_daily_achievement_check) if self.next_daily_achievement_check else None,
@@ -284,7 +284,7 @@ class BotInstance(models.Model):
         if self.configuration:
             dct["configuration"] = {
                 "id": self.configuration.pk,
-                "url": reverse("admin:titandash_configuration_change", kwargs={"object_id": self.configuration.pk}),
+                "url": reverse("configuration", kwargs={"pk": self.configuration.pk}),
                 "name": self.configuration.name
             }
         if self.window:
@@ -305,10 +305,10 @@ class BotInstance(models.Model):
         self.next_heroes_level = None
         self.next_skills_level = None
         self.next_skills_activation = None
+        self.next_miscellaneous_actions = None
         self.next_prestige = None
         self.next_randomized_prestige = None
         self.next_stats_update = None
-        self.next_recovery_reset = None
         self.next_daily_achievement_check = None
         self.next_milestone_check = None
         self.next_raid_notifications_check = None

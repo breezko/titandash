@@ -28,8 +28,6 @@ COMPRESSION_KEYS = {
     "post_action_min_wait_time": 3,
     "post_action_max_wait_time": 4,
     "emulator": 5,
-    "enable_ad_collection": 6,
-    "enable_premium_ad_collect": 7,
     "enable_egg_collection": 8,
     "enable_tapping": 9,
     "enable_tournaments": 10,
@@ -80,8 +78,6 @@ COMPRESSION_KEYS = {
     "enable_clan_results_parse": 63,
     "parse_clan_results_on_start": 64,
     "parse_clan_results_every_x_minutes": 65,
-    "recovery_check_interval_minutes": 66,
-    "recovery_allowed_failures": 67,
     "enable_logging": 68,
     "logging_level": 69,
     "master_level_only_once": 70,
@@ -110,6 +106,9 @@ COMPRESSION_KEYS = {
     "hero_level_on_start": 93,
     "level_skills_on_start": 94,
     "activate_skills_every_x_seconds": 95,
+    "tapping_repeat": 96,
+    "minigames_repeat": 97
+
 }
 
 HELP_TEXT = {
@@ -119,14 +118,14 @@ HELP_TEXT = {
     "post_action_min_wait_time": "Determine the minimum amount of seconds to wait after an in game function is finished executing.",
     "post_action_max_wait_time": "Determine the maximum amount of seconds to wait after an in game function is finished executing.",
     "emulator": "Which emulator service is being used?",
-    "enable_ad_collection": "Enable to ability to collect ads in game.",
-    "enable_premium_ad_collect": "Enable the premium ad collection, Note: This will only work if you have unlocked the ability to skip ads, leave disabled to watch ads.",
     "enable_tapping": "Enable the ability to tap on titans (This also enables the clicking of fairies in game).",
+    "tapping_repeat": "Specify how many times the tapping loop should run when executed.",
     "enable_daily_rewards": "Enable the ability to collect daily rewards in game when they become available.",
     "enable_clan_crates": "Enable the ability to collect clan crates in game when they are available.",
     "enable_egg_collection": "Enable the ability to collect and hatch eggs in game.",
     "enable_tournaments": "Enable the ability to enter and participate in tournaments.",
     "enable_minigames": "Enable the ability to enable/disable different skill minigames that can be executed.",
+    "minigames_repeat": "Specify how many times the minigames loop should run when executed.",
     "enable_coordinated_offensive": "Enable coordinated offensive tapping skill minigame.",
     "enable_astral_awakening": "Enable astral awakening tapping skill minigame.",
     "enable_heart_of_midas": "Enable heart of midas tapping skill minigame.",
@@ -197,8 +196,6 @@ HELP_TEXT = {
     "enable_clan_results_parse": "Enable the ability to have the bot attempt to parse out clan raid results.",
     "parse_clan_results_on_start": "Should clan results be parsed when a session is started.",
     "parse_clan_results_every_x_minutes": "Determine how many minutes between each clan results parse attempt.",
-    "recovery_check_interval_minutes": "Determine how many minutes between each check that determines if the game has crashed/broke.",
-    "recovery_allowed_failures": "How many failures are allowed before the recovery process is started.",
     "enable_logging": "Enable logging of information during sessions.",
     "logging_level": "Determine the logging level used during sessions."
 }
@@ -226,12 +223,9 @@ class Configuration(ParanoidModel, ExportModelMixin):
     # DEVICE Settings.
     emulator = models.CharField(verbose_name="Emulator", choices=EMULATOR_CHOICES, default=EMULATOR_CHOICES[0][0], max_length=255, help_text=HELP_TEXT["emulator"])
 
-    # AD Settings.
-    enable_ad_collection = models.BooleanField(verbose_name="Enable Ad Collection", default=True, help_text=HELP_TEXT["enable_ad_collection"])
-    enable_premium_ad_collect = models.BooleanField(verbose_name="Enable Premium Ad Collection", default=False, help_text=HELP_TEXT["enable_premium_ad_collect"])
-
     # GENERIC Settings.
     enable_tapping = models.BooleanField(verbose_name="Enable Tapping", default=True, help_text=HELP_TEXT["enable_tapping"])
+    tapping_repeat = models.PositiveIntegerField(verbose_name="Repeat Tapping", default=1, help_text=HELP_TEXT["tapping_repeat"])
     enable_daily_rewards = models.BooleanField(verbose_name="Enable Daily Rewards", default=True, help_text=HELP_TEXT["enable_daily_rewards"])
     enable_clan_crates = models.BooleanField(verbose_name="Enable Clan Crates", default=True, help_text=HELP_TEXT["enable_clan_crates"])
     enable_egg_collection = models.BooleanField(verbose_name="Enable Egg Collection", default=True, help_text=HELP_TEXT["enable_egg_collection"])
@@ -239,6 +233,7 @@ class Configuration(ParanoidModel, ExportModelMixin):
 
     # MINIGAME Settings.
     enable_minigames = models.BooleanField(verbose_name="Enable Skill Minigames", default=False, help_text=HELP_TEXT["enable_minigames"])
+    minigames_repeat = models.PositiveIntegerField(verbose_name="Repeat Minigames", default=1, help_text=HELP_TEXT["minigames_repeat"])
     enable_coordinated_offensive = models.BooleanField(verbose_name="Enable Coordinated Offensive", default=False, help_text=HELP_TEXT["enable_coordinated_offensive"])
     enable_astral_awakening = models.BooleanField(verbose_name="Enable Astral Awakening", default=False, help_text=HELP_TEXT["enable_astral_awakening"])
     enable_heart_of_midas = models.BooleanField(verbose_name="Enable Heart Of Midas", default=False, help_text=HELP_TEXT["enable_heart_of_midas"])
@@ -333,10 +328,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
     enable_clan_results_parse = models.BooleanField(verbose_name="Enable Clan Results Parsing", default=True, help_text=HELP_TEXT["enable_clan_results_parse"])
     parse_clan_results_on_start = models.BooleanField(verbose_name="Parse Clan Results On Session Start", default=False, help_text=HELP_TEXT["parse_clan_results_on_start"])
     parse_clan_results_every_x_minutes = models.PositiveIntegerField(verbose_name="Attempt To Parse Clan Results Every X Minutes", default=300, help_text=HELP_TEXT["parse_clan_results_every_x_minutes"])
-
-    # RECOVERY Settings.
-    recovery_check_interval_minutes = models.PositiveIntegerField(verbose_name="Recovery Check Interval Minutes", default=5, help_text=HELP_TEXT["recovery_check_interval_minutes"])
-    recovery_allowed_failures = models.PositiveIntegerField(verbose_name="Recovery Allowed Failures", default=45, help_text=HELP_TEXT["recovery_allowed_failures"])
 
     # LOGGING Settings.
     enable_logging = models.BooleanField(verbose_name="Enable Logging", default=True, help_text=HELP_TEXT["enable_logging"])
@@ -447,12 +438,9 @@ class Configuration(ParanoidModel, ExportModelMixin):
             "Device": {
                 "emulator": self.emulator
             },
-            "Ad": {
-                "enable_ad_collection": self.enable_ad_collection,
-                "enable_premium_ad_collect": self.enable_premium_ad_collect,
-            },
             "Generic": {
                 "enable_tapping": self.enable_tapping,
+                "tapping_repeat": self.tapping_repeat,
                 "enable_daily_rewards": self.enable_daily_rewards,
                 "enable_clan_crates": self.enable_clan_crates,
                 "enable_egg_collection": self.enable_egg_collection,
@@ -460,6 +448,7 @@ class Configuration(ParanoidModel, ExportModelMixin):
             },
             "Minigames": {
                 "enable_minigames": self.enable_minigames,
+                "minigames_repeat": self.minigames_repeat,
                 "enable_coordinated_offensive": self.enable_coordinated_offensive,
                 "enable_astral_awakening": self.enable_astral_awakening,
                 "enable_heart_of_midas": self.enable_heart_of_midas,
@@ -548,10 +537,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 "enable_clan_results_parse": self.enable_clan_results_parse,
                 "parse_clan_results_on_start": self.parse_clan_results_on_start,
                 "parse_clan_results_every_x_minutes": self.parse_clan_results_every_x_minutes
-            },
-            "Recovery": {
-                "recovery_check_interval_minutes": self.recovery_check_interval_minutes,
-                "recovery_allowed_failures": self.recovery_allowed_failures
             },
             "Logging": {
                 "enable_logging": self.enable_logging,
