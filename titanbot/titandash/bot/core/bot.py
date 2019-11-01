@@ -606,16 +606,16 @@ class Bot(object):
                 # all heroes, just level the top heroes.
                 if self.grabber.search(self.images.max_level, bool_only=True):
                     self.logger.info("a max levelled hero has been found! Only first set of heroes will be levelled.")
-                    for point in HEROES_LOCS["level_heroes"][::-1][1:9]:
+                    for point in HEROES_LOCS["level_heroes"][::-1][1:]:
                         self.click(point=point, clicks=self.configuration.hero_level_intensity, interval=0.07)
 
                     # Early exit as well.
                     self.calculate_next_heroes_level()
                     return True
 
-                # Always level the first 5 heroes in the list.
-                self.logger.info("levelling the first five heroes available.")
-                for point in HEROES_LOCS["level_heroes"][::-1][1:10]:
+                # Always level the first set of heroes in the list.
+                self.logger.info("levelling the first set of heroes available...")
+                for point in HEROES_LOCS["level_heroes"][::-1][1:]:
                     self.click(point=point, clicks=self.configuration.hero_level_intensity, interval=0.07)
 
                 # Travel to the bottom of the panel.
