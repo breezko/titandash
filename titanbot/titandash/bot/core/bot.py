@@ -1229,6 +1229,11 @@ class Bot(object):
             # or not, if we reach this point, return our flags as False, None.
             return False, None
 
+        # Explicitly return (False, None) if a user has tournaments disabled, because our tournaments
+        # are the only function that expects multiple variables returned, we only need do it in this function currently.
+        else:
+            return False, None
+
     @wrap_current_function
     @not_in_transition
     def daily_rewards(self):
