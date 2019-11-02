@@ -59,7 +59,7 @@ FUNCTION_LOOP_TIMEOUT = 40
 # than the base FUNCTION_LOOP_TIMEOUT since after about 7-10 tries, if we haven't
 # succeeded, the bot is likely stuck due to in game damage being too low currently.
 # In which case, we can continue and attempt to up this damage and try again later.
-BOSS_LOOP_TIMEOUT = int(FUNCTION_LOOP_TIMEOUT / 2)
+BOSS_LOOP_TIMEOUT = int(FUNCTION_LOOP_TIMEOUT / 4)
 
 # Specify any functions that may be forced.
 FORCEABLE_FUNCTIONS = [
@@ -182,3 +182,9 @@ NOX_WINDOW_FILTER = [
 MEMU_WINDOW_FILTER = [
     "memu"
 ]
+
+# Determine the interval between the execution of each defined function
+# handled by the scheduler object when a bot is running (seconds).
+SCHEDULE_INTERVALS = {
+    "parse_current_stage": 3
+}
