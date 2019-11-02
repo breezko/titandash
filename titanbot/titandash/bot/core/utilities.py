@@ -280,10 +280,6 @@ def in_transition_func(*args, max_loops):
         ], bool_only=True):
             break
 
-        # Can a stage be parsed out in the game?
-        if not _self.stats.stage_ocr() == '':
-            break
-
         # Clicking the top of the screen in case of a transition taking place due to something being
         # present on the screen that requires clicking.
         _self.click(point=MASTER_LOCS["screen_top"], clicks=3, pause=0.5)
