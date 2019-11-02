@@ -182,3 +182,9 @@ NOX_WINDOW_FILTER = [
 MEMU_WINDOW_FILTER = [
     "memu"
 ]
+
+# Determine the interval between the execution of each defined function
+# handled by the scheduler object when a bot is running (seconds).
+SCHEDULE_INTERVALS = {
+    "parse_current_stage": 3
+}
