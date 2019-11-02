@@ -27,12 +27,14 @@ from .utilities import (
     strfnumber, sleep, send_raid_notification
 )
 from .constants import (
-    STAGE_PARSE_THRESHOLD, FUNCTION_LOOP_TIMEOUT, BOSS_LOOP_TIMEOUT,
-    QUEUEABLE_FUNCTIONS, FORCEABLE_FUNCTIONS, PROPERTIES, BREAK_NEXT_PROPS,
-    BREAK_NEXT_PROPS_ALL
+    FUNCTION_LOOP_TIMEOUT, BOSS_LOOP_TIMEOUT, QUEUEABLE_FUNCTIONS,
+    FORCEABLE_FUNCTIONS, PROPERTIES, BREAK_NEXT_PROPS,
+    BREAK_NEXT_PROPS_ALL, SCHEDULE_INTERVALS
 )
 
 from pyautogui import FailSafeException
+
+from apscheduler.schedulers.background import BackgroundScheduler
 
 import datetime
 import random
@@ -135,6 +137,17 @@ class Bot(object):
         self.calculate_next_raid_notifications_check()
         self.calculate_next_clan_result_parse()
         self.calculate_next_break()
+
+        # We generate a scheduler once this bot has been initialized correctly,
+        # The scheduler should be used for any functionality that is meant to be ran
+        # on an interval, and in the background.
+        self.scheduler = BackgroundScheduler()
+
+        # Adding all expected jobs to our background scheduler instance.
+        # Note: Our scheduler is not yet started at this point, that only
+        # happens once the bot is initialized.
+        for func, interval in SCHEDULE_INTERVALS.items():
+            self.scheduler.add_job(func=getattr(self, func), trigger='interval', seconds=interval, id=func)
 
         if start:
             self.run()
@@ -255,7 +268,6 @@ class Bot(object):
             self.logger.warning("text: {text}".format(text=stage_text))
             self.ADVANCED_START = None
 
-    @wrap_current_function
     def parse_current_stage(self):
         """
         Attempt to update the current stage attribute through an OCR check in game. The current_stage
@@ -264,48 +276,25 @@ class Bot(object):
 
         When using the attribute, a check should be performed to ensure it isn't None before running
         numeric friendly conditionals.
-        """
-        self.ensure_collapsed()
-        stage_parsed = self.stats.stage_ocr()
 
+        Note, we do not wrap our current function implementation since we use this function
+        through our background scheduler.
+        """
         try:
-            stage = int(stage_parsed)
-            self.logger.info("stage {stage_text} was successfully coerced into an integer: {stage}.".format(
-                stage_text=stage_parsed, stage=strfnumber(stage)))
+            stage = int(self.stats.stage_ocr())
             if stage > STAGE_CAP:
-                self.logger.info("stage {stage} is greater then the stage cap: {stage_cap}, resetting stage variables.".format(
-                    stage=strfnumber(stage), stage_cap=STAGE_CAP))
+                return
+            if self.ADVANCED_START and stage < self.ADVANCED_START:
                 return
 
-            if self.ADVANCED_START:
-                if stage < self.ADVANCED_START:
-                    self.logger.info("stage: {stage} is less then the advanced start: {advanced_start}, leaving current stage unchanged.".format(
-                        stage=strfnumber(stage), advanced_start=self.ADVANCED_START))
-                    return
-
-            # Is the stage potentially way greater than the last check? Could mean the parse failed.
-            if isinstance(self.last_stage, int):
-                diff = stage - self.last_stage
-                if diff > STAGE_PARSE_THRESHOLD:
-                    self.logger.info(
-                        "difference between current stage and last stage passes the stage change threshold: "
-                        "{stage_thresh} ({stage} - {last_stage} = {diff}), resetting stage variables...".format(
-                            stage_thresh=STAGE_PARSE_THRESHOLD, stage=strfnumber(stage), last_stage=strfnumber(self.last_stage), diff=strfnumber(diff)))
-
-                    self.last_stage, self.props.current_stage = None, None
-                    return
-
-            self.logger.info("current stage in game was successfully parsed: {stage}".format(stage=strfnumber(stage)))
+            self.logger.debug("current stage parsed as: {stage}".format(stage=strfnumber(number=stage)))
             self.last_stage = self.props.current_stage
-            self.logger.info("last stage has been set to the previous current stage in game: {last_stage}".format(last_stage=strfnumber(self.last_stage)))
             self.props.current_stage = stage
 
         # ValueError when the parsed stage isn't able to be coerced.
         except ValueError:
-            self.logger.error("ocr check could not parse out a proper string from image, leaving stage variables as they were before...")
-            self.logger.info("current stage: {current}".format(current=strfnumber(self.props.current_stage)))
-            self.logger.info("last stage: {last}".format(last=strfnumber(self.last_stage)))
-            self.last_stage, self.props.current_stage = None, None
+            self.logger.debug("current stage could not be parsed... skipping.")
+            pass
 
     @wrap_current_function
     def order_minigames(self):
@@ -606,16 +595,16 @@ class Bot(object):
                 # all heroes, just level the top heroes.
                 if self.grabber.search(self.images.max_level, bool_only=True):
                     self.logger.info("a max levelled hero has been found! Only first set of heroes will be levelled.")
-                    for point in HEROES_LOCS["level_heroes"][::-1][1:9]:
+                    for point in HEROES_LOCS["level_heroes"][::-1][1:]:
                         self.click(point=point, clicks=self.configuration.hero_level_intensity, interval=0.07)
 
                     # Early exit as well.
                     self.calculate_next_heroes_level()
                     return True
 
-                # Always level the first 5 heroes in the list.
-                self.logger.info("levelling the first five heroes available.")
-                for point in HEROES_LOCS["level_heroes"][::-1][1:10]:
+                # Always level the first set of heroes in the list.
+                self.logger.info("levelling the first set of heroes available...")
+                for point in HEROES_LOCS["level_heroes"][::-1][1:]:
                     self.click(point=point, clicks=self.configuration.hero_level_intensity, interval=0.07)
 
                 # Travel to the bottom of the panel.
@@ -966,6 +955,15 @@ class Bot(object):
                 self.logger.info("{begin_force} prestige process in game now.".format(
                     begin_force="beginning" if not force else "forcing"))
 
+                # Leaving boss fight if one is available, and waiting slightly to ensure out current
+                # stage is up to date before we begin the prestige.
+                self.leave_boss()
+                sleep(5)
+
+                # Pausing our scheduler while a prestige is taking place.
+                # We do not want the current stage being modified while this takes place.
+                self.scheduler.pause()
+
                 # Reset the current prestige skill level values, since they all go back to
                 # zero on a prestige, We can reset and be sure they're all zero.
                 self.current_prestige_skill_levels = {skill: 0 for skill in SKILLS}
@@ -990,9 +988,11 @@ class Bot(object):
                     # and our correct advanced start parsing.
                     self.props.last_prestige = tournament_prestige
                     self.parse_advanced_start(stage_text=advanced_start)
+                    self.props.current_stage = advanced_start
                     # Sleeping explicitly if a tournament was joined, since we update the last
                     # prestige and advanced start right after it happens.
                     sleep(35)
+                    self.scheduler.resume()
                     return True
 
                 if not self.goto_master(collapsed=False, top=False):
@@ -1009,11 +1009,13 @@ class Bot(object):
                     prestige, advanced_start = self.stats.update_prestige(artifact=self.next_artifact_upgrade, current_stage=self.props.current_stage)
                     self.props.last_prestige = prestige
                     self.parse_advanced_start(advanced_start)
+                    self.props.current_stage = self.ADVANCED_START
 
                     self.click(point=MASTER_LOCS["prestige_confirm"], pause=1)
                     # Waiting for a while after prestiging, this reduces the chance
                     # of a game crash taking place due to many clicks while game is resetting.
                     self.click(point=MASTER_LOCS["prestige_final"], pause=35)
+                    self.scheduler.resume()
 
                     # If a timer is used for prestige. Reset this timer to the next timed prestige value.
                     if self.configuration.prestige_x_minutes != 0:
@@ -1047,8 +1049,6 @@ class Bot(object):
                                 self.logger.info("current stage is greater than your previous max stage {max}, forcing a stats update to reflect new max stage.".format(
                                     max=self.stats.highest_stage))
                                 self.update_stats(force=True)
-
-                    self.props.current_stage = self.ADVANCED_START
 
     @wrap_current_function
     @not_in_transition
@@ -1227,6 +1227,11 @@ class Bot(object):
 
             # No tournament was joined, and regardless of the reward being available
             # or not, if we reach this point, return our flags as False, None.
+            return False, None
+
+        # Explicitly return (False, None) if a user has tournaments disabled, because our tournaments
+        # are the only function that expects multiple variables returned, we only need do it in this function currently.
+        else:
             return False, None
 
     @wrap_current_function
@@ -1928,12 +1933,14 @@ class Bot(object):
         Execute a pause for this Bot.
         """
         self.PAUSE = True
+        self.scheduler.pause()
         self.instance.pause()
 
     @wrap_current_function
     def resume(self):
         """Execute a resume for this Bot."""
         self.PAUSE = False
+        self.scheduler.resume()
         self.instance.resume()
 
     @wrap_current_function
@@ -1971,7 +1978,6 @@ class Bot(object):
                 "miscellaneous_actions": True,
                 "tap": self.configuration.enable_tapping,
                 "minigames": self.configuration.enable_minigames,
-                "parse_current_stage": True,
                 "level_master": self.configuration.enable_master,
                 "level_heroes": self.configuration.enable_heroes,
                 "level_skills": self.configuration.enable_level_skills,
@@ -1995,6 +2001,10 @@ class Bot(object):
         """
         Run any initial functions as soon as a session is started.
         """
+        # Boot up the scheduler instance so it begins running all interval/period
+        # type functions.
+        self.scheduler.start()
+
         # Parse current skill levels, done once on initialization
         # and taken care of by our prestige function for every prestige.
         self.parse_current_skills()
@@ -2031,7 +2041,7 @@ class Bot(object):
         automated action within the emulator.
         """
         try:
-            self.setup_shortcuts()
+            # self.setup_shortcuts()
             self.goto_master()
             self.initialize()
 
@@ -2106,6 +2116,9 @@ class Bot(object):
 
         # Cleaning up the BotInstance once a termination has been received.
         finally:
+            # Stop the schedulers functionality once the session has been stopped.
+            self.scheduler.shutdown(wait=False)
+
             self.stats.session.end = timezone.now()
             self.stats.session.save()
             self.instance.stop()
