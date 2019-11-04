@@ -503,12 +503,13 @@ def signal(request):
     sig = request.GET.get("signal")
     cfg = request.GET.get("config")
     win = request.GET.get("window")
+    shrt = True if request.GET.get("shortcuts") == "true" else False
 
     if sig == "PLAY":
         if bot.state == RUNNING:
             return JsonResponse(data={"status": "warning", "message": "BotInstance is already running..."})
         if bot.state == STOPPED:
-            start(config=cfg, window=win, instance=bot)
+            start(config=cfg, window=win, shortcuts=shrt, instance=bot)
             return JsonResponse(data={"status": "success", "message": "BotInstance has been started..."})
         if bot.state == PAUSED:
             resume(instance=bot)
