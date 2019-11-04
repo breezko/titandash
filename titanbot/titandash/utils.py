@@ -25,7 +25,7 @@ def title(value):
     return "".join(capped)
 
 
-def start(config, window, instance):
+def start(config, window, shortcuts, instance):
     """
     Start a new Bot Process if one does not already exist. We can check for an existing one by looking at the
     current Bot model and the data present. If one does exist, we can send a termination signal to ensure that
@@ -52,6 +52,7 @@ def start(config, window, instance):
         Thread(target=Bot, kwargs={
             'configuration': configuration,
             'window': win,
+            'enable_shortcuts': shortcuts,
             'instance': instance,
             'start': True
         }).start()

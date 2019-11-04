@@ -84,6 +84,7 @@ class BotInstance(models.Model):
     # Bot Variables...
     configuration = models.ForeignKey(verbose_name="Current Configuration", to="Configuration", blank=True, null=True, on_delete=models.CASCADE)
     window = jsonfield.JSONField(verbose_name="Current Window", blank=True, null=True)
+    shortcuts = models.BooleanField(verbose_name="Enable Shortcuts", blank=True, null=True)
     log = models.ForeignKey(verbose_name="Current Log", to=Log, on_delete=models.CASCADE, blank=True, null=True)
     current_stage = models.PositiveIntegerField(verbose_name="Current Stage", blank=True, null=True)
     next_action_run = models.DateTimeField(verbose_name="Next Action Run", blank=True, null=True)
@@ -289,6 +290,8 @@ class BotInstance(models.Model):
             }
         if self.window:
             dct["window"] = self.window
+        if self.shortcuts:
+            dct["shortcuts"] = self.shortcuts
 
         return dct
 
@@ -299,6 +302,7 @@ class BotInstance(models.Model):
         self.resume_from_break = None
         self.configuration = None
         self.window = None
+        self.shortcuts = None
         self.log_file = None
         self.current_stage = None
         self.next_master_level = None

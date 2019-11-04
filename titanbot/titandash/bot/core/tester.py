@@ -38,6 +38,7 @@ def make_bot():
     return Bot(
         configuration=Configuration.objects.first(),
         window=next(iter(wh.filter().items()))[1],
+        enable_shortcuts=True,
         instance=BotInstance.objects.first(),
         start=False
     )

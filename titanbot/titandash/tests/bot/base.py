@@ -35,6 +35,7 @@ class BaseBotTest(TestCase):
         cls.bot = Bot(
             configuration=cls.config,
             window=cls.window,
+            enable_shortcuts=False,
             instance=BotInstance.objects.grab(),
             logger=cls.logger,
             debug=True
