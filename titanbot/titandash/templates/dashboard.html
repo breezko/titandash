@@ -40,35 +40,6 @@
         </div>
     </div>
 
-    <!-- Tools Modal -->
-    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Tools</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <button id="killInstanceButton"
-                            style="width: 100%"
-                            class="btn btn-primary"
-                            data-toggle="tooltip"
-                            data-placement="right"
-                            title="Kill the existing bot instance (if one exists). This may occur when the server is restarted or ended unexpectedly at some point. After killing the instance, you can start a new one without issue.">
-                        Kill Instance
-                    </button>
-                    <hr/>
-                <div style="margin-top: 10px;" class="row" id="toolsModalAlerts"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Bot Instances Card -->
     <div id="dashboardInstancesAccordion">
         <div class="card">
@@ -154,7 +125,9 @@
             <div class="card-header" id="dashboardActions">
                 <h5 class="mb-0" style="line-height: 1.8;">
                     <button class="btn btn-link" id="dashboardActionsHeaderBtn" data-toggle="collapse" data-target="#collapseActions">Actions</button>
-                    <button data-toggle="modal" data-target="#exampleModal" type="button" class="btn btn-primary float-right">Tools</button>
+                    <button id="killInstanceButton" class="btn btn-primary float-right" data-toggle="tooltip" data-placement="right" title="Kill the existing bot instance (if one exists). This may occur when the server is restarted or ended unexpectedly at some point. After killing the instance, you can start a new one without issue.">
+                        Kill Instance
+                    </button>
                 </h5>
             </div>
 
