@@ -208,7 +208,6 @@ let ConfigurationController = function() {
         $.each(required, function (index, value) {
             if (value.val() === "" || !value.val()) {
                 // INVALID.
-                debugger;
                 generateInvalidAlert(value);
                 valid = false;
             } else {

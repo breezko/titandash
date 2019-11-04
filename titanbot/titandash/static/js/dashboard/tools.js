@@ -64,7 +64,6 @@ let ToolHandler = function() {
         });
     };
 
-    debugger;
     /* Tool Elements */
     let elements = this.configureToolElements();
 
