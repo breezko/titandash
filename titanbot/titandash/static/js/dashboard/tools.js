@@ -20,7 +20,7 @@ let ToolHandler = function() {
     this.configureToolElements = function() {
         return {
             killInstanceButton: $("#killInstanceButton"),
-            modalAlerts: $("#toolsModalAlerts")
+            alertContainer: $("#alert-container")
         }
     };
 
@@ -58,21 +58,13 @@ let ToolHandler = function() {
                 success: function (data) {
                     clearInterval(loadInterval);
                     elements.killInstanceButton.text("Kill Instance").prop("disabled", false);
-
-                    let alert = $(`<div class="alert alert-${data["status"]}" style="width: 100%; margin-bottom: 0; margin-top: 5px;">${data["message"]}</div>`);
-                    alert.appendTo(elements.modalAlerts);
-                    alert.fadeIn(750);
-
-                    setTimeout(function () {
-                        alert.fadeOut(500, function () {
-                            $(this).remove();
-                        });
-                    }, 5000);
+                    sendAlert(`${data["message"]}`, elements.alertContainer, null, `${data["status"]}`);
                 }
             });
         });
     };
 
+    debugger;
     /* Tool Elements */
     let elements = this.configureToolElements();
 
