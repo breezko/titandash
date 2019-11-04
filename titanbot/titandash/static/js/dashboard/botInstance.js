@@ -44,6 +44,7 @@ let BotInstanceConsumer = function() {
         this.setupInstance(active, data);
         this.setupConfigChoice(active, data);
         this.setupWindowChoice(active, data);
+        this.setupShortcutChoice(active, data);
         this.setupPrestige(active);
         this.setupQueued(active);
         this.setupCurrentFunction(active, data);
@@ -53,6 +54,7 @@ let BotInstanceConsumer = function() {
         this.setupInstanceLogVar(active, data);
         this.setupInstanceConfigVar(active, data);
         this.setupInstanceWindowVar(active, data);
+        this.setupInstanceShortcutsVar(active, data);
         this.setupInstanceNextArtifactVar(active, data);
         this.setupInstanceCurrentStageVar(active, data);
         this.setupInstanceCountdownVars(active, data);
@@ -100,6 +102,7 @@ let BotInstanceConsumer = function() {
             instanceVariablesErrors: $("#dashboardBotErrorsValue"),
             instanceVariablesConfiguration: $("#dashboardBotConfigurationValue"),
             instanceVariablesWindow: $("#dashboardBotWindowValue"),
+            instanceVariablesShortcuts: $("#dashboardBotShortcutsValue"),
             instanceVariablesLogFile: $("#dashboardBotLogFileValue"),
             instanceVariablesCurrentStage: $("#dashboardBotCurrentStageValue"),
             instanceVariablesRaidAttackReset: $("#dashboardBotRaidAttackResetValue"),
@@ -135,6 +138,7 @@ let BotInstanceConsumer = function() {
             /* Configuration */
             chooseConfig: $("#dashboardBotConfigurationSelect"),
             chooseWindow: $("#dashboardBotWindowSelect"),
+            chooseShortcuts:$("#dashboardBotShortcutCheckbox"),
 
             /* QueuedFunctions */
             queueInitial: $("#dashboardQueueInitial"),
@@ -265,6 +269,17 @@ let BotInstanceConsumer = function() {
         elements.chooseWindow.attr("disabled", !!active);
         if (active)
             elements.chooseWindow.val(data["window"]["hwnd"]);
+    };
+
+    /**
+     * Setup Bot Settings to either allow modifying values or disabled when one is running.
+     */
+    this.setupShortcutChoice = function(active, data) {
+        elements.chooseShortcuts.attr("disabled", !!active);
+        if (data["shortcuts"])
+            elements.chooseShortcuts.prop("checked", true);
+        else
+            elements.chooseShortcuts.prop("checked", false)
     };
 
     /* Active / Inactive Modification Functions */
@@ -526,6 +541,21 @@ let BotInstanceConsumer = function() {
         }
     };
     /**
+     * Setup the instance shortcuts displayed data.
+     */
+    this.setupInstanceShortcutsVar = function(active, data) {
+        if (active) {
+            if (data["shortcuts"]) {
+                if (elements.instanceVariablesShortcuts.text() !== "ENABLED")
+                    elements.instanceVariablesShortcuts.removeClass("text-warning").addClass("text-success").text("ENABLED");
+            }
+            else {
+                if (elements.instanceVariablesShortcuts.text() !== "DISABLED")
+                    elements.instanceVariablesShortcuts.removeClass("text-success").addClass("text-warning").text("DISABLED");
+            }
+        }
+    };
+    /**
      * Setup the next artifact upgrade displayed data.
      */
     this.setupInstanceNextArtifactVar = function(active, data) {
@@ -688,6 +718,7 @@ let BotInstanceConsumer = function() {
         if (signal === PLAY) {
             data["config"] = elements.chooseConfig.find(":selected").val();
             data["window"] = elements.chooseWindow.find(":selected").val();
+            data["shortcuts"] = elements.chooseShortcuts.prop("checked");
         }
 
         $.ajax({
