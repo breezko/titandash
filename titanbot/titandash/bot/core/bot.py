@@ -53,7 +53,7 @@ class Bot(object):
 
     Statistics, Configurations and Logging is all setup here.
     """
-    def __init__(self, configuration, window, instance, logger=None, start=False, debug=False):
+    def __init__(self, configuration, window, enable_shortcuts, instance, logger=None, start=False, debug=False):
         """
         Initialize a new Bot. Setting up base variables as well as performing some bootstrapping
         to ensure authentication is handled before moving on.
@@ -64,9 +64,11 @@ class Bot(object):
         self.ADVANCED_START = None
         self.configuration = configuration
         self.window = window
+        self.enable_shortcuts = enable_shortcuts
         self.instance = instance
         self.instance.configuration = configuration
         self.instance.window = window.json()
+        self.instance.shortcuts = enable_shortcuts
         self.instance.errors = self.ERRORS
 
         # Initialize and setup our Props object which is used to handle BotInstance
@@ -2041,7 +2043,9 @@ class Bot(object):
         automated action within the emulator.
         """
         try:
-            # self.setup_shortcuts()
+            if self.enable_shortcuts:
+                self.setup_shortcuts()
+
             self.goto_master()
             self.initialize()
 
@@ -2126,10 +2130,11 @@ class Bot(object):
 
             # Unhook our now terminated instance from our local shortcut module.
             # Shortcuts are still active at this point, but no logs or queued events are created for this instance.
-            shortcuts.unhook(
-                instance=self.instance,
-                logger=self.logger
-            )
+            if self.enable_shortcuts:
+                shortcuts.unhook(
+                    instance=self.instance,
+                    logger=self.logger
+                )
 
             self.logger.info("==========================================================================================")
             self.logger.info("{session}".format(session=self.stats.session))
