@@ -193,7 +193,7 @@ def gen_offset(point, amount):
     return point[0] + rand_x, point[1] + rand_y
 
 
-def click_on_point(point, window, clicks=1, interval=0.0, button="left", pause=0.0, offset=5, disable_padding=False):
+def click_on_point(point, window, clicks=1, interval=0.0, button="left", pause=0.0, offset=5):
     """
     Click on the specified X, Y value based on the point passed along as a parameter.
     """
@@ -206,8 +206,7 @@ def click_on_point(point, window, clicks=1, interval=0.0, button="left", pause=0
         clicks=clicks,
         interval=interval,
         button=button,
-        pause=pause,
-        disable_padding=disable_padding
+        pause=pause
     )
 
 
@@ -215,13 +214,6 @@ def click_on_image(window, image=None, pos=None, button="left", pause=0.0):
     """
     Click on the specified image on the screen.
     """
-    # Since our emulator window can be technically anywhere, we should subtract whatever the x, y
-    # is, since our clicks are relative to the window being clicked anyways...
-    pos = (
-        pos[0] - window.x,
-        pos[1] - window.y
-    )
-
     logger.debug("{button} clicking on {image} located at {pos} with {pause}s pause".format(button=button, image=image, pos=pos, pause=pause))
     click_image(
         window=window,
@@ -285,7 +277,11 @@ def in_transition_func(*args, max_loops):
             # In this case, the game may of broke? A crash may of occurred. It's safe to attempt to restart the
             # game at this point.
             _self.logger.error("unable to resolve transition state of game, exiting...")
-            _self.terminate()
+
+            # Raising our termination error manually. Since our main loop that is accessing this function
+            # could contain a while loop, we want to ensure we terminate here.
+            from .bot import TerminationEncountered
+            raise TerminationEncountered()
 
 
 class TitanBotHandler(logging.StreamHandler):
