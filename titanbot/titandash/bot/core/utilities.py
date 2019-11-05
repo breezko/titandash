@@ -267,17 +267,11 @@ def in_transition_func(*args, max_loops):
         # Is an ad panel open that should be accepted/declined?
         _self.collect_ad_no_transition()
 
-        if _self.grabber.search(image=[
-            _self.images.exit_panel,
-            _self.images.clan_raid_ready,
-            _self.images.clan_no_raid,
-            _self.images.daily_reward,
-            _self.images.fight_boss,
-            _self.images.hatch_egg,
-            _self.images.leave_boss,
-            _self.images.settings,
-            _self.images.tournament
-        ], bool_only=True):
+        # Check the screen for any images that would represent a non active transition state.
+        # If any of these are found, it's safe to say that we are NOT in a transition.
+        if _self.grabber.search(image=[_self.images.exit_panel, _self.images.clan_raid_ready,_self.images.clan_no_raid, _self.images.daily_reward,
+                                       _self.images.fight_boss, _self.images.hatch_egg, _self.images.leave_boss, _self.images.settings, _self.images.tournament,
+                                       _self.images.pet_damage, _self.images.master_damage], bool_only=True):
             break
 
         # Clicking the top of the screen in case of a transition taking place due to something being
