@@ -4,7 +4,7 @@ core.py
 Main bot initialization and script startup should take place here. All actions and main bot loops
 will be maintained from this location.
 """
-from settings import STAGE_CAP, GAME_VERSION, BOT_VERSION, GIT_COMMIT
+from settings import STAGE_CAP, BOT_VERSION, GIT_COMMIT
 
 from django.utils import timezone
 
@@ -91,9 +91,8 @@ class Bot(object):
         self.colors = Colors(GAME_COLORS, self.logger)
 
         self.instance.start(session=self.stats.session)
-        self.instance_string = "bot (v{version}) (v{game_version}){git} has been initialized".format(
+        self.instance_string = "bot (v{version}) {git} has been initialized".format(
             version=BOT_VERSION,
-            game_version=GAME_VERSION,
             git=" [{commit}]".format(commit=GIT_COMMIT[:10]) if GIT_COMMIT else " "
         )
 
