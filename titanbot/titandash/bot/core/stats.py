@@ -71,6 +71,10 @@ class Stats:
         # present in the django settings... Which should be handled by our bootstrapper.
         pytesseract.pytesseract.tesseract_cmd = settings.TESSERACT_COMMAND
 
+    def increment_ads(self):
+        self.statistics.bot_statistics.ads += 1
+        self.statistics.bot_statistics.save()
+
     @property
     def highest_stage(self):
         """
