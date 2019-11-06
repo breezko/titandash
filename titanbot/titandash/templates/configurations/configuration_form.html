@@ -86,32 +86,6 @@
     </div>
 </div>
 
-{# Device #}
-<div id="accordionDevice">
-    <div class="card">
-        <div class="card-header" id="configurationDeviceHeader">
-            <h5 class="modal-title" id="configurationDeviceTitle">
-                <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseDevice">Device</button>
-            </h5>
-        </div>
-
-        <div id="collapseDevice" class="collapse show" data-parent="#accordionDevice">
-            <div id="configurationDeviceBody" class="card-body">
-                <div class="form-group">
-                    {# Emulator #}
-                    <label for="emulator">Emulator:</label>
-                    <select class="form-control" id="emulator">
-                        {% for emulator in choices.emulator %}
-                            <option {% if config.emulator == emulator.0 %}selected{% endif %} data-value="{{ emulator.0 }}">{{ emulator.1 }}</option>
-                        {% endfor %}
-                    </select>
-                    <p style="padding: 3px;" class="text-muted">{{ help.emulator }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
 {# Generic Settings #}
 <div id="accordionGenericSettings">
     <div class="card">
