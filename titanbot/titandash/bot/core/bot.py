@@ -1620,6 +1620,7 @@ class Bot(object):
             if self.grabber.search(self.images.collect_ad, bool_only=True):
                 self.logger.info("collecting vip ad now...")
                 self.click(point=self.locs.collect_ad, pause=1, offset=5)
+                self.stats.increment_ads()
             # No VIP...
             if self.grabber.search(self.images.watch_ad, bool_only=True):
                 self.logger.info("declining fairy ad now...")
