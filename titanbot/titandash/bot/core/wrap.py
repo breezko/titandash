@@ -55,7 +55,11 @@ class Images:
         self.stats_title = None
 
         # DAILY_REWARD.
+        self.daily_rewards_header = None
         self.collect_reward = None
+
+        # INBOX.
+        self.inbox_header = None
 
         # EQUIPMENT.
         self.crafting = None
@@ -162,6 +166,11 @@ class Locs:
         self.open_rewards = None
         self.open_rewards = None
         self.close_rewards = None
+
+        # INBOX.
+        self.inbox = None
+        self.inbox_news = None
+        self.inbox_clan = None
 
         # SKILL_BAR.
         self.collect_rewards = None
