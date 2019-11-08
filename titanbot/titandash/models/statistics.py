@@ -260,14 +260,19 @@ class ArtifactStatistics(models.Model):
     artifacts = models.ManyToManyField(verbose_name="Artifacts", to="ArtifactOwned", help_text=ARTIFACT_STATISTICS_HELP_TEXT["artifacts"])
     instance = models.ForeignKey(verbose_name="Instance", to="BotInstance", null=True, on_delete=models.CASCADE, help_text=ARTIFACT_STATISTICS_HELP_TEXT["instance"])
 
+    def __str__(self):
+        return "ArtifactStatistics ({owned}/{all})".format(owned=len(self.owned()), all=len(self.artifacts.all()))
+
     def owned(self):
         return self.artifacts.filter(owned=True)
 
     def missing(self):
         return self.artifacts.filter(owned=False)
 
-    def __str__(self):
-        return "ArtifactStatistics ({owned}/{all})".format(owned=len(self.owned()), all=len(self.artifacts.all()))
+    def json(self):
+        return {
+            ao.artifact.key: ao.json() for ao in self.artifacts.all()
+        }
 
 
 SESSION_HELP_TEXT = {
@@ -465,6 +470,12 @@ class Statistics(models.Model):
 
     def __str__(self):
         return "{instance} Statistics ({key})".format(instance=self.instance.name, key=self.pk)
+
+    def json(self):
+        return {
+            "GAME_STATISTICS": self.game_statistics.json(),
+            "BOT_STATISTICS": self.bot_statistics.json(),
+        }
 
 
 class PrestigeStatisticsManager(models.Manager):
