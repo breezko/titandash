@@ -413,7 +413,7 @@ class Configuration(ParanoidModel, ExportModelMixin):
             }
         }
 
-    def json(self, condense=False):
+    def json(self, condense=False, hide_sensitive=False):
         """
         Return a JSON compliant dictionary for current configuration.
 
@@ -539,6 +539,16 @@ class Configuration(ParanoidModel, ExportModelMixin):
             dct["Artifacts Action"]["upgrade_owned_tier"] = ", ".join([title(t.name) for t in self.upgrade_owned_tier.all()])
             dct["Artifacts Action"]["ignore_artifacts"] = ", ".join([title(a.name) for a in self.ignore_artifacts.all()])
             dct["Artifacts Action"]["upgrade_artifacts"] = ", ".join([title(a.name) for a in self.upgrade_artifacts.all()])
+
+        if hide_sensitive:
+            if dct["Raid Notifications"]["raid_notifications_twilio_account_sid"]:
+                dct["Raid Notifications"]["raid_notifications_twilio_account_sid"] = "************"
+            if dct["Raid Notifications"]["raid_notifications_twilio_auth_token"]:
+                dct["Raid Notifications"]["raid_notifications_twilio_auth_token"] = "************"
+            if dct["Raid Notifications"]["raid_notifications_twilio_from_number"]:
+                dct["Raid Notifications"]["raid_notifications_twilio_from_number"] = "************"
+            if dct["Raid Notifications"]["raid_notifications_twilio_to_number"]:
+                dct["Raid Notifications"]["raid_notifications_twilio_to_number"] = "************"
 
         return dct
 

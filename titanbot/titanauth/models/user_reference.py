@@ -47,3 +47,14 @@ class ExternalAuthReference(models.Model):
 
     def __str__(self):
         return "{email} ({valid})".format(email=self.email, valid=self.valid)
+
+    @property
+    def hide_token(self):
+        return "*" * len(self.token)
+
+    def json(self, hide_sensitive=False):
+        return {
+            "email": self.email,
+            "token": self.token if not hide_sensitive else self.hide_token,
+            "valid": self.valid
+        }

@@ -14,6 +14,7 @@ Once the server is started and application is opened in a webbrowser, we enter t
 tray event loop that blocks forever while the user has the application open.
 """
 from django.conf import settings
+from django.core.management import call_command
 
 import PySimpleGUI as sg
 import PySimpleGUIWx as sgw
@@ -48,7 +49,7 @@ logging.basicConfig(
         level=logging.DEBUG,
         format="[%(asctime)s] %(levelname)s [%(filename)s:%(lineno)s - %(funcName)s() ] %(message)s",
         datefmt="%m-%d %H:%M",
-        filename=os.path.join(settings.LOCAL_DATA_LOG_DIR, "titandash.log"),
+        filename=settings.LOCAL_DATA_LOG_FILE,
         filemode="w"
 )
 
@@ -249,6 +250,8 @@ class TitandashApplication(object):
                 "Open Github",
                 "---",
                 "Bootstrap",
+                "---",
+                "Generate Debug Report",
                 "Exit"
             ]
         ]
@@ -291,6 +294,11 @@ class TitandashApplication(object):
             # the program for the first time.
             if event in "Bootstrap":
                 webbrowser.open_new_tab(url=settings.TITANDASH_LOADER_URL)
+
+            # Generate a debug report based on the most current information.
+            # Opening the directory once finished.
+            if event == "Generate Debug Report":
+                call_command("debug_report")
 
 
 if __name__ == "__main__":
