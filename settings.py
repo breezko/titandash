@@ -63,6 +63,12 @@ LOCAL_DATA_UPDATE_DIR = os.path.join(LOCAL_DATA_DIR, "update")
 LOCAL_DATA_BACKUP_DIR = os.path.join(LOCAL_DATA_DIR, "backup")
 # Directory to store our titandash logs in.
 LOCAL_DATA_LOG_DIR = os.path.join(LOCAL_DATA_DIR, "logs")
+# File name to store titandash logs in.
+LOCAL_DATA_LOG_FILE = os.path.join(LOCAL_DATA_LOG_DIR, "titandash.log")
+# Directory to store our titandash debug reports in.
+LOCAL_DATA_DEBUG_DIR = os.path.join(LOCAL_DATA_DIR, "debug")
+# File to store titandash debug json data in.
+LOCAL_DATA_DEBUG_FILE = os.path.join(LOCAL_DATA_DEBUG_DIR, "debug.json")
 
 # Testing directory.
 TEST_DIR = os.path.join(TITANDASH_DIR, "tests")
@@ -108,7 +114,7 @@ def user_directory():
     """
     for path in [
         LOCAL_DATA_DIR, LOCAL_DATA_DB_DIR, LOCAL_DATA_DB_BACKUP_DIR, LOCAL_DATA_UPDATE_DIR,
-        LOCAL_DATA_BACKUP_DIR, LOCAL_DATA_LOG_DIR
+        LOCAL_DATA_BACKUP_DIR, LOCAL_DATA_LOG_DIR, LOCAL_DATA_DEBUG_DIR
     ]:
         # Create the specified local data directory if it does not currently exist.
         if not os.path.exists(path):
@@ -192,5 +198,4 @@ database_backup()
 # and reflect the new constants that may be used by the bot.
 # Note: This reflect what the project is currently setup to support. Newer versions may be
 # released and be fine, but this is a good way to derive whether or not features may be missing.
-GAME_VERSION = "3.3.1"
-STAGE_CAP = 80000
+STAGE_CAP = 84000

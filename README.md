@@ -46,10 +46,11 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 - Open Dashboard.
 - Open Bootstrapper.
 - Open Github Repository.
+- Generate Debug Report.
 - Exit Application.
 
 ### Bot
-- Perform all functionality in the background, so you can do other things while the bot is running (the window must be visible currently).
+- Perform all functionality in the background, so you can do other things while the bot is running.
 - Activate chosen in game skills on a specified cooldown, with the option to wait for a specific skill before activating others.
 - Activate specific functions using keyboard shortcuts.
 - Automatically tap on the screen, activating and collecting fairies.

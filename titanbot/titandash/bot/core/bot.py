@@ -4,7 +4,7 @@ core.py
 Main bot initialization and script startup should take place here. All actions and main bot loops
 will be maintained from this location.
 """
-from settings import STAGE_CAP, GAME_VERSION, BOT_VERSION, GIT_COMMIT
+from settings import STAGE_CAP, BOT_VERSION, GIT_COMMIT
 
 from django.utils import timezone
 
@@ -91,9 +91,8 @@ class Bot(object):
         self.colors = Colors(GAME_COLORS, self.logger)
 
         self.instance.start(session=self.stats.session)
-        self.instance_string = "bot (v{version}) (v{game_version}){git} has been initialized".format(
+        self.instance_string = "bot (v{version}) {git} has been initialized".format(
             version=BOT_VERSION,
-            game_version=GAME_VERSION,
             git=" [{commit}]".format(commit=GIT_COMMIT[:10]) if GIT_COMMIT else " "
         )
 
@@ -154,11 +153,11 @@ class Bot(object):
         if start:
             self.run()
 
-    def click(self, point, clicks=1, interval=0.0, button="left", pause=0.0, offset=5, disable_padding=False):
+    def click(self, point, clicks=1, interval=0.0, button="left", pause=0.0, offset=5):
         """
         Local click method for use with the bot, ensuring we pass the window being used into the click function.
         """
-        click_on_point(point=point, window=self.window, clicks=clicks, interval=interval, button=button, pause=pause, offset=offset, disable_padding=disable_padding)
+        click_on_point(point=point, window=self.window, clicks=clicks, interval=interval, button=button, pause=pause, offset=offset)
 
     def click_image(self, image, pos, button="left", pause=0.0):
         """
@@ -1163,7 +1162,7 @@ class Bot(object):
 
             # Currently just upgrading the artifact to it's max level. Future updates may include the ability
             # to determine how much to upgrade an artifact by.
-            self.click(point=(new_x, new_y), pause=1, disable_padding=True)
+            self.click(point=(new_x, new_y), pause=1)
 
     @not_in_transition
     def check_tournament(self):
@@ -1246,15 +1245,15 @@ class Bot(object):
         if not self.ensure_collapsed():
             return False
 
-        reward_found = self.grabber.search(self.images.daily_reward, bool_only=True)
-        if reward_found:
+        self.click(point=self.locs.open_rewards, pause=0.5)
+        rewards_found = self.grabber.search(self.images.daily_rewards_header, bool_only=True)
+        if rewards_found:
             self.logger.info("daily rewards are available, collecting!")
-            self.click(point=self.locs.open_rewards, pause=1)
             self.click(point=self.locs.collect_rewards, pause=1)
             self.click(point=self.locs.game_middle, clicks=5, interval=0.5, pause=1)
             self.click(point=MASTER_LOCS["screen_top"], pause=1)
 
-        return reward_found
+        return rewards_found
 
     @wrap_current_function
     @not_in_transition
@@ -1263,17 +1262,14 @@ class Bot(object):
         Hatch any eggs if they're available.
         """
         if self.configuration.enable_egg_collection:
-            self.logger.info("checking if any eggs are available to be hatched in game.")
+            self.logger.info("checking if any eggs are available to be hatched in game and hatching them.")
             if not self.ensure_collapsed():
                 return False
 
-            egg_found = self.grabber.search(self.images.hatch_egg, bool_only=True)
-            if egg_found:
-                self.logger.info("egg(s) are available, collecting!")
-                self.click(point=self.locs.hatch_egg, pause=1)
-                self.click(point=self.locs.game_middle, clicks=5, interval=0.5, pause=1)
+            self.click(point=self.locs.hatch_egg, pause=0.5)
+            self.click(point=self.locs.game_middle, clicks=5, interval=0.5, pause=1)
 
-            return egg_found
+            return True
 
     @wrap_current_function
     @not_in_transition
@@ -1285,13 +1281,37 @@ class Bot(object):
             return False
 
         self.click(point=self.locs.clan_crate, pause=0.5)
-        found, pos = self.grabber.search(self.images.okay)
+        found, pos = self.grabber.search(image=self.images.okay)
         if found:
             self.logger.info("clan crate is available, collecting!")
             self.click_image(image=self.images.okay, pos=pos, pause=1)
 
         return found
 
+    @wrap_current_function
+    @not_in_transition
+    def inbox(self):
+        """
+        Open up the inbox if it's available on the screen, clicking from header to header, ensuring that the icon is gone.
+        """
+        if not self.ensure_collapsed():
+            return False
+
+        self.click(point=self.locs.inbox, pause=0.5)
+        inbox_found = self.grabber.search(self.images.inbox_header, bool_only=True)
+        if inbox_found:
+            self.click(point=self.locs.inbox_clan, pause=0.2)
+            self.click(point=self.locs.inbox_news, pause=0.2)
+            self.click(point=self.locs.inbox_clan, pause=0.2)
+            self.click(point=self.locs.inbox_news, pause=0.2)
+
+            # Close the inbox screen now.
+            self.click(point=MASTER_LOCS["screen_top"], pause=0.5)
+
+        return inbox_found
+
+    @wrap_current_function
+    @not_in_transition
     def miscellaneous_actions(self, force=False):
         """
         Miscellaneous actions can be activated here when the generic cooldown is reached.
@@ -1305,6 +1325,7 @@ class Bot(object):
             self.clan_crate()
             self.daily_rewards()
             self.hatch_eggs()
+            self.inbox()
 
             # Calculate when the next miscellaneous actions process
             # should take place again.
@@ -1620,6 +1641,7 @@ class Bot(object):
             if self.grabber.search(self.images.collect_ad, bool_only=True):
                 self.logger.info("collecting vip ad now...")
                 self.click(point=self.locs.collect_ad, pause=1, offset=5)
+                self.stats.increment_ads()
             # No VIP...
             if self.grabber.search(self.images.watch_ad, bool_only=True):
                 self.logger.info("declining fairy ad now...")

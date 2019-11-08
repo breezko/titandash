@@ -6,7 +6,7 @@ from titandash.models.artifact import Artifact
 from titandash.models.artifact import Tier
 from titandash.utils import import_model_kwargs
 from titandash.constants import (
-    INFO, LOGGING_LEVEL_CHOICES, EMULATOR_CHOICES, SKILL_LEVEL_CHOICES,
+    INFO, LOGGING_LEVEL_CHOICES, SKILL_LEVEL_CHOICES,
     SKILL_MAX_CHOICE, GENERIC_BLACKLIST, DATETIME_FMT
 )
 
@@ -27,7 +27,6 @@ COMPRESSION_KEYS = {
     "soft_shutdown_update_stats": 2,
     "post_action_min_wait_time": 3,
     "post_action_max_wait_time": 4,
-    "emulator": 5,
     "enable_egg_collection": 8,
     "enable_tapping": 9,
     "enable_tournaments": 10,
@@ -117,7 +116,6 @@ HELP_TEXT = {
     "soft_shutdown_update_stats": "Perform a stats update when a soft shutdown is executed.",
     "post_action_min_wait_time": "Determine the minimum amount of seconds to wait after an in game function is finished executing.",
     "post_action_max_wait_time": "Determine the maximum amount of seconds to wait after an in game function is finished executing.",
-    "emulator": "Which emulator service is being used?",
     "enable_tapping": "Enable the ability to tap on titans (This also enables the clicking of fairies in game).",
     "tapping_repeat": "Specify how many times the tapping loop should run when executed.",
     "enable_daily_rewards": "Enable the ability to collect daily rewards in game when they become available.",
@@ -219,9 +217,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
     soft_shutdown_update_stats = models.BooleanField(verbose_name="Update Stats On Soft Shutdown", default=True, help_text=HELP_TEXT["soft_shutdown_update_stats"])
     post_action_min_wait_time = models.PositiveIntegerField(verbose_name="Post Action Min Wait Time", default=0, help_text=HELP_TEXT["post_action_min_wait_time"])
     post_action_max_wait_time = models.PositiveIntegerField(verbose_name="Post Action Max Wait Time", default=1, help_text=HELP_TEXT["post_action_max_wait_time"])
-
-    # DEVICE Settings.
-    emulator = models.CharField(verbose_name="Emulator", choices=EMULATOR_CHOICES, default=EMULATOR_CHOICES[0][0], max_length=255, help_text=HELP_TEXT["emulator"])
 
     # GENERIC Settings.
     enable_tapping = models.BooleanField(verbose_name="Enable Tapping", default=True, help_text=HELP_TEXT["enable_tapping"])
@@ -412,14 +407,13 @@ class Configuration(ParanoidModel, ExportModelMixin):
             "help": HELP_TEXT,
             "choices": {
                 "skill_levels": SKILL_LEVEL_CHOICES,
-                "emulator": EMULATOR_CHOICES,
                 "logging_level": LOGGING_LEVEL_CHOICES,
                 "artifacts": Artifact.objects.all(),
                 "tiers": Tier.objects.all()
             }
         }
 
-    def json(self, condense=False):
+    def json(self, condense=False, hide_sensitive=False):
         """
         Return a JSON compliant dictionary for current configuration.
 
@@ -434,9 +428,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 "soft_shutdown_update_stats": self.soft_shutdown_update_stats,
                 "post_action_min_wait_time": self.post_action_min_wait_time,
                 "post_action_max_wait_time": self.post_action_max_wait_time
-            },
-            "Device": {
-                "emulator": self.emulator
             },
             "Generic": {
                 "enable_tapping": self.enable_tapping,
@@ -548,6 +539,16 @@ class Configuration(ParanoidModel, ExportModelMixin):
             dct["Artifacts Action"]["upgrade_owned_tier"] = ", ".join([title(t.name) for t in self.upgrade_owned_tier.all()])
             dct["Artifacts Action"]["ignore_artifacts"] = ", ".join([title(a.name) for a in self.ignore_artifacts.all()])
             dct["Artifacts Action"]["upgrade_artifacts"] = ", ".join([title(a.name) for a in self.upgrade_artifacts.all()])
+
+        if hide_sensitive:
+            if dct["Raid Notifications"]["raid_notifications_twilio_account_sid"]:
+                dct["Raid Notifications"]["raid_notifications_twilio_account_sid"] = "************"
+            if dct["Raid Notifications"]["raid_notifications_twilio_auth_token"]:
+                dct["Raid Notifications"]["raid_notifications_twilio_auth_token"] = "************"
+            if dct["Raid Notifications"]["raid_notifications_twilio_from_number"]:
+                dct["Raid Notifications"]["raid_notifications_twilio_from_number"] = "************"
+            if dct["Raid Notifications"]["raid_notifications_twilio_to_number"]:
+                dct["Raid Notifications"]["raid_notifications_twilio_to_number"] = "************"
 
         return dct
 

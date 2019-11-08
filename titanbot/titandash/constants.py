@@ -18,12 +18,6 @@ LOGGING_LEVEL_CHOICES = (
     (CRITICAL, "Critical"),
 )
 
-# Emulator choices used by Configuration's.
-EMULATOR_CHOICES = (
-    ("nox", "Nox Emulator"),
-    ("memu", "MEmu Emulator"),
-)
-
 SKILL_MAX_LEVEL = 30
 SKILL_MAX_CHOICE = "max"
 SKILL_DISABLE_CHOICE = "disable"

@@ -23,6 +23,11 @@ GAME_LOCS = {
         "close_rewards": (430, 226),
         "collect_rewards": (240, 526),
     },
+    "INBOX": {
+        "inbox": (31, 361),
+        "inbox_news": (142, 106),
+        "inbox_clan": (343, 106),
+    },
     "CLAN": {
         "clan": (82, 25),
         "clan_info": (194, 728),
@@ -270,7 +275,11 @@ IMAGES = {
         "enchant": IMAGE_DIR + "/artifacts/enchant.png",
     },
     "DAILY_REWARD": {
+        "daily_rewards_header": IMAGE_DIR + "/daily_reward/daily_rewards_header.png",
         "collect_reward": IMAGE_DIR + "/daily_reward/collect.png",
+    },
+    "INBOX": {
+        "inbox_header": IMAGE_DIR + "/inbox/inbox_header.png",
     },
     "EQUIPMENT": {
         "crafting": IMAGE_DIR + "/equipment/crafting.png",
@@ -327,6 +336,9 @@ IMAGES = {
         "leave_boss": IMAGE_DIR + "/no_panels/leave_boss.png",
         "settings": IMAGE_DIR + "/no_panels/settings.png",
         "tournament": IMAGE_DIR + "/no_panels/tournament.png",
+        "pet_damage": IMAGE_DIR + "/no_panels/pet_damage.png",
+        "master_damage": IMAGE_DIR + "/no_panels/master_damage.png",
+
     },
     "PETS": {
         "next_egg": IMAGE_DIR + "/pets/next_egg.png",

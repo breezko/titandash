@@ -17,14 +17,13 @@ def bot(request):
     context = {
         "BOT": {
             "STAGE_CAP": settings.STAGE_CAP,
-            "GAME_VERSION": settings.GAME_VERSION,
             "TITANBOT_VERSION": settings.BOT_VERSION
         },
     }
 
     # Grab all values from the bot's settings file and generate a key: value for each one.
     values = {k: v for k, v in vars(settings).items() if any(char.isupper() for char in k)}
-    for setting, val in {k: v for k, v in values.items() if k not in ["VERSION", "BOT_VERSION", "GAME_VERSION", "STAGE_CAP"]}.items():
+    for setting, val in {k: v for k, v in values.items() if k not in ["VERSION", "BOT_VERSION", "STAGE_CAP"]}.items():
         context["BOT"][setting] = val
 
     # Including all settings as a json string.
