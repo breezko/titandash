@@ -3,6 +3,7 @@ from django.conf import settings
 
 from titanauth.models.user_reference import ExternalAuthReference
 
+from titandash.bot.core.window import WindowHandler
 from titandash.models.bot import BotInstance
 from titandash.models.statistics import Session, ArtifactStatistics, Statistics
 from titandash.models.configuration import Configuration
@@ -95,6 +96,17 @@ class Command(BaseCommand):
             copy(src=session.first().log.log_file, dst=bot_settings.LOCAL_DATA_DEBUG_DIR)
         if os.path.exists(bot_settings.LOCAL_DATA_LOG_FILE):
             copy(src=bot_settings.LOCAL_DATA_LOG_FILE, dst=bot_settings.LOCAL_DATA_DEBUG_DIR)
+
+        # Looping through available windows, if any are present, take a screenshot
+        # and include in our debug report.
+        wh = WindowHandler()
+        wh.enum()
+
+        for hwnd, window in wh.filter().items():
+            window.screenshot().save(fp=os.path.join(bot_settings.LOCAL_DATA_DEBUG_DIR, "{text}_{hwnd}.png".format(
+                text=window.text.replace(" ", "-"),
+                hwnd=window.hwnd
+            )))
 
         # Finally, dump our data object into a file as well.
         with open(bot_settings.LOCAL_DATA_DEBUG_FILE, "w") as f:
