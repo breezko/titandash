@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from django.utils.text import slugify
 from django.conf import settings
 
 from titanauth.models.user_reference import ExternalAuthReference
@@ -104,7 +105,7 @@ class Command(BaseCommand):
 
         for hwnd, window in wh.filter().items():
             window.screenshot().save(fp=os.path.join(bot_settings.LOCAL_DATA_DEBUG_DIR, "{text}_{hwnd}.png".format(
-                text=window.text.replace(" ", "-"),
+                text=slugify(window.text),
                 hwnd=window.hwnd
             )))
 
