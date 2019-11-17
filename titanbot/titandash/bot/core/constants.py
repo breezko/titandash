@@ -63,7 +63,7 @@ BOSS_LOOP_TIMEOUT = int(FUNCTION_LOOP_TIMEOUT / 4)
 
 # Specify any functions that may be forced.
 FORCEABLE_FUNCTIONS = [
-    "level_master", "level_heroes", "level_skills", "miscellaneous_actions", "update_stats", "prestige",
+    "level_master", "level_heroes", "level_skills", "miscellaneous_actions", "update_stats", "perks", "prestige",
     "daily_achievement_check", "milestone_check", "raid_notifications", "activate_skills", "clan_results_parse", "breaks"
 ]
 
@@ -88,6 +88,7 @@ SHORTCUT_FUNCTIONS = {
     "fight_boss": "shift+f",
     "leave_boss": "shift+l",
     "update_stats": "shift+u",
+    "perks": "shift+c",
     "prestige": "shift+p",
     "daily_achievement_check": "ctrl+d",
     "milestone_check": "ctrl+m",
@@ -145,6 +146,7 @@ QUEUEABLE_TOOLTIPS = {
     "soft_terminate": "Perform a soft termination of all bot functionality.",
     "actions": "Force all actions to be executed in game.",
     "update_stats": "Force a statistics update in game.",
+    "perks": "Force a perk check in game.",
     "prestige": "Force a prestige in game.",
     "daily_achievement_check": "Force a daily achievement check in game.",
     "milestone_check": "Force a milestone check in game.",
@@ -158,10 +160,10 @@ QUEUEABLE_TOOLTIPS = {
 # simultaneously, this is required to allow the Bot to update the value and at the
 # same time, update the current BotInstance and send out socket updates to the dashboard.
 PROPERTIES = [
-    "current_stage", "current_function", "last_prestige", "next_prestige", "next_randomized_prestige",
-    "next_stats_update", "next_daily_achievement_check", "next_milestone_check", "next_break",
-    "resume_from_break", "next_raid_notifications_check", "next_raid_attack_reset", "next_clan_results_parse",
-    "next_master_level", "next_heroes_level", "next_skills_level", "next_skills_activation", "next_miscellaneous_actions",
+    "current_stage", "current_function", "last_prestige", "next_prestige", "next_perk_check", "next_randomized_prestige",
+    "next_stats_update", "next_daily_achievement_check", "next_milestone_check", "next_break", "resume_from_break",
+    "next_raid_notifications_check", "next_raid_attack_reset", "next_clan_results_parse", "next_master_level",
+    "next_heroes_level", "next_skills_level", "next_skills_activation", "next_miscellaneous_actions",
     "next_heavenly_strike", "next_deadly_strike", "next_hand_of_midas", "next_fire_sword", "next_war_cry", "next_shadow_clone"
 ]
 

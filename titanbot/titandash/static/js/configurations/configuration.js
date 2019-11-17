@@ -31,21 +31,18 @@ let ConfigurationController = function() {
             /* Collapse/Expand */
             collapseAll: $("#collapseAll"),
             expandAll: $("#expandAll"),
-
             /* Alert Container */
             alertContainer: $("#alert-container"),
-
             /* Form */
             form: $("#configurationForm"),
-
             /* Artifact Action Settings */
             upgrade_owned_tier: $("#upgrade_owned_tier"),
             upgrade_artifacts: $("#upgrade_artifacts"),
             ignore_artifacts: $("#ignore_artifacts"),
-
             /* Select Elements */
             emulator: $("#emulator"),
             logging_level: $("#logging_level"),
+            use_perk_on_prestige: $("#use_perk_on_prestige"),
             /* Action Level Caps */
             level_heavenly_strike_cap: $("#level_heavenly_strike_cap"),
             level_deadly_strike_cap: $("#level_deadly_strike_cap"),
@@ -99,6 +96,8 @@ let ConfigurationController = function() {
             interval_fire_sword: $("#interval_fire_sword"),
             interval_war_cry: $("#interval_war_cry"),
             interval_shadow_clone: $("#interval_shadow_clone"),
+            /* Perks */
+            use_perks_every_x_hours: $("#use_perks_every_x_hours"),
             /* Prestige */
             prestige_x_minutes: $("#prestige_x_minutes"),
             prestige_at_stage: $("#prestige_at_stage"),
@@ -178,6 +177,7 @@ let ConfigurationController = function() {
         // Grabbing the select box values.
         serialized.push({name: "emulator", value: elements.emulator.find(":selected").data("value")});
         serialized.push({name: "logging_level", value: elements.logging_level.find(":selected").data("value")});
+        serialized.push({name: "use_perk_on_prestige", value: elements.use_perk_on_prestige.find(":selected").data("value")});
         // Action level caps.
         serialized.push({name: "level_heavenly_strike_cap", value: elements.level_heavenly_strike_cap.find(":selected").data("value")});
         serialized.push({name: "level_deadly_strike_cap", value: elements.level_deadly_strike_cap.find(":selected").data("value")});

@@ -133,6 +133,16 @@ GAME_LOCS = {
         "enchant_point": (410, 608),
         "purchase": (254, 554)
     },
+    "PERKS": {
+        "power_of_swiping": (406, 229),
+        "adrenaline_rush": (406, 310),
+        "make_it_rain": (406, 387),
+        "mana_potion": (406, 470),
+        "doom": (406, 548),
+        "clan_crate": (406, 627),
+        "perks_okay": (326, 444),
+        "perks_cancel": (150, 444),
+    },
 }
 
 # When an ad is finished, the exit button is likely going to be in the
@@ -370,6 +380,10 @@ IMAGES = {
     },
     "RATE": {
         "rate_icon": IMAGE_DIR + "/rate/rate_icon.png",
+    },
+    "PERKS": {
+        "perks_diamond": IMAGE_DIR + "/perks/perks_diamond.png",
+        "perks_header": IMAGE_DIR + "/perks/perks_header.png",
     }
 }
 
@@ -439,6 +453,10 @@ CLAN_RAID_COORDS = {
 # Artifact coordinates used py any artifact related functionality.
 ARTIFACT_COORDS = {
     "parse_region": (0, 57, 72, 763)
+}
+
+PERK_COORDS = {
+    "purchase": (72, 290, 407, 405),
 }
 
 # Set of skills in game.

@@ -7,7 +7,8 @@ from titandash.models.artifact import Tier
 from titandash.utils import import_model_kwargs
 from titandash.constants import (
     INFO, LOGGING_LEVEL_CHOICES, SKILL_LEVEL_CHOICES,
-    SKILL_MAX_CHOICE, GENERIC_BLACKLIST, DATETIME_FMT
+    SKILL_MAX_CHOICE, GENERIC_BLACKLIST, DATETIME_FMT,
+    NO_PERK, PERK_CHOICES
 )
 
 EXPORT_BLACKLIST = [
@@ -106,8 +107,19 @@ COMPRESSION_KEYS = {
     "level_skills_on_start": 94,
     "activate_skills_every_x_seconds": 95,
     "tapping_repeat": 96,
-    "minigames_repeat": 97
-
+    "minigames_repeat": 97,
+    "enable_perk_usage": 98,
+    "enable_perk_diamond_purchase": 99,
+    "enable_perk_only_tournament": 100,
+    "use_perks_every_x_hours": 101,
+    "use_perk_on_prestige": 102,
+    "enable_power_of_swiping": 103,
+    "enable_adrenaline_rush": 104,
+    "enable_make_it_rain": 105,
+    "enable_mana_potion": 106,
+    "enable_doom": 107,
+    "enable_clan_crate": 108,
+    "use_perks_on_start": 109,
 }
 
 HELP_TEXT = {
@@ -173,6 +185,18 @@ HELP_TEXT = {
     "interval_fire_sword": "How many seconds between each activation of the fire sword skill.",
     "interval_war_cry": "How many seconds between each activation of the war cry skill.",
     "interval_shadow_clone": "How many seconds between each activation of the shadow clone skill.",
+    "enable_perk_usage": "Enable the ability to use and purchase perks in game.",
+    "enable_perk_diamond_purchase": "Enable the ability to purchase a perk with diamonds if you don't currently have one.",
+    "enable_perk_only_tournament": "Enable the ability to only check and use perks when a tournament is joined initially.",
+    "use_perks_every_x_hours": "Specify the amount of hours to wait in between each perk usage process.",
+    "use_perk_on_prestige": "Choose a specific perk that you would like to use or purchase (if enabled) when a prestige occurs.",
+    "use_perks_on_start": "Should perks be used or purchased when a session is started.",
+    "enable_power_of_swiping": "Enable the power of swiping perk.",
+    "enable_adrenaline_rush": "Enable the adrenaline rush perk.",
+    "enable_make_it_rain": "Enable the make it rain perk.",
+    "enable_mana_potion": "Enable the mana potion perk.",
+    "enable_doom": "Enable the doom perk.",
+    "enable_clan_crate": "Enable the clan crate perk.",
     "skill_level_intensity": "Determine the amount of clicks performed on each skill when levelled.",
     "enable_auto_prestige": "Enable the ability to automatically prestige in game.",
     "enable_prestige_threshold_randomization": "Enable the ability to add additional time to a prestige once one of the thresholds below are reached. For example, if this setting is enabled and you choose to prestige every 30 minutes, the actual prestige may take place in 33 minutes depending on the settings below. Additionally, if you choose to prestige at a percent, once you reach your percentage, the bot will wait the calculated amount of time before prestiging.",
@@ -296,6 +320,20 @@ class Configuration(ParanoidModel, ExportModelMixin):
     interval_war_cry = models.PositiveIntegerField(verbose_name="War Cry Interval", default=50, help_text=HELP_TEXT["interval_war_cry"])
     interval_shadow_clone = models.PositiveIntegerField(verbose_name="Shadow Clone Interval", default=60, help_text=HELP_TEXT["interval_shadow_clone"])
 
+    # PERK Settings.
+    enable_perk_usage = models.BooleanField(verbose_name="Enable Perks", default=False, help_text=HELP_TEXT["enable_perk_usage"])
+    enable_perk_diamond_purchase = models.BooleanField(verbose_name="Enable Perk Diamond Purchase", default=False, help_text=HELP_TEXT["enable_perk_diamond_purchase"])
+    enable_perk_only_tournament = models.BooleanField(verbose_name="Enable Perks Only During Tournaments", default=False, help_text=HELP_TEXT["enable_perk_only_tournament"])
+    use_perks_every_x_hours = models.PositiveIntegerField(verbose_name="Use Perks Every X Hours", default=12, help_text=HELP_TEXT["use_perks_every_x_hours"])
+    use_perks_on_start = models.BooleanField(verbose_name="Use Perks On Session Start", default=False, help_text=HELP_TEXT["use_perks_on_start"])
+    use_perk_on_prestige = models.CharField(verbose_name="Use Perk On Prestige", choices=PERK_CHOICES, default=NO_PERK, max_length=255, help_text=HELP_TEXT["use_perk_on_prestige"])
+    enable_power_of_swiping = models.BooleanField(verbose_name="Enable Power Of Swiping", default=False, help_text=HELP_TEXT["enable_power_of_swiping"])
+    enable_adrenaline_rush = models.BooleanField(verbose_name="Enable Adrenaline Rush", default=False, help_text=HELP_TEXT["enable_adrenaline_rush"])
+    enable_make_it_rain = models.BooleanField(verbose_name="Enable Make It Rain", default=False, help_text=HELP_TEXT["enable_make_it_rain"])
+    enable_mana_potion = models.BooleanField(verbose_name="Enable Mana Potion", default=False, help_text=HELP_TEXT["enable_mana_potion"])
+    enable_doom = models.BooleanField(verbose_name="Enable Doom", default=False, help_text=HELP_TEXT["enable_doom"])
+    enable_clan_crate = models.BooleanField(verbose_name="Enable Clan Crate", default=False, help_text=HELP_TEXT["enable_clan_crate"])
+
     # PRESTIGE ACTION Settings.
     enable_auto_prestige = models.BooleanField(verbose_name="Enable Auto Prestige", default=True, help_text=HELP_TEXT["enable_auto_prestige"])
     enable_prestige_threshold_randomization = models.BooleanField(verbose_name="Enable Prestige Threshold Randomization", default=True, help_text=HELP_TEXT["enable_prestige_threshold_randomization"])
@@ -409,7 +447,8 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 "skill_levels": SKILL_LEVEL_CHOICES,
                 "logging_level": LOGGING_LEVEL_CHOICES,
                 "artifacts": Artifact.objects.all(),
-                "tiers": Tier.objects.all()
+                "tiers": Tier.objects.all(),
+                "perks": PERK_CHOICES,
             }
         }
 
@@ -500,6 +539,20 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 "interval_fire_sword": self.interval_fire_sword,
                 "interval_war_cry": self.interval_war_cry,
                 "interval_shadow_clone": self.interval_shadow_clone,
+            },
+            "Perks": {
+                "enable_perk_usage": self.enable_perk_usage,
+                "enable_perk_diamond_purchase": self.enable_perk_diamond_purchase,
+                "enable_perk_only_tournament": self.enable_perk_only_tournament,
+                "use_perks_on_start": self.use_perk_on_prestige,
+                "use_perks_every_x_hours": self.use_perks_every_x_hours,
+                "use_perk_on_prestige": self.use_perk_on_prestige,
+                "enable_power_of_swiping": self.enable_power_of_swiping,
+                "enable_adrenaline_rush": self.enable_adrenaline_rush,
+                "enable_make_it_rain": self.enable_make_it_rain,
+                "enable_mana_potion": self.enable_mana_potion,
+                "enable_doom": self.enable_doom,
+                "enable_clan_crate": self.enable_clan_crate,
             },
             "Prestige Action": {
                 "enable_auto_prestige": self.enable_auto_prestige,
