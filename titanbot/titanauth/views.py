@@ -40,6 +40,9 @@ def credentials(request):
     email = request.POST.get("email")
     token = request.POST.get("token")
 
+    # Ensure our token is correctly stripped of unwanted characters.
+    token = token.lstrip().rstrip()
+
     # Are all required variables present and filled out?
     if not email or not token:
         return JsonResponse(data={
