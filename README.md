@@ -52,6 +52,8 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 ### Bot
 - Perform all functionality in the background, so you can do other things while the bot is running.
 - Activate chosen in game skills on a specified cooldown, with the option to wait for a specific skill before activating others.
+- Use/purchase chosen in game perks on a specified cooldown, or only when a tournament is joined.
+- Use/purchase a specific in game perk whenever you prestige.
 - Activate specific functions using keyboard shortcuts.
 - Automatically tap on the screen, activating and collecting fairies.
 - Automatically tap skill minigames on the screen (coordinated offensive, astral awakening, etc), activating and collecting fairies if they're triggered.
