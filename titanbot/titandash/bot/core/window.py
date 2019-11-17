@@ -36,6 +36,7 @@ class Window(object):
     def __init__(self, hwnd):
         self.hwnd = hwnd
         self.x_subtract = 0
+        self.debug = hwnd == "DEBUG"
 
         # Depending on the type of emulator being used (and supported), some differences in the way their window object is defined.
         # Nox: X Axis is not included in window rectangle.  MEmu: X Axis is included. Based on these differences, we should modify appropriately
@@ -52,11 +53,12 @@ class Window(object):
 
     @property
     def text(self):
-        return win32gui.GetWindowText(self.hwnd)
+        return win32gui.GetWindowText(self.hwnd) if not self.debug else "DEBUG WINDOW"
 
     @property
     def rect(self):
-        return win32gui.GetClientRect(self.hwnd)
+        return win32gui.GetClientRect(self.hwnd) if not self.debug \
+            else [0, 0, self.EMULATOR_WIDTH, self.EMULATOR_HEIGHT]
 
     @property
     def x_padding(self):
