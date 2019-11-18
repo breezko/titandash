@@ -139,6 +139,10 @@ class Images:
         # RATE
         self.rate_icon = None
 
+        # PERKS
+        self.perks_diamond = None
+        self.perks_header = None
+
 
 class Locs:
     """Locs class wraps all location points into a friendly wrapper class for use with the bot."""
@@ -233,6 +237,16 @@ class Locs:
         self.discover_point = None
         self.enchant_point = None
         self.purchase = None
+
+        # PERKS
+        self.power_of_swiping = None
+        self.adrenaline_rush = None
+        self.make_it_rain = None
+        self.mana_potion = None
+        self.doom = None
+        self.clan_crate = None
+        self.perks_okay = None
+        self.perks_cancel = None
 
 
 class Colors:

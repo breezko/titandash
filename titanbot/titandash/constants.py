@@ -26,6 +26,24 @@ SKILL_LEVEL_CHOICES = (
     (SKILL_DISABLE_CHOICE, "Disable"),
 )
 
+NO_PERK = "none"
+POWER_OF_SWIPING = "power_of_swiping"
+ADRENALINE_RUSH = "adrenaline_rush"
+MAKE_IT_RAIN = "make_it_rain"
+MANA_POTION = "mana_potion"
+DOOM = "doom"
+CLAN_CRATE = "clan_crate"
+
+PERK_CHOICES = (
+    (NO_PERK, "None"),
+    (POWER_OF_SWIPING, "Power Of Swiping"),
+    (ADRENALINE_RUSH, "Adrenaline Rush"),
+    (MAKE_IT_RAIN, "Make It Rain"),
+    (MANA_POTION, "Mana Potion"),
+    (DOOM, "Doom"),
+    (CLAN_CRATE, "Clan Crate"),
+)
+
 for i in range(1, SKILL_MAX_LEVEL + 1):
     SKILL_LEVEL_CHOICES += ((str(i), str(i)),)
 

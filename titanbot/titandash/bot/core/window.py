@@ -15,6 +15,12 @@ import win32con
 
 import time
 
+# Making use of a screenshot lock, instantiated at the module level of our window.py file.
+# We do this so that any additional bot instances that are started, always use this lock.
+# Only a SINGLE screenshot should be taken at any given time, otherwise we run into issues
+# with our DC retrieval (GetCompatibleDC) and DC deletion.
+_SCREENSHOT_LOCK = Lock()
+
 
 class Window(object):
     """Window can be used to define a single window/process."""
@@ -30,16 +36,13 @@ class Window(object):
     def __init__(self, hwnd):
         self.hwnd = hwnd
         self.x_subtract = 0
+        self.debug = hwnd == "DEBUG"
 
         # Depending on the type of emulator being used (and supported), some differences in the way their window object is defined.
         # Nox: X Axis is not included in window rectangle.  MEmu: X Axis is included. Based on these differences, we should modify appropriately
         # the width and height values before calculating padding.
         if self.text.lower() in MEMU_WINDOW_FILTER:
             self.x_subtract = 38
-
-        # We use a lock object to ensure that screenshots are only ever taken by a single
-        # thread, we do this to avoid issues with the win32api and ctypes implementations.
-        self.lock = Lock()
 
     def __str__(self):
         return "{text} ({x}, {y}, {w}, {h})".format(
@@ -50,11 +53,12 @@ class Window(object):
 
     @property
     def text(self):
-        return win32gui.GetWindowText(self.hwnd)
+        return win32gui.GetWindowText(self.hwnd) if not self.debug else "DEBUG WINDOW"
 
     @property
     def rect(self):
-        return win32gui.GetClientRect(self.hwnd)
+        return win32gui.GetClientRect(self.hwnd) if not self.debug \
+            else [0, 0, self.EMULATOR_WIDTH, self.EMULATOR_HEIGHT]
 
     @property
     def x_padding(self):
@@ -176,33 +180,34 @@ class Window(object):
         """
         Take a screenshot of the current window. The window may be visible or behind another window.
         """
-        with self.lock:
-            hwnd_dc = win32gui.GetWindowDC(self.hwnd)
-            mfc_dc = win32ui.CreateDCFromHandle(hwnd_dc)
-            save_dc = mfc_dc.CreateCompatibleDC()
+        _SCREENSHOT_LOCK.acquire()
 
-            save_bitmap = win32ui.CreateBitmap()
-            save_bitmap.CreateCompatibleBitmap(mfc_dc, self.width, self.height)
-            save_dc.SelectObject(save_bitmap)
+        hwnd_dc = win32gui.GetWindowDC(self.hwnd)
+        mfc_dc = win32ui.CreateDCFromHandle(hwnd_dc)
+        save_dc = mfc_dc.CreateCompatibleDC()
+        save_bitmap = win32ui.CreateBitmap()
+        save_bitmap.CreateCompatibleBitmap(mfc_dc, self.width, self.height)
+        save_dc.SelectObject(save_bitmap)
+        result = windll.user32.PrintWindow(self.hwnd, save_dc.GetSafeHdc(), 0)
 
-            result = windll.user32.PrintWindow(self.hwnd, save_dc.GetSafeHdc(), 0)
+        bmp_info = save_bitmap.GetInfo()
+        bmp_str = save_bitmap.GetBitmapBits(True)
+        image = Image.frombuffer("RGB", (bmp_info["bmWidth"], bmp_info["bmHeight"]), bmp_str, "raw", "BGRX", 0, 1)
 
-            bmp_info = save_bitmap.GetInfo()
-            bmp_str = save_bitmap.GetBitmapBits(True)
-            image = Image.frombuffer("RGB", (bmp_info["bmWidth"], bmp_info["bmHeight"]), bmp_str, "raw", "BGRX", 0, 1)
+        save_dc.DeleteDC()
+        mfc_dc.DeleteDC()
+        win32gui.ReleaseDC(self.hwnd, hwnd_dc)
+        win32gui.DeleteObject(save_bitmap.GetHandle())
 
-            save_dc.DeleteDC()
-            mfc_dc.DeleteDC()
-            win32gui.ReleaseDC(self.hwnd, hwnd_dc)
-            win32gui.DeleteObject(save_bitmap.GetHandle())
+        image = image.crop(box=(0, self.y_padding, self.EMULATOR_WIDTH, self.EMULATOR_HEIGHT + self.y_padding))
+        if not region:
+            _SCREENSHOT_LOCK.release()
+            return image
 
-            image = image.crop(box=(0, self.y_padding, self.EMULATOR_WIDTH, self.EMULATOR_HEIGHT + self.y_padding))
-            if not region:
-                return image
-
-            # If we have a region available, we can crop the screenshot
-            # to represent the specified region of the emulator.
-            return image.crop(box=region)
+        # If we have a region available, we can crop the screenshot
+        # to represent the specified region of the emulator.
+        _SCREENSHOT_LOCK.release()
+        return image.crop(box=region)
 
     def json(self):
         """Convert window instance to a json compliant dictionary."""

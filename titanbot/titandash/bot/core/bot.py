@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from titandash.models.queue import Queue
 from titandash.models.clan import Clan, RaidResult
-from titandash.constants import SKILL_MAX_LEVEL
+from titandash.constants import SKILL_MAX_LEVEL, PERK_CHOICES, NO_PERK
 
 from titandash.bot.core import shortcuts
 
@@ -124,9 +124,14 @@ class Bot(object):
         # very easily enable/disable skill levelling based on the configuration caps and current levels in game.
         self.current_prestige_skill_levels = {skill: 0 for skill in SKILLS}
 
+        # Currently enabled perk values based on the configuration
+        # defined by the user.
+        self.enabled_perks = [k[0] for k in PERK_CHOICES if k[0] != NO_PERK and getattr(self.configuration, "enable_{key}".format(key=k[0]))]
+
         # Setup the datetime objects used initially to determine when the bot
         # will perform specific actions in game.
         self.calculate_next_prestige()
+        self.calculate_next_perk_check()
         self.calculate_next_stats_update()
         self.calculate_next_master_level()
         self.calculate_next_heroes_level()
@@ -448,6 +453,20 @@ class Bot(object):
         dt = now + datetime.timedelta(seconds=self.configuration.prestige_x_minutes * 60)
         self.props.next_prestige = dt
         self.logger.info("the next timed prestige will take place in {time}".format(time=strfdelta(dt - now)))
+
+    @wrap_current_function
+    def calculate_next_perk_check(self):
+        """
+        Calculate when the next timed perk check will take place.
+        """
+        if self.enabled_perks:
+            if self.configuration.enable_perk_only_tournament:
+                return
+
+            now = timezone.now()
+            dt = now + datetime.timedelta(hours=self.configuration.use_perks_every_x_hours)
+            self.props.next_perk_check = dt
+            self.logger.info("the next timed perk check will take place in {time}".format(time=strfdelta(dt - now)))
 
     @wrap_current_function
     def calculate_next_master_level(self):
@@ -905,6 +924,73 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    def use_perk(self, perk):
+        """
+        Attempt to use or purchase the specified perk in game.
+
+        Based on the users configuration, we may or may not use the perk if the user does
+        not own one currently.
+        """
+        self.logger.info("attempting to use {perk} perk.".format(perk=perk))
+        # We also travel to the bottom of the expanded master panel for each purchase, since some
+        # perks may close the panel after activation.
+        self.goto_master(collapsed=False, top=False)
+
+        # Attempting to open the purchase panel for this perk.
+        # If it is already active, no window will be opened, which we
+        # can use to determine whether or not to continue.
+        self.click(point=getattr(self.locs, perk), pause=1)
+
+        if not self.grabber.search(image=self.images.perks_header, bool_only=True):
+            self.logger.info("unable to open {perk} purchase panel, it's probably already active...".format(perk=perk))
+            return True
+
+        # Check for the diamond icon in the opened window,
+        # based on it being present or not, we can choose to either
+        # purchase the perk or not.
+        if self.grabber.search(image=self.images.perks_diamond, region=PERK_COORDS["purchase"], bool_only=True):
+            if self.configuration.enable_perk_diamond_purchase:
+                self.logger.info("purchasing {perk} now.".format(perk=perk))
+                return self.click(point=self.locs.perks_okay, pause=1)
+            else:
+                self.logger.info("{perk} requires diamonds to use, this is disabled currently, skipping...".format(perk=perk))
+                return self.click(point=self.locs.perks_cancel, pause=1)
+
+        # Otherwise, go ahead with normal perk purchase.
+        self.logger.info("using {perk} now.".format(perk=perk))
+        return self.click(point=self.locs.perks_okay, pause=1)
+
+    @wrap_current_function
+    @not_in_transition
+    def perks(self, force=False):
+        """
+        Perform the periodic perks usage function.
+
+        This only ever happens if the interval has been surpassed. This interval is also only ever set
+        if the user has disabled the ability to check for perks outside of the tournament perk functionality.
+        """
+        if self.configuration.enable_perk_usage:
+            if self.configuration.enable_perk_only_tournament and not force:
+                return False
+
+            if self.props.next_perk_check:
+                if force or timezone.now() > self.props.next_perk_check:
+                    self.logger.info("{force_or_initiate} perks check now.".format(
+                        force_or_initiate="forcing" if force else "beginning"))
+
+                    # Travel to the bottom of the master panel, expanded so we
+                    # can view all of the perks in game.
+                    self.goto_master(collapsed=False, top=False)
+
+                    # Looping through enabled perks in game, attempting to use each one.
+                    for perk in self.enabled_perks:
+                        self.use_perk(perk=perk)
+
+                    self.calculate_next_perk_check()
+                    return True
+
+    @wrap_current_function
+    @not_in_transition
     def update_stats(self, force=False):
         """
         Update the bot stats by travelling to the stats page in the heroes panel and performing OCR update.
@@ -994,6 +1080,14 @@ class Bot(object):
                     # prestige and advanced start right after it happens.
                     sleep(35)
                     self.scheduler.resume()
+
+                    # If we have chosen to only use perks when a tournament takes place,
+                    # we perform that here.
+                    if self.configuration.enable_perk_usage:
+                        if self.configuration.enable_perk_only_tournament:
+                            for perk in self.enabled_perks:
+                                self.use_perk(perk=perk)
+
                     return True
 
                 if not self.goto_master(collapsed=False, top=False):
@@ -1042,6 +1136,12 @@ class Bot(object):
                     # Level heroes last, once our master is levelled,
                     # and skills have been activated, saving some time here.
                     self.level_heroes(force=True)
+
+                    # Once our prestige has finished, let's check if we should
+                    # activate one of the perks chosen.
+                    if self.configuration.enable_perk_usage:
+                        if self.configuration.use_perk_on_prestige != NO_PERK:
+                            self.use_perk(perk=self.configuration.use_perk_on_prestige)
 
                     # If the current stage currently is greater than the current max stage, lets update our stats
                     # to reflect that a new max stage has been reached. This allows for
@@ -2006,6 +2106,7 @@ class Bot(object):
                 "level_heroes": self.configuration.enable_heroes,
                 "level_skills": self.configuration.enable_level_skills,
                 "activate_skills": self.configuration.enable_activate_skills,
+                "perks": self.configuration.enable_perk_usage,
                 "prestige": self.configuration.enable_auto_prestige,
                 "daily_achievement_check": self.configuration.enable_daily_achievements,
                 "milestone_check": self.configuration.enable_milestones,
@@ -2056,6 +2157,8 @@ class Bot(object):
             self.clan_results_parse(force=True)
         if self.configuration.raid_notifications_check_on_start:
             self.raid_notifications(force=True)
+        if self.configuration.use_perks_on_start:
+            self.perks(force=True)
 
     @wrap_current_function
     def run(self):

@@ -661,6 +661,109 @@
     </div>
 </div>
 
+{# Perk Settings #}
+<div id="accordionPerkSettings">
+    <div class="card">
+        <div class="card-header" id="configurationPerkSettingsHeader">
+            <h5 class="modal-title" id="configurationPerkSettingsTitle">
+                <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapsePerkSettings">Perk Settings</button>
+            </h5>
+        </div>
+
+        <div id="collapsePerkSettings" class="collapse show" data-parent="#accordionPerkSettings">
+            <div id="configurationPerkSettingsBody" class="card-body">
+                <div class="form-check">
+                    {# Enable Perk Usage #}
+                    <input {% if config.enable_perk_usage %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_perk_usage" name="enable_perk_usage">
+                    <label class="form-check-label" for="enable_perk_usage">Enable Perk Usage</label>
+                    <p class="text-muted">{{ help.enable_perk_usage }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Enable Perk Diamond Purchase #}
+                    <input {% if config.enable_perk_diamond_purchase %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_perk_diamond_purchase" name="enable_perk_diamond_purchase">
+                    <label class="form-check-label" for="enable_perk_diamond_purchase">Enable Perk Diamond Purchase</label>
+                    <p class="text-muted">{{ help.enable_perk_diamond_purchase }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Enable Perk Only Tournament #}
+                    <input {% if config.enable_perk_only_tournament %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_perk_only_tournament" name="enable_perk_only_tournament">
+                    <label class="form-check-label" for="enable_perk_only_tournament">Enable Perks Only During Tournaments</label>
+                    <p class="text-muted">{{ help.enable_perk_only_tournament }}</p>
+                </div>
+
+                <div class="form-group">
+                    {# Use Perks Every X Hours #}
+                    <label for="use_perks_every_x_hours">Use Perks Every X Hours:</label>
+                    <input value="{{ config.use_perks_every_x_hours|default_if_none:0 }}" type="number" class="form-control" id="use_perks_every_x_hours" name="use_perks_every_x_hours">
+                    <p style="padding: 3px;" class="text-muted">{{ help.use_perks_every_x_hours }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Use Perks On Start #}
+                    <input {% if config.use_perks_on_start %}checked{% endif %} type="checkbox" class="form-check-input" id="use_perks_on_start" name="use_perks_on_start">
+                    <label class="form-check-label" for="use_perks_on_start">Use Perks On Session Start</label>
+                    <p class="text-muted">{{ help.use_perks_on_start }}</p>
+                </div>
+
+                <div class="form-group">
+                    {# Use Perk On Prestige #}
+                    <label for="use_perk_on_prestige">Use Perk On Prestige:</label>
+                    <select id="use_perk_on_prestige" class="form-control">
+                        {% for perk in choices.perks %}
+                            <option {% if config.use_perk_on_prestige == perk.0 %}selected{% endif %} data-value="{{ perk.0 }}">{{ perk.1 }}</option>
+                        {% endfor %}
+                    </select>
+                    <p style="padding: 3px;" class="text-muted">{{ help.use_perk_on_prestige }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Enable Power Of Sniping #}
+                    <input {% if config.enable_power_of_swiping %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_power_of_swiping" name="enable_power_of_swiping">
+                    <label class="form-check-label" for="enable_power_of_swiping">Enable Power Of Swiping</label>
+                    <p class="text-muted">{{ help.enable_power_of_swiping }}</p>
+                </div>
+
+                 <div class="form-check">
+                    {# Enable Adrenaline Rush #}
+                    <input {% if config.enable_adrenaline_rush %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_adrenaline_rush" name="enable_adrenaline_rush">
+                    <label class="form-check-label" for="enable_adrenaline_rush">Enable Adrenaline Rush</label>
+                    <p class="text-muted">{{ help.enable_adrenaline_rush }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Enable Make It Rain #}
+                    <input {% if config.enable_make_it_rain %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_make_it_rain" name="enable_make_it_rain">
+                    <label class="form-check-label" for="enable_make_it_rain">Enable Make It Rain</label>
+                    <p class="text-muted">{{ help.enable_make_it_rain }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Enable Mana Potion #}
+                    <input {% if config.enable_mana_potion %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_mana_potion" name="enable_mana_potion">
+                    <label class="form-check-label" for="enable_mana_potion">Enable Mana Potion</label>
+                    <p class="text-muted">{{ help.enable_mana_potion }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Enable Doom #}
+                    <input {% if config.enable_doom %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_doom" name="enable_doom">
+                    <label class="form-check-label" for="enable_doom">Enable Doom</label>
+                    <p class="text-muted">{{ help.enable_doom }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Enable Clan Crate #}
+                    <input {% if config.enable_clan_crate %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_clan_crate" name="enable_clan_crate">
+                    <label class="form-check-label" for="enable_clan_crate">Enable Clan Crate</label>
+                    <p class="text-muted">{{ help.enable_clan_crate }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {# Prestige Action Settings #}
 <div id="accordionPrestigeActionSettings">
     <div class="card">

@@ -93,6 +93,7 @@ class BotInstance(models.Model):
     next_skills_level = models.DateTimeField(verbose_name="Next Skills Level", blank=True, null=True)
     next_skills_activation = models.DateTimeField(verbose_name="Next Skills Activation", blank=True, null=True)
     next_miscellaneous_actions = models.DateTimeField(verbose_name="Next Miscellaneous Actions", blank=True, null=True)
+    next_perk_check = models.DateTimeField(verbose_name="Next Perk Check", blank=True, null=True)
     next_prestige = models.DateTimeField(verbose_name="Next Timed Prestige", blank=True, null=True)
     next_randomized_prestige = models.DateTimeField(verbose_name="Next Randomized Prestige", blank=True, null=True)
     next_stats_update = models.DateTimeField(verbose_name="Next Stats Update", blank=True, null=True)
@@ -211,6 +212,10 @@ class BotInstance(models.Model):
                 "datetime": str(self.next_miscellaneous_actions) if self.next_miscellaneous_actions else None,
                 "formatted": self.next_miscellaneous_actions.astimezone().strftime(DATETIME_FMT) if self.next_miscellaneous_actions else None
             },
+            "next_perk_check": {
+                "datetime": str(self.next_perk_check) if self.next_perk_check else None,
+                "formatted": self.next_perk_check.astimezone().strftime(DATETIME_FMT) if self.next_perk_check else None
+            },
             "next_prestige": {
                 "datetime": str(self.next_prestige) if self.next_prestige else None,
                 "formatted": self.next_prestige.astimezone().strftime(DATETIME_FMT) if self.next_prestige else None
@@ -310,6 +315,7 @@ class BotInstance(models.Model):
         self.next_skills_level = None
         self.next_skills_activation = None
         self.next_miscellaneous_actions = None
+        self.next_perk_check = None
         self.next_prestige = None
         self.next_randomized_prestige = None
         self.next_stats_update = None

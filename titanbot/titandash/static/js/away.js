@@ -21,7 +21,9 @@ $(document).ready(function() {
         let diff = (timeSinceLastClick.getTime() - new Date().getTime());
         let secs = Math.abs(diff / 1000);
         if (secs >= 1200)
-            displayOverlay();
+            if (!overlayShown) {
+                displayOverlay();
+            }
     }, 1000);
 
     // Display our overlay.
