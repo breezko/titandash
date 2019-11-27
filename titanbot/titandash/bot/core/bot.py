@@ -1253,14 +1253,14 @@ class Bot(object):
 
             # Looking for the artifact to upgrade here, dragging until it is finally found.
             loops = 0
-            while not self.grabber.search(ARTIFACT_MAP.get(artifact), bool_only=True):
+            while not self.grabber.search(ARTIFACT_MAP.get(artifact), precision=0.7, bool_only=True):
                 loops += 1
                 if loops == FUNCTION_LOOP_TIMEOUT:
                     self.logger.warning("artifact: {artifact} couldn't be found on screen... skipping.".format(artifact=artifact))
                     self.ERRORS += 1
                     return False
 
-                self.drag(start=self.locs.scroll_start, end=self.locs.scroll_bottom_end, pause=0.5)
+                self.drag(start=self.locs.scroll_start, end=self.locs.scroll_bottom_end, pause=1.5)
 
             # Making it here means the artifact in question has been found.
             found, position = self.grabber.search(ARTIFACT_MAP.get(artifact))
