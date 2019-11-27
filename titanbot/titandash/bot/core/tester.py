@@ -90,6 +90,39 @@ def fix_clicks(fix_x=0, fix_y=34):
     print(new_locs)
 
 
+def fix_clicks_bbox(bbox, points):
+    """
+    Given a set of points or locations (X, Y) values, remove any points that are within the specified bounding
+    box value.
+
+    The bounding box should be a tuple containing the following: (X1, Y1, X2, Y2), any points within this "box"
+    will be removed and not pasted back to the user.
+
+    Misc BBOX: (0, 46, 57, 448)
+    Inbox BBOX: (0, 288, 80, 431)
+
+    Examples:
+        - fix_clicks_bbox(bbox=(0, 46, 57, 448), points=GAME_LOCS["MINIGAMES"]["coordinated_offensive"])
+        - fix_clicks_bbox(bbox=(0, 46, 57, 448), points=GAME_LOCS["MINIGAMES"]["astral_awakening"])
+        - fix_clicks_bbox(bbox=(0, 46, 57, 448), points=GAME_LOCS["MINIGAMES"]["flash_zip"])
+
+    from titandash.bot.core.tester import *; from titandash.bot.core.maps import *; fix_clicks_bbox(bbox=(0, 46, 57, 448), points=GAME_LOCS["MINIGAMES"]["coordinated_offensive"])
+    """
+    def in_point(x1, y1, x2, y2, x, y):
+        if x1 < x < x2 and y1 < y < y2:
+            return True
+        else:
+            return False
+
+    new = []
+
+    for point in points:
+        if not in_point(x1=bbox[0], y1=bbox[2], x2=bbox[1], y2=bbox[3], x=point[0], y=point[1]):
+            new.append(point)
+
+    print(", ".join(str(f) for f in new))
+
+
 def make_prestige(instance_id=None, session_uuid=None):
     """
     Generate a generic prestige instance.
