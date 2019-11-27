@@ -198,4 +198,4 @@ database_backup()
 # and reflect the new constants that may be used by the bot.
 # Note: This reflect what the project is currently setup to support. Newer versions may be
 # released and be fine, but this is a good way to derive whether or not features may be missing.
-STAGE_CAP = 84000
+STAGE_CAP = 88000
