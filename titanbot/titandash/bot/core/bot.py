@@ -34,6 +34,7 @@ from .constants import (
 
 from pyautogui import FailSafeException
 
+from apscheduler.schedulers.base import STATE_PAUSED, STATE_RUNNING, STATE_STOPPED
 from apscheduler.schedulers.background import BackgroundScheduler
 
 import datetime
@@ -1049,7 +1050,8 @@ class Bot(object):
 
                 # Pausing our scheduler while a prestige is taking place.
                 # We do not want the current stage being modified while this takes place.
-                self.scheduler.pause()
+                if self.scheduler.state == STATE_RUNNING:
+                    self.scheduler.pause()
 
                 # Reset the current prestige skill level values, since they all go back to
                 # zero on a prestige, We can reset and be sure they're all zero.
@@ -1075,11 +1077,14 @@ class Bot(object):
                     # and our correct advanced start parsing.
                     self.props.last_prestige = tournament_prestige
                     self.parse_advanced_start(stage_text=advanced_start)
+
                     self.props.current_stage = advanced_start
                     # Sleeping explicitly if a tournament was joined, since we update the last
                     # prestige and advanced start right after it happens.
                     sleep(35)
-                    self.scheduler.resume()
+
+                    if self.scheduler.state == STATE_PAUSED:
+                        self.scheduler.resume()
 
                     # If we have chosen to only use perks when a tournament takes place,
                     # we perform that here.
@@ -1110,7 +1115,9 @@ class Bot(object):
                     # Waiting for a while after prestiging, this reduces the chance
                     # of a game crash taking place due to many clicks while game is resetting.
                     self.click(point=MASTER_LOCS["prestige_final"], pause=35)
-                    self.scheduler.resume()
+
+                    if self.scheduler.state == STATE_PAUSED:
+                        self.scheduler.resume()
 
                     # If a timer is used for prestige. Reset this timer to the next timed prestige value.
                     if self.configuration.prestige_x_minutes != 0:
@@ -2057,14 +2064,19 @@ class Bot(object):
         Execute a pause for this Bot.
         """
         self.PAUSE = True
-        self.scheduler.pause()
+        if self.scheduler.state == STATE_RUNNING:
+            self.scheduler.pause()
+
         self.instance.pause()
 
     @wrap_current_function
     def resume(self):
         """Execute a resume for this Bot."""
         self.PAUSE = False
-        self.scheduler.resume()
+
+        if self.scheduler.state == STATE_PAUSED:
+            self.scheduler.resume()
+
         self.instance.resume()
 
     @wrap_current_function
@@ -2128,7 +2140,8 @@ class Bot(object):
         """
         # Boot up the scheduler instance so it begins running all interval/period
         # type functions.
-        self.scheduler.start()
+        if self.scheduler.state == STATE_STOPPED:
+            self.scheduler.start()
 
         # Parse current skill levels, done once on initialization
         # and taken care of by our prestige function for every prestige.
@@ -2246,7 +2259,8 @@ class Bot(object):
         # Cleaning up the BotInstance once a termination has been received.
         finally:
             # Stop the schedulers functionality once the session has been stopped.
-            self.scheduler.shutdown(wait=False)
+            if self.scheduler.state in [STATE_RUNNING, STATE_PAUSED]:
+                self.scheduler.shutdown(wait=False)
 
             self.stats.session.end = timezone.now()
             self.stats.session.save()
