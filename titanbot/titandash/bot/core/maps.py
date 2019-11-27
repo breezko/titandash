@@ -117,7 +117,7 @@ GAME_LOCS = {
     },
     "TOURNAMENT": {
         "tournament": (30, 71),
-        "tournament_prestige": (330, 536),
+        "tournament_prestige": (330, 546),
         "collect_prize": (245, 731),
         "join": (245, 696),
     },
@@ -173,7 +173,7 @@ AD_EXIT_LOCS = [
 MASTER_LOCS = {
     "master_level": (415, 136),
     "prestige": (405, 736),
-    "prestige_confirm": (245, 626),
+    "prestige_confirm": (245, 675),
     "prestige_final": (330, 536),
     "screen_top": (240, 6),
     "achievements": (207, 503),
@@ -411,8 +411,8 @@ STAGE_COORDS = {
 }
 
 PRESTIGE_COORDS = {
-    "time_since": (300, 580, 360, 594),
-    "advance_start": (145, 523, 202, 543),
+    "time_since": (301, 155, 380, 177),
+    "advance_start": (136, 584, 212, 612),
 }
 
 # The regions for each skill present on the master screen if the panel
