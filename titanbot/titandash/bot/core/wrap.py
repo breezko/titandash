@@ -93,6 +93,7 @@ class Images:
         self.achievements = None
         self.cancel_active_skill = None
         self.confirm_prestige = None
+        self.confirm_prestige_final = None
         self.deadly_strike = None
         self.fire_sword = None
         self.hand_of_midas = None

@@ -317,6 +317,7 @@ IMAGES = {
         "achievements": IMAGE_DIR + "/master/achievements.png",
         "cancel_active_skill": IMAGE_DIR + "/master/cancel_active_skill.png",
         "confirm_prestige": IMAGE_DIR + "/master/confirm_prestige.png",
+        "confirm_prestige_final": IMAGE_DIR + "/master/confirm_prestige_final.png",
         "deadly_strike": IMAGE_DIR + "/master/deadly_strike.png",
         "fire_sword": IMAGE_DIR + "/master/fire_sword.png",
         "hand_of_midas": IMAGE_DIR + "/master/hand_of_midas.png",

@@ -1111,10 +1111,13 @@ class Bot(object):
                     self.parse_advanced_start(advanced_start)
                     self.props.current_stage = self.ADVANCED_START
 
-                    self.click(point=MASTER_LOCS["prestige_confirm"], pause=1)
+                    # Click on the prestige confirmation box.
+                    self.click_image(image=self.images.confirm_prestige, pos=prestige_position, pause=1)
                     # Waiting for a while after prestiging, this reduces the chance
                     # of a game crash taking place due to many clicks while game is resetting.
-                    self.click(point=MASTER_LOCS["prestige_final"], pause=35)
+                    prestige_final_found, prestige_final_position = self.grabber.search(image=self.images.confirm_prestige_final)
+
+                    self.click_image(image=self.images.confirm_prestige_final, pos=prestige_final_position, pause=35)
 
                     if self.scheduler.state == STATE_PAUSED:
                         self.scheduler.resume()
