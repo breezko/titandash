@@ -83,7 +83,7 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 - [Node/NPM](https://nodejs.org/en/)
 - [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract)
 - [Redis Server](https://redislabs.com/)
-- [MEmu Emulator](https://www.memuplay.com/) or [Nox Android Emulator](https://www.bignox.com/)
+- [MEmu Emulator 7.0.1](https://drive.google.com/open?id=19WVZleJjRAcoKK4s-2pSnhiv8pKO_t1g) or [Nox Android Emulator (Not Fully Supported)](https://www.bignox.com/)
 
 ## Development
 Thanks for taking the time to check out this project. If you have any suggestions, 
