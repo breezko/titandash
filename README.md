@@ -15,6 +15,29 @@ Take a look at the [wiki](https://github.com/becurrie/titandash/wiki) for inform
 You can also visit our homepage, [here](https://titanda.sh) for more information!
 
 ## Features
+### Bot
+- Perform all functionality in the background, so you can do other things while the bot is running.
+- Activate chosen in game skills on a specified cooldown, with the option to wait for a specific skill before activating others.
+- Use/purchase chosen in game perks on a specified cooldown, or only when a tournament is joined.
+- Use/purchase a specific in game perk whenever you prestige.
+- Activate specific functions using keyboard shortcuts.
+- Automatically tap on the screen, activating and collecting fairies.
+- Automatically tap skill minigames on the screen (coordinated offensive, astral awakening, etc), activating and collecting fairies if they're triggered.
+- Automatically level up the sword master, skills and heroes in game with specific intervals for the activation of each.
+- Automatically level up skills to a specified level cap.
+- Automatically prestige after a threshold has been reached (stage, percent of max stage, max stage, time limit).
+- Automatically add random padding to prestige times to ensure they look less robotic.
+- Automatically parse out clan raid results from in game.
+- Automatically take breaks in game after random intervals of game time.
+- Receive text notifications when your raid attacks timer has reset and the titan can be attacked.
+- Upgrade or ignore specific artifacts or tiers after a prestige.
+- Participate in tournaments when they are available (enter/collect rewards).
+- Hatch and collect any eggs when they become available.
+- Collect in game ads if VIP is unlocked in game.
+- Collect daily achievements when they are completed.
+- Collect milestones in game when they are completed.
+- Collect daily rewards when they are available.
+
 ### Bootstrapper
 - Perform automatic updates as they are released directly from this page within the web application.
 - Automate the following processes through the bootstrapper:
@@ -48,29 +71,6 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 - Open Github Repository.
 - Generate Debug Report.
 - Exit Application.
-
-### Bot
-- Perform all functionality in the background, so you can do other things while the bot is running.
-- Activate chosen in game skills on a specified cooldown, with the option to wait for a specific skill before activating others.
-- Use/purchase chosen in game perks on a specified cooldown, or only when a tournament is joined.
-- Use/purchase a specific in game perk whenever you prestige.
-- Activate specific functions using keyboard shortcuts.
-- Automatically tap on the screen, activating and collecting fairies.
-- Automatically tap skill minigames on the screen (coordinated offensive, astral awakening, etc), activating and collecting fairies if they're triggered.
-- Automatically level up the sword master, skills and heroes in game with specific intervals for the activation of each.
-- Automatically level up skills to a specified level cap.
-- Automatically prestige after a threshold has been reached (stage, percent of max stage, max stage, time limit).
-- Automatically add random padding to prestige times to ensure they look less robotic.
-- Automatically parse out clan raid results from in game.
-- Automatically take breaks in game after random intervals of game time.
-- Receive text notifications when your raid attacks timer has reset and the titan can be attacked.
-- Upgrade or ignore specific artifacts or tiers after a prestige.
-- Participate in tournaments when they are available (enter/collect rewards).
-- Hatch and collect any eggs when they become available.
-- Collect in game ads if VIP is unlocked in game.
-- Collect daily achievements when they are completed.
-- Collect milestones in game when they are completed.
-- Collect daily rewards when they are available.
 
 ### Quickstart
 - Ensure you've installed and configured dependencies present in the [wiki](https://github.com/becurrie/titandash/wiki/Dependencies).
