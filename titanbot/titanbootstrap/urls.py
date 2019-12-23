@@ -5,7 +5,6 @@ from . import views
 urlpatterns = [
     # BOOTSTRAP.
     path("", views.bootstrap, name="bootstrap"),
-
     # AJAX Bootstrapper.
     path("ajax/check_update", views.check_update, name="check_update"),
     path("ajax/perform_update", views.perform_update, name="perform_update"),

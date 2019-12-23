@@ -1,8 +1,3 @@
-"""
-tester.py
-
-Place any helpful functions or commands that can be used to actively test different parts of a instantiated Bot.
-"""
 from django.utils.timezone import now
 
 from titandash.models.configuration import Configuration

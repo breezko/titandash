@@ -1,9 +1,3 @@
-"""
-stats.py
-
-The stats module will encapsulate all functionality related to the stats
-panel located inside of the heroes panel in game.
-"""
 from settings import BOT_VERSION
 
 from django.utils import timezone

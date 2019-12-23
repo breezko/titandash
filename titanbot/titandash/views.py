@@ -18,8 +18,9 @@ from titandash.models.artifact import Artifact, Tier
 from titandash.models.configuration import Configuration, ThemeConfig
 from titandash.models.prestige import Prestige
 from titandash.models.queue import Queue
+
 from titandash.bot.core.window import WindowHandler, Window
-from titandash.bot.core.constants import QUEUEABLE_FUNCTIONS, QUEUEABLE_TOOLTIPS, SHORTCUT_FUNCTIONS
+from titandash.bot.core.decorators import BotProperty
 
 from io import BytesIO
 
@@ -49,11 +50,11 @@ def dashboard(request):
     ctx["windows"].reverse()
 
     # Grab all queueable functions.
-    for queue in QUEUEABLE_FUNCTIONS:
+    for prop in BotProperty.all():
         ctx["queueable"].append({
-            "name": title(queue),
-            "func": queue,
-            "tooltip": QUEUEABLE_TOOLTIPS[queue]
+            "name": title(prop["name"]),
+            "func": prop["name"],
+            "tooltip": prop["tooltip"] if prop["tooltip"] else None
         })
 
     return render(request, "dashboard.html", context=ctx)
@@ -385,7 +386,7 @@ def project_settings(request):
 
 def shortcuts(request):
     """View all shortcuts available for use with the bot."""
-    ctx = {"shortcuts": {title(k): v.split("+") for k, v in SHORTCUT_FUNCTIONS.items()}}
+    ctx = {"shortcuts": {title(prop["name"]): prop["shortcut"].split("+") for prop in BotProperty.shortcuts()}}
     return render(request, "shortcuts.html", context=ctx)
 
 

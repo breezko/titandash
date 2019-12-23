@@ -22,10 +22,16 @@ class DependencyError(Exception):
 
 
 class TesseractCheckError(DependencyError):
+    """
+    Tesseract Dependency Error.
+    """
     pass
 
 
 class NodeCheckError(DependencyError):
+    """
+    NodeJS Dependency Error.
+    """
     pass
 
 
@@ -110,7 +116,7 @@ def perform_update(request):
             targetdir=settings.LOCAL_DATA_BACKUP_DIR,
             action="sync",
             exclude=(
-                'node_modules', 'titanbot/static', 'titanbot/logs', ".git",
+                "node_modules", "titanbot/static", "titanbot/logs", ".git",
                 ".github", ".idea", ".gitattributes", ".gitignore"
             )
         )

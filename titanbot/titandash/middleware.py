@@ -1,23 +1,38 @@
 from django.contrib.auth.models import User
 from django.utils.deprecation import MiddlewareMixin
-
-from titanauth.constants import AUTH_URL_EXCEPTIONS
-from titanbootstrap.constants import BOOTSTRAP_URL_EXCEPTIONS
+from django.urls import reverse
 
 
-class AutoAuthenticationMiddleware(MiddlewareMixin):
+class TitandashBaseMiddleware(MiddlewareMixin):
+    """
+    Base Titandash middleware that performs the setup or urls that should be ignored when our
+    requests are processed by the system.
+    """
+    def __init__(self, get_response):
+        super(TitandashBaseMiddleware, self).__init__(get_response=get_response)
+        self.exceptions = [
+            # Titanauth.
+            reverse("authenticate"),
+            reverse("credentials"),
+            #  Titan Bootstrap.
+            reverse("bootstrap"),
+            reverse("check_update"),
+            reverse("perform_update"),
+            reverse("perform_requirements"),
+            reverse("perform_node_packages"),
+            reverse("perform_migration"),
+            reverse("perform_cache"),
+            reverse("perform_static"),
+            reverse("perform_dependency")
+        ]
+        self.get_response = get_response
+
+
+class AutoAuthenticationMiddleware(TitandashBaseMiddleware):
     """
     AutoAuthenticationMiddleware is used to ensure that the "titan" user is properly
     used as the requests user variable. This user is used throughout the dashboard.
     """
-    def __init__(self, get_response):
-        super(AutoAuthenticationMiddleware, self).__init__(get_response=get_response)
-
-        # Setup a list of exceptions that are used to either grab the titan user,
-        # or completely ignore that database call.
-        self.exceptions = AUTH_URL_EXCEPTIONS + BOOTSTRAP_URL_EXCEPTIONS
-        self.get_response = get_response
-
     def process_request(self, request):
         if request.path not in self.exceptions:
             request.user = User.objects.get(username="titan")
