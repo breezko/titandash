@@ -9,6 +9,9 @@ class TitandashConfig(AppConfig):
     def ready(self):
         post_migrate.connect(migrate_callback, sender=self)
 
+        # Importing checks.
+        import titandash.checks
+
 
 def migrate_callback(sender, **kwargs):
     """
