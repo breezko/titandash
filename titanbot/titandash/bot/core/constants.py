@@ -38,11 +38,6 @@ LOGGER_FILE_NAME_STRFMT = "%Y-%m-%d_%H-%M-%S"
 INIT_DATE_FMT = datetime.datetime.strftime(datetime.datetime.now(), LOGGER_FILE_NAME_STRFMT)
 LOGGER_FILE_NAME = "{log_dir}/{name}.log".format(log_dir=LOG_DIR, name=INIT_DATE_FMT)
 
-# imagesearch.py will make use of these constants to determine which button to press.
-LEFT_CLICK = "left"
-RIGHT_CLICK = "right"
-MIDDLE_CLICK = "middle"
-
 # Threshold used to determine if the value of the next parsed stage is obviously malformed.
 # This can be determined by looking at the new value, subtracting it from the old value and seeing
 # if it crosses the threshold, in which case we can skip the current parse attempt.
@@ -61,122 +56,6 @@ FUNCTION_LOOP_TIMEOUT = 40
 # In which case, we can continue and attempt to up this damage and try again later.
 BOSS_LOOP_TIMEOUT = int(FUNCTION_LOOP_TIMEOUT / 4)
 
-# Specify any functions that may be forced.
-FORCEABLE_FUNCTIONS = [
-    "level_master", "level_heroes", "level_skills", "miscellaneous_actions", "update_stats", "perks", "prestige",
-    "daily_achievement_check", "milestone_check", "raid_notifications", "activate_skills", "clan_results_parse", "breaks"
-]
-
-# Specify functions that can be activated through keyboard shortcuts.
-# The key present should represent a function that's present on the Bot.
-# The value should be the name of a key (or keys with a + used as a delimiter).
-SHORTCUT_FUNCTIONS = {
-    # Utility shortcuts.
-    "pause": "p",
-    "resume": "r",
-    "terminate": "e",
-    "soft_terminate": "shift+e",
-    # Functional shortcuts.
-    "actions": "shift+a",
-    "breaks": "shift+b",
-    "level_heroes": "shift+h",
-    "level_master": "shift+m",
-    "level_skills": "shift+s",
-    "artifacts": "shift+a",
-    "daily_rewards": "shift+d",
-    "hatch_eggs": "shift+h",
-    "fight_boss": "shift+f",
-    "leave_boss": "shift+l",
-    "update_stats": "shift+u",
-    "perks": "shift+c",
-    "prestige": "shift+p",
-    "daily_achievement_check": "ctrl+d",
-    "milestone_check": "ctrl+m",
-    "clan_results_parse": "ctrl+p",
-    "raid_notifications": "ctrl+r",
-    "activate_skills": "ctrl+a",
-}
-
-# Reverse the original SHORTCUT_FUNCTIONS dictionary, so we can access functions by their shortcut value.
-FUNCTION_SHORTCUTS = {v: k for k, v in SHORTCUT_FUNCTIONS.items()}
-
-# Specify any functions that be queued. These will be grabbed by the TitanDashboard to provide a user
-# with the ability to manually add functions that will be executed by the Bot.
-QUEUEABLE_FUNCTIONS = FORCEABLE_FUNCTIONS + [
-    "calculate_next_master_level", "calculate_next_heroes_level", "calculate_next_skills_level", "calculate_next_skills_activation",
-    "calculate_next_stats_update", "calculate_next_daily_achievement_check", "calculate_next_raid_notifications_check",
-    "calculate_next_skill_execution",  "calculate_next_prestige", "update_next_artifact_upgrade", "calculate_next_break",
-    "parse_current_stage", "artifacts", "parse_artifacts", "check_tournament",
-    "daily_rewards", "hatch_eggs", "clan_crate", "collect_ad", "fight_boss", "leave_boss", "tap", "minigames",
-    "pause", "resume", "terminate", "soft_terminate"
-]
-
-# Also generating a dictionary of tooltips or help texts associated with each queueable function.
-QUEUEABLE_TOOLTIPS = {
-    "calculate_next_master_level": "Calculate the next time that the master level process will take place.",
-    "calculate_next_heroes_level": "Calculate the next time that the heroes level process will take place.",
-    "calculate_next_skills_level": "Calculate the next time that the skills level process will take place.",
-    "calculate_next_skills_activation": "Calculate the next time that the skills activation process will take place.",
-    "calculate_next_stats_update": "Calculate the next time a statistics update will take place.",
-    "calculate_next_daily_achievement_check": "Calculate the next time a daily achievement check will take place",
-    "calculate_next_raid_notifications_check": "Calculate the next time raid notification check will take place.",
-    "calculate_next_skill_execution": "Calculate the next time a skill execution will take place.",
-    "calculate_next_prestige": "Calculate the next time a prestige will take place.",
-    "calculate_next_break": "Calculate the next time a break will take place.",
-    "update_next_artifact_upgrade": "Update the next artifact that will be upgraded.",
-    "parse_current_stage": "Parse the current stage in game.",
-    "level_heroes": "Level heroes in game.",
-    "level_master": "Level sword master in game.",
-    "level_skills": "Level skills in game.",
-    "miscellaneous_actions": "Initiate miscellaneous_actions in game.",
-    "artifacts": "Begin the upgrade discover/enchant/purchase process in game.",
-    "parse_artifacts": "Begin a parse of all owned artifacts in game.",
-    "check_tournament": "Check for a tournament and join/prestige if one is available.",
-    "daily_rewards": "Check for daily rewards in game and collect if available.",
-    "hatch_eggs": "Check for eggs in game and hatch them if available.",
-    "clan_crate": "Check for a clan crate in game and collect if available.",
-    "collect_ad": "Collect an ad in game if one is available.",
-    "fight_boss": "Attempt to begin the boss fight in game.",
-    "leave_boss": "Attempt to leave the boss fight in game.",
-    "tap": "Begin generic tapping process in game.",
-    "minigames": "Begin minigame tapping process in game.",
-    "pause": "Pause all bot functionality.",
-    "resume": "Resume all bot functionality.",
-    "terminate": "Terminate all bot functionality.",
-    "soft_terminate": "Perform a soft termination of all bot functionality.",
-    "actions": "Force all actions to be executed in game.",
-    "update_stats": "Force a statistics update in game.",
-    "perks": "Force a perk check in game.",
-    "prestige": "Force a prestige in game.",
-    "daily_achievement_check": "Force a daily achievement check in game.",
-    "milestone_check": "Force a milestone check in game.",
-    "clan_results_parse": "Force a clan results parse in game.",
-    "raid_notifications": "Force a raid notifications check in game.",
-    "activate_skills": "Force a skill activation in game.",
-    "breaks": "Force a manual break in game."
-}
-
-# Place any properties here that will be present on both the Bot and BotInstance
-# simultaneously, this is required to allow the Bot to update the value and at the
-# same time, update the current BotInstance and send out socket updates to the dashboard.
-PROPERTIES = [
-    "current_stage", "current_function", "last_prestige", "next_prestige", "next_perk_check", "next_randomized_prestige",
-    "next_stats_update", "next_daily_achievement_check", "next_milestone_check", "next_break", "resume_from_break",
-    "next_raid_notifications_check", "next_raid_attack_reset", "next_clan_results_parse", "next_master_level",
-    "next_heroes_level", "next_skills_level", "next_skills_activation", "next_miscellaneous_actions",
-    "next_heavenly_strike", "next_deadly_strike", "next_hand_of_midas", "next_fire_sword", "next_war_cry", "next_shadow_clone"
-]
-
-# Creating a list of all properties that should be modified when a break takes place so that
-# their next execution time take place at the proper time when a break finishes.
-BREAK_NEXT_PROPS = [
-    prop for prop in PROPERTIES if prop.split("_")[0] == "next" and prop not in ["next_break", "next_raid_attack_reset"]
-]
-
-# Create an additional list containing all of the properties we can modify when needed including
-# the next break variable. This is useful when functionality occurs that needs all timed variables to change.
-BREAK_NEXT_PROPS_ALL = BREAK_NEXT_PROPS + ["next_break", "resume_from_break"]
-
 # Specify the filter strings used to find emulator windows.
 NOX_WINDOW_FILTER = [
     "nox", "noxplayer",
@@ -184,9 +63,3 @@ NOX_WINDOW_FILTER = [
 MEMU_WINDOW_FILTER = [
     "memu"
 ]
-
-# Determine the interval between the execution of each defined function
-# handled by the scheduler object when a bot is running (seconds).
-SCHEDULE_INTERVALS = {
-    "parse_current_stage": 3
-}
