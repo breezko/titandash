@@ -22,15 +22,12 @@ from .grabber import Grabber
 from .stats import Stats
 from .wrap import Images, Locs, Colors
 from .decorators import not_in_transition, wait_afterwards, wrap_current_function
+from .decorators import BotProperty as bot_property
 from .utilities import (
     click_on_point, click_on_image, drag_mouse, make_logger, strfdelta,
     strfnumber, sleep, send_raid_notification
 )
-from .constants import (
-    FUNCTION_LOOP_TIMEOUT, BOSS_LOOP_TIMEOUT, QUEUEABLE_FUNCTIONS,
-    FORCEABLE_FUNCTIONS, PROPERTIES, BREAK_NEXT_PROPS,
-    BREAK_NEXT_PROPS_ALL, SCHEDULE_INTERVALS
-)
+from .constants import FUNCTION_LOOP_TIMEOUT, BOSS_LOOP_TIMEOUT
 
 from pyautogui import FailSafeException
 
@@ -74,7 +71,7 @@ class Bot(object):
 
         # Initialize and setup our Props object which is used to handle BotInstance
         # realtime updates using our Django Channels sockets.
-        self.props = Props(instance=self.instance, props=PROPERTIES)
+        self.props = Props(instance=self.instance)
         self.last_stage = None
 
         self.logger = logger if logger else make_logger(instance, self.configuration.logging_level, log_file=None)
@@ -153,8 +150,13 @@ class Bot(object):
         # Adding all expected jobs to our background scheduler instance.
         # Note: Our scheduler is not yet started at this point, that only
         # happens once the bot is initialized.
-        for func, interval in SCHEDULE_INTERVALS.items():
-            self.scheduler.add_job(func=getattr(self, func), trigger='interval', seconds=interval, id=func)
+        for prop in bot_property.intervals():
+            self.scheduler.add_job(
+                func=getattr(self, prop["name"]),
+                trigger='interval',
+                seconds=prop["interval"],
+                id=prop["name"]
+            )
 
         if start:
             self.run()
@@ -275,6 +277,7 @@ class Bot(object):
             self.logger.warning("text: {text}".format(text=stage_text))
             self.ADVANCED_START = None
 
+    @bot_property(interval=3)
     def parse_current_stage(self):
         """
         Attempt to update the current stage attribute through an OCR check in game. The current_stage
@@ -348,11 +351,11 @@ class Bot(object):
 
         This is useful to us if a user has to wait for things to happens (ie: wait for an ad).
         """
-        for attr in BREAK_NEXT_PROPS_ALL:
+        for prop in [prop for prop in self.props.fields if prop.split("_")[0] == "next"]:
             # Ignore None attributes so that disabled functionality isn't
             # also bumped unnecessarily.
-            if getattr(self.props, attr):
-                setattr(self.props, attr, getattr(self.props, attr) + delta)
+            if getattr(self.props, prop):
+                setattr(self.props, prop, getattr(self.props, prop) + delta)
 
     def should_prestige(self):
         """
@@ -470,6 +473,7 @@ class Bot(object):
             self.logger.info("the next timed perk check will take place in {time}".format(time=strfdelta(dt - now)))
 
     @wrap_current_function
+    @bot_property(queueable=True, tooltip="Calculate the next time that the master level process will take place.")
     def calculate_next_master_level(self):
         """
         Calculate when the next sword master levelling process will be ran.
@@ -480,6 +484,7 @@ class Bot(object):
         self.logger.info("sword master levelling process will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     @wrap_current_function
+    @bot_property(queueable=True, tooltip="Calculate the next time that the heroes level process will take place.")
     def calculate_next_heroes_level(self):
         """
         Calculate when the next heroes level process will be ran.
@@ -490,6 +495,7 @@ class Bot(object):
         self.logger.info("heroes levelling process will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     @wrap_current_function
+    @bot_property(queueable=True, tooltip="Calculate the next time that the skills level process will take place.")
     def calculate_next_skills_level(self):
         """
         Calculate when the next skills level process will be ran.
@@ -510,6 +516,7 @@ class Bot(object):
         self.logger.info("miscellaneous actions will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     @wrap_current_function
+    @bot_property(queueable=True, tooltip="Calculate the next time that the skills activation process will take place.")
     def calculate_next_skills_activation(self):
         """
         Calculate when the next skills activation process will be ran.
@@ -520,6 +527,7 @@ class Bot(object):
         self.logger.info("skills activation process will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     @wrap_current_function
+    @bot_property(queueable=True, tooltip="Calculate the next time a statistics update will take place.")
     def calculate_next_stats_update(self):
         """
         Calculate when the next stats update should take place.
@@ -530,6 +538,7 @@ class Bot(object):
         self.logger.info("in game statistics update in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     @wrap_current_function
+    @bot_property(queueable=True, tooltip="Calculate the next time a daily achievement check will take place")
     def calculate_next_daily_achievement_check(self):
         """
         Calculate when the next daily achievement check should take place.
@@ -540,6 +549,7 @@ class Bot(object):
         self.logger.info("daily achievement check in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     @wrap_current_function
+    @bot_property(queueable=True, tooltip="Calculate the next time a milestone check will take place.")
     def calculate_next_milestone_check(self):
         """
         Calculate when the next milestone check should take place.
@@ -550,6 +560,7 @@ class Bot(object):
         self.logger.info("milestone check in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     @wrap_current_function
+    @bot_property(queueable=True, tooltip="Calculate the next time raid notification check will take place.")
     def calculate_next_raid_notifications_check(self):
         """
         Calculate when the next raid notifications check should take place.
@@ -560,6 +571,7 @@ class Bot(object):
         self.logger.info("raid notifications check will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     @wrap_current_function
+    @bot_property(queueable=True, tooltip="Calculate the next time a clan result parse will take place.")
     def calculate_next_clan_result_parse(self):
         """
         Calculate when the next clan result parse should take place.
@@ -570,6 +582,7 @@ class Bot(object):
         self.logger.info("clan results parse in game will be initiated in {time}".format(time=strfdelta(dt - now)))
 
     @wrap_current_function
+    @bot_property(queueable=True, tooltip="Calculate the next time a break will take place.")
     def calculate_next_break(self):
         """
         Calculate when the next break will take place in game.
@@ -597,6 +610,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(forceable=True, shortcut="shift+h", tooltip="Level heroes in game.")
     def level_heroes(self, force=False):
         """
         Perform all actions related to the levelling of all heroes in game.
@@ -662,6 +676,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(forceable=True, shortcut="shift+m", tooltip="Level sword master in game.")
     def level_master(self, force=False):
         """
         Perform all actions related to the levelling of the sword master in game.
@@ -700,6 +715,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(queueable=True, tooltip="Parse out current in game skill levels.")
     def parse_current_skills(self):
         """
         Do an explicit parse of the users current skill levels and assign them to our current prestige
@@ -782,6 +798,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(forceable=True, shortcut="shift+s", tooltip="Level skills in game.")
     def level_skills(self, force=False):
         """
         Level in game skills.
@@ -878,6 +895,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(forceable=True, shortcut="ctrl+a", tooltip="Force a skill activation in game.")
     def activate_skills(self, force=False):
         """
         Activate in game skills.
@@ -963,6 +981,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(forceable=True, shortcut="shift+c", tooltip="Force a perk check in game.")
     def perks(self, force=False):
         """
         Perform the periodic perks usage function.
@@ -992,6 +1011,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(forceable=True, shortcut="shift+u", tooltip="Force a statistics update in game.")
     def update_stats(self, force=False):
         """
         Update the bot stats by travelling to the stats page in the heroes panel and performing OCR update.
@@ -1034,6 +1054,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(forceable=True, shortcut="shift+p", tooltip="Force a prestige in game.")
     def prestige(self, force=False):
         """
         Perform a prestige in game.
@@ -1163,6 +1184,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(queueable=True, tooltip="Attempt to parse all artifacts from in game.")
     def parse_artifacts(self):
         """
         Begin the process to parse owned artifacts from in game.
@@ -1178,6 +1200,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(queueable=True, shortcut="shift+a", tooltip="Begin the artifact discover/enchant/purchase process in game.")
     def artifacts(self):
         """
         Determine whether or not any artifacts should be purchased, and purchase them.
@@ -1347,6 +1370,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(queueable=True, shortcut="shift+d", tooltip="Check for daily rewards in game and collect if available.")
     def daily_rewards(self):
         """
         Collect any daily gifts if they're available.
@@ -1367,6 +1391,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(queueable=True, tooltip="Check for eggs in game and hatch them if available.")
     def hatch_eggs(self):
         """
         Hatch any eggs if they're available.
@@ -1383,6 +1408,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(queueable=True, tooltip="Check for a clan crate in game and collect if available.")
     def clan_crate(self):
         """
         Check if a clan crate is currently available and collect it if one is.
@@ -1400,6 +1426,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(queueable=True, tooltip="Open the messages panel in game, and attempt to mark all messages as read.")
     def inbox(self):
         """
         Open up the inbox if it's available on the screen, clicking from header to header, ensuring that the icon is gone.
@@ -1422,6 +1449,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(forceable=True, tooltip="Force miscellaneous actions in game.")
     def miscellaneous_actions(self, force=False):
         """
         Miscellaneous actions can be activated here when the generic cooldown is reached.
@@ -1443,6 +1471,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(forceable=True, shortcut="shift+b", tooltip="Force a break in game.")
     def breaks(self, force=False):
         """
         Check to see if a break should take place, if a break should take place, the emulator will
@@ -1467,7 +1496,7 @@ class Bot(object):
 
                 # Modify all next attributes to take place after their normal calculated
                 # time with a bit of padding after a break ends.
-                for prop in BREAK_NEXT_PROPS:
+                for prop in [prop for prop in self.props.fields if prop.split("_")[0] == "next" and prop not in ["next_break", "next_raid_attack_reset"]]:
                     current = getattr(self.props, prop, None)
                     if current:
                         # Adding a bit of padding to next activation values.
@@ -1491,7 +1520,8 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
-    def daily_achievement_check(self, force=False):
+    @bot_property(forceable=True, shortcut="ctrl+d", tooltip="Force a daily achievement check in game.")
+    def daily_achievements(self, force=False):
         """
         Perform a check for any completed daily achievements, collecting them as long as any are present.
         """
@@ -1525,7 +1555,8 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
-    def milestone_check(self, force=False):
+    @bot_property(forceable=True, shortcut="ctrl+m", tooltip="Force a milestone check in game.")
+    def milestones(self, force=False):
         """
         Perform a check for the collection of a completed milestone reward.
         """
@@ -1562,6 +1593,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(forceable=True, shortcut="ctrl+r", tooltip="Force a raid notifications check in game.")
     def raid_notifications(self, force=False):
         """
         Perform all checks to see if a sms message will be sent to notify a user of an active raid.
@@ -1616,6 +1648,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(forceable=True, shortcut="ctrl+p", tooltip="Force a clan results parse in game.")
     def clan_results_parse(self, force=False):
         """
         If the time threshold has been reached and clan result parsing is enabled, initiate the process
@@ -1759,6 +1792,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(queueable=True, tooltip="Collect an ad in game if one is available.")
     def collect_ad(self):
         self.ad()
 
@@ -1766,6 +1800,7 @@ class Bot(object):
         self.ad()
 
     @not_in_transition
+    @bot_property(queueable=True, shortcut="shift+f", tooltip="Attempt to begin the boss fight in game.")
     def fight_boss(self):
         """
         Ensure that the boss is being fought if it isn't already.
@@ -1787,6 +1822,7 @@ class Bot(object):
         return True
 
     @not_in_transition
+    @bot_property(queueable=True, shortcut="shift+l", tooltip="Attempt to leave the boss fight in game.")
     def leave_boss(self):
         """
         Ensure that there is no boss being fought (avoids transition).
@@ -1813,6 +1849,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(queueable=True, tooltip="Begin generic tapping process in game.")
     def tap(self):
         """
         Perform simple screen tap over entire game area.
@@ -1841,6 +1878,7 @@ class Bot(object):
 
     @wrap_current_function
     @not_in_transition
+    @bot_property(queueable=True, tooltip="Begin minigame tapping process in game.")
     def minigames(self):
         if self.configuration.enable_minigames:
             self.logger.info("beginning minigame execution process...")
@@ -2062,6 +2100,7 @@ class Bot(object):
         self.update_stats(force=True)
 
     @wrap_current_function
+    @bot_property(queueable=True, shortcut="p", tooltip="Pause all bot functionality.")
     def pause(self):
         """
         Execute a pause for this Bot.
@@ -2073,6 +2112,7 @@ class Bot(object):
         self.instance.pause()
 
     @wrap_current_function
+    @bot_property(queueable=True, shortcut="r", tooltip="Resume all bot functionality.")
     def resume(self):
         """Execute a resume for this Bot."""
         self.PAUSE = False
@@ -2083,6 +2123,7 @@ class Bot(object):
         self.instance.resume()
 
     @wrap_current_function
+    @bot_property(queueable=True, shortcut="e", tooltip="Terminate all bot functionality.")
     def terminate(self):
         """
         Execute a termination of this Bot instance.
@@ -2090,6 +2131,7 @@ class Bot(object):
         self.TERMINATE = True
 
     @wrap_current_function
+    @bot_property(queueable=True, shortcut="shift+e", tooltip="Perform soft termination of all bot functionality.")
     def soft_terminate(self):
         """
         Execute a soft shutdown/termination of this Bot instance.
@@ -2111,24 +2153,26 @@ class Bot(object):
         """
         Generate list of loop functions based on the enabled functions specified in the configuration.
         """
+        # Using function.__name__ to ensure that changing our function names causes this to error out,
+        # which in turn, requires us to update it.
         lst = [
             k for k, v in {
-                "fight_boss": True,
-                "miscellaneous_actions": True,
-                "tap": self.configuration.enable_tapping,
-                "minigames": self.configuration.enable_minigames,
-                "level_master": self.configuration.enable_master,
-                "level_heroes": self.configuration.enable_heroes,
-                "level_skills": self.configuration.enable_level_skills,
-                "activate_skills": self.configuration.enable_activate_skills,
-                "perks": self.configuration.enable_perk_usage,
-                "prestige": self.configuration.enable_auto_prestige,
-                "daily_achievement_check": self.configuration.enable_daily_achievements,
-                "milestone_check": self.configuration.enable_milestones,
-                "raid_notifications": self.configuration.enable_raid_notifications,
-                "clan_results_parse": self.configuration.enable_clan_results_parse,
-                "update_stats": self.configuration.enable_stats,
-                "breaks": self.configuration.enable_breaks
+                self.fight_boss.__name__: True,
+                self.miscellaneous_actions.__name__: True,
+                self.tap.__name__: self.configuration.enable_tapping,
+                self.minigames.__name__: self.configuration.enable_minigames,
+                self.level_master.__name__: self.configuration.enable_master,
+                self.level_heroes.__name__: self.configuration.enable_heroes,
+                self.level_skills.__name__: self.configuration.enable_level_skills,
+                self.activate_skills.__name__: self.configuration.enable_activate_skills,
+                self.perks.__name__: self.configuration.enable_perk_usage,
+                self.prestige.__name__: self.configuration.enable_auto_prestige,
+                self.daily_achievements.__name__: self.configuration.enable_daily_achievements,
+                self.milestones.__name__: self.configuration.enable_milestones,
+                self.raid_notifications.__name__: self.configuration.enable_raid_notifications,
+                self.clan_results_parse.__name__: self.configuration.enable_clan_results_parse,
+                self.update_stats.__name__: self.configuration.enable_stats,
+                self.breaks.__name__: self.configuration.enable_breaks
             }.items() if v
         ]
 
@@ -2166,9 +2210,9 @@ class Bot(object):
         if self.configuration.update_stats_on_start:
             self.update_stats(force=True)
         if self.configuration.daily_achievements_check_on_start:
-            self.daily_achievement_check(force=True)
+            self.daily_achievements(force=True)
         if self.configuration.milestones_check_on_start:
-            self.milestone_check(force=True)
+            self.milestones(force=True)
         if self.configuration.parse_clan_results_on_start:
             self.clan_results_parse(force=True)
         if self.configuration.raid_notifications_check_on_start:
@@ -2212,7 +2256,7 @@ class Bot(object):
                     # Any explicit functions can be executed after the main game loop has finished.
                     # The Queue handles the validation to ensure only available functions can be created...
                     for qfunc in Queue.objects.filter(instance=self.instance).order_by("-created"):
-                        if qfunc.function not in QUEUEABLE_FUNCTIONS:
+                        if qfunc.function not in bot_property.queueables():
                             self.logger.info("queued function: {func} encountered but this function does not exist on the bot... ignoring function!".format(
                                 func=qfunc.function))
 
@@ -2227,7 +2271,7 @@ class Bot(object):
                             ceiling=self.configuration.post_action_max_wait_time
                         )
 
-                        if qfunc.function in FORCEABLE_FUNCTIONS:
+                        if qfunc.function in bot_property.forceables():
                             wait(force=True)
                         else:
                             wait()
