@@ -8,13 +8,17 @@ while True loop to always be waiting for I/O.
 from django.utils import timezone
 
 from titandash.models.queue import Queue
-from titandash.bot.core.constants import FUNCTION_SHORTCUTS, SHORTCUT_FUNCTIONS
+
+from titandash.bot.core.decorators import BotProperty
 
 import keyboard
 import operator
 import collections
 import datetime
 
+
+_FUNCTION_SHORTCUTS = {}
+_SHORTCUT_FUNCTIONS = {}
 
 SHIFT = "shift"
 CTRL = "ctrl"
@@ -64,9 +68,16 @@ def hook():
     We only ever hook once, and our loggers/instances present are actually used when
     a callback is executed.
     """
-    global _HOOKED
+    global _HOOKED, _FUNCTION_SHORTCUTS, _SHORTCUT_FUNCTIONS
 
     if not _HOOKED:
+        # Setup the shortcut functions and reversed function shortcuts
+        # that are used globally to ensure that we have all functions
+        # that can be queued up through a keyboard shortcut.
+        for prop in BotProperty.shortcuts():
+            _FUNCTION_SHORTCUTS[prop["shortcut"]] = prop["name"]
+            _SHORTCUT_FUNCTIONS[prop["name"]] = prop['shortcut']
+
         keyboard.on_press(callback=on_press)
         keyboard.on_release(callback=on_release)
 
@@ -136,7 +147,7 @@ def on_press(event):
     When a keypress takes place, some checks take place to fixup the event passed and additional checks
     are present to allow a user to use keyboard combinations to activate functionality within a Bot.
     """
-    global TIMESTAMP, INDEX, RESUME, INSTANCES
+    global TIMESTAMP, INDEX, RESUME, INSTANCES, _FUNCTION_SHORTCUTS, _SHORTCUT_FUNCTIONS
 
     TIMESTAMP = timezone.now()
     if INDEX < 0:
@@ -147,7 +158,7 @@ def on_press(event):
             return
 
         # Determine if the key pressed is present in any of the available shortcuts.
-        for short in FUNCTION_SHORTCUTS.keys():
+        for short in _FUNCTION_SHORTCUTS.keys():
             if key in short.split("+"):
                 CURRENT[key] = INDEX
                 INDEX += 1
@@ -155,9 +166,9 @@ def on_press(event):
 
         if len(CURRENT) > 0:
             combo = "+".join(collections.OrderedDict(sorted(CURRENT.items(), key=operator.itemgetter(1))).keys())
-            if combo in FUNCTION_SHORTCUTS:
+            if combo in _FUNCTION_SHORTCUTS:
                 if TIMESTAMP > RESUME:
-                    _queue(function=FUNCTION_SHORTCUTS[combo])
+                    _queue(function=_FUNCTION_SHORTCUTS[combo])
                     _log(message="{combo} pressed, adding '{func}' to queued functions...".format(combo=combo, func=FUNCTION_SHORTCUTS[combo]))
                     RESUME = RESUME + datetime.timedelta(seconds=1)
 
