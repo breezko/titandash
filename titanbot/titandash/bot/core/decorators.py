@@ -17,6 +17,118 @@ from .utilities import in_transition_func, sleep
 from random import randint
 
 
+# Globally available properties dictionary, store information about functions
+# and their options within the app. See "BotProperty" below.
+_PROPERTIES = dict()
+
+
+class BotProperty(object):
+    """
+    Queueable Function Decorator.
+    """
+    def __init__(self, queueable=False, forceable=False, shortcut=None, tooltip=None, interval=None):
+        """
+        Initialize the queueable decorator on a function, we should be able to choose
+        a couple of options when making a function queueable, including whether ot not it
+        is a function that should be "forced", the shortcut used and the tooltip displayed.
+
+        :param queueable: Should this function be a queueable that can be queued by the bot.
+        :param forceable: Should this function be forceable when called by the bot.
+        :param shortcut: Specify a keyboard shortcut that can be used to queue the function.
+        :param tooltip:  Specify a tooltip that will be displayed when the function is hovered over.
+        :param interval: Specify an interval that will be used to derive scheduled function periods.
+        """
+        self.queueable = queueable
+        self.forceable = forceable
+        self.shortcut = shortcut
+        self.tooltip = tooltip
+        self.interval = interval
+
+    def __call__(self, function):
+        """
+        Perform the magic required when this decorator is applied to our
+        functions here. Ensuring that the function is present in the our
+        properties dictionary.
+        """
+        self._add_property(
+            function=function
+        )
+
+        def wrapper(*args, **kwargs):
+            # Run our function normally once we've added it to our
+            # globally available queueable dictionary.
+            return function(*args, **kwargs)
+
+        # Returning wrapper function here, retain class decorator norms.
+        return wrapper
+
+    def _add_property(self, function):
+        """
+        Add the current function to the properties global variable with it's settings included.
+        """
+        if function.__name__ not in _PROPERTIES:
+            _PROPERTIES[function.__name__] = {
+                'name': function.__name__,
+                'function': function,
+                'queueable': self.queueable,
+                'forceable': self.forceable,
+                'shortcut': self.shortcut,
+                'tooltip': self.tooltip,
+                'interval': self.interval
+            }
+
+    @classmethod
+    def _all(cls, function=None, queueables=False, forceables=False, shortcuts=False, intervals=False):
+        """
+        Utility function that attempts to grab all of the properties based on the options
+        specified, we can return the information for a specific function, or return all properties
+        with specific information associated with them.
+        """
+        _all = {}
+        results = []
+
+        if function:
+            _all.update(_PROPERTIES[function])
+        else:
+            _all.update(_PROPERTIES)
+
+        for prop in _all.values():
+            if shortcuts and prop["shortcut"]:
+                results.append(prop)
+                continue
+            if queueables and prop["queueable"]:
+                results.append(prop)
+                continue
+            if forceables and prop["forceable"]:
+                results.append(prop)
+                continue
+            if intervals and prop["interval"]:
+                results.append(prop)
+                continue
+
+        return results
+
+    @classmethod
+    def all(cls, function=None):
+        return cls._all(function=function, queueables=True, forceables=True, shortcuts=True)
+
+    @classmethod
+    def queueables(cls, function=None):
+        return cls._all(function=function, queueables=True)
+
+    @classmethod
+    def forceables(cls, function=None):
+        return cls._all(function=function, forceables=True)
+
+    @classmethod
+    def shortcuts(cls, function=None):
+        return cls._all(function=function, shortcuts=True)
+
+    @classmethod
+    def intervals(cls, function=None):
+        return cls._all(function=function, intervals=True)
+
+
 def not_in_transition(function, max_loops=30):
     """
     Stop functionality until some sort of game object is on the screen that represents the game not being
