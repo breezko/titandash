@@ -1,9 +1,3 @@
-"""
-grabber.py
-
-Encapsulate the functional class used by the bot to take screenshots of the game screen and search
-for specific images present on the screen.
-"""
 from titandash.bot.external.imagesearch import *
 
 

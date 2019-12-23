@@ -1,16 +1,3 @@
-"""
-decorators.py
-
-Any decorators used by the bot should be placed here. Mostly used to store the _not_in_transition decorator
-that handles pausing the bot and fixing any issues that may come up when a transition state is detected.
-
-A transition state refers to one of the following states in game:
-    - Stage changing over (screen overlay present during).
-    - Premium ad available (no way to click out of this other than accepting/declining).
-
-These states are handled through clicking on the top of the screen if required. The ad collection
-is handled manually by clicking on either accept or decline based on user settings.
-"""
 from functools import wraps
 
 from .utilities import in_transition_func, sleep
@@ -54,6 +41,7 @@ class BotProperty(object):
             function=function
         )
 
+        @wraps(function)
         def wrapper(*args, **kwargs):
             # Run our function normally once we've added it to our
             # globally available queueable dictionary.
@@ -88,7 +76,12 @@ class BotProperty(object):
         results = []
 
         if function:
-            _all.update(_PROPERTIES[function])
+            try:
+                _all = {
+                   function: _PROPERTIES[function]
+                }
+            except KeyError:
+                _all = {}
         else:
             _all.update(_PROPERTIES)
 
@@ -113,8 +106,8 @@ class BotProperty(object):
         return cls._all(function=function, queueables=True, forceables=True, shortcuts=True)
 
     @classmethod
-    def queueables(cls, function=None):
-        return cls._all(function=function, queueables=True)
+    def queueables(cls, function=None, forceables=False):
+        return cls._all(function=function, queueables=True, forceables=forceables)
 
     @classmethod
     def forceables(cls, function=None):
@@ -153,6 +146,7 @@ def wait_afterwards(function, floor, ceiling):
     """
     Delay a function after it's been called for a random amount of seconds between the specified floor and ceiling.
     """
+    @wraps(function)
     def wrapped(*args, **kwargs):
         function(*args, **kwargs)
         sleep(randint(floor, ceiling))
@@ -165,6 +159,7 @@ def wrap_current_function(function):
 
     This allows the current function display to change based on the function being executed.
     """
+    @wraps(function)
     def current_function(*args, **kwargs):
         args[0].props.current_function = function.__name__
         return function(*args, **kwargs)

@@ -1,9 +1,5 @@
-"""
-constants.py
-
-Store any bot specific values here that should not change at any point.
-"""
 from settings import LOG_DIR
+
 import re
 import datetime
 

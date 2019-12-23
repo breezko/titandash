@@ -1,9 +1,3 @@
-"""
-core.py
-
-Main bot initialization and script startup should take place here. All actions and main bot loops
-will be maintained from this location.
-"""
 from settings import STAGE_CAP, BOT_VERSION, GIT_COMMIT
 
 from django.utils import timezone
@@ -20,7 +14,7 @@ from .maps import *
 from .props import Props
 from .grabber import Grabber
 from .stats import Stats
-from .wrap import Images, Locs, Colors
+from .wrap import DynamicAttrs
 from .decorators import not_in_transition, wait_afterwards, wrap_current_function
 from .decorators import BotProperty as bot_property
 from .utilities import (
@@ -78,52 +72,47 @@ class Bot(object):
         if not self.configuration.enable_logging:
             self.logger.disabled = True
 
-        # Bot utilities.
+        # Bot Utilities.
         self.grabber = Grabber(window=self.window, logger=self.logger)
         self.stats = Stats(instance=self.instance, window=self.window, grabber=self.grabber, configuration=self.configuration, logger=self.logger)
-        # Statistics handles Log instance creation... Set BotInstance now.
+
+        # Instance Log (Handled by statistics initialization).
         self.instance.log = self.stats.session.log
-        # Data containers.
-        self.images = Images(IMAGES, self.logger)
-        self.locs = Locs(GAME_LOCS, self.logger)
-        self.colors = Colors(GAME_COLORS, self.logger)
+
+        # Data Containers.
+        self.images = DynamicAttrs(attrs=IMAGES, logger=self.logger)
+        self.locs = DynamicAttrs(attrs=GAME_LOCS, logger=self.logger)
+        self.colors = DynamicAttrs(attrs=GAME_COLORS, logger=self.logger)
 
         self.instance.start(session=self.stats.session)
-        self.instance_string = "bot (v{version}) {git} has been initialized".format(
-            version=BOT_VERSION,
-            git=" [{commit}]".format(commit=GIT_COMMIT[:10]) if GIT_COMMIT else " "
-        )
 
         self.logger.info("==========================================================================================")
-        self.logger.info(self.instance_string)
+        self.logger.info("bot (v{version}) {git} has been initialized".format(
+            version=BOT_VERSION, git="[{commit}]".format(
+                commit=GIT_COMMIT[:10] if GIT_COMMIT else " ")
+        ))
         self.logger.info("s: {session}".format(session=self.stats.session))
         self.logger.info("w: {window}".format(window=self.window))
         self.logger.info("c: {configuration}".format(configuration=self.configuration))
         self.logger.info("==========================================================================================")
 
-        # Set authentication reference to an online state.
+        # Online Authentication.
         if not debug:
             AuthWrapper().online()
 
-        # Create a list of the functions called in there proper order
-        # when actions are performed by the bot.
+        # Minigame Order (Set once on initialization and used through session).
         self.minigame_order = self.order_minigames()
 
-        # Store information about the artifacts in game.
+        # Session Artifacts Information.
         self.owned_artifacts = None
         self.next_artifact_index = None
         self.next_artifact_upgrade = None
 
-        # Current prestige information, this should be reset on each prestige so that certain actions
-        # can be performed a number of times, and be disabled when needed.
+        # Current Prestige Information.
         self.current_prestige_master_levelled = False
-
-        # Current prestige skill level values. We keep track of these to ensure that we can
-        # very easily enable/disable skill levelling based on the configuration caps and current levels in game.
         self.current_prestige_skill_levels = {skill: 0 for skill in SKILLS}
 
-        # Currently enabled perk values based on the configuration
-        # defined by the user.
+        # Enabled Perks.
         self.enabled_perks = [k[0] for k in PERK_CHOICES if k[0] != NO_PERK and getattr(self.configuration, "enable_{key}".format(key=k[0]))]
 
         # Setup the datetime objects used initially to determine when the bot
@@ -142,14 +131,9 @@ class Bot(object):
         self.calculate_next_clan_result_parse()
         self.calculate_next_break()
 
-        # We generate a scheduler once this bot has been initialized correctly,
-        # The scheduler should be used for any functionality that is meant to be ran
-        # on an interval, and in the background.
+        # Background Function Scheduler.
         self.scheduler = BackgroundScheduler()
-
-        # Adding all expected jobs to our background scheduler instance.
-        # Note: Our scheduler is not yet started at this point, that only
-        # happens once the bot is initialized.
+        # Add "Jobs" To Scheduler.
         for prop in bot_property.intervals():
             self.scheduler.add_job(
                 func=getattr(self, prop["name"]),
@@ -158,6 +142,7 @@ class Bot(object):
                 id=prop["name"]
             )
 
+        # Begin "Bot" Loop.
         if start:
             self.run()
 
@@ -194,17 +179,17 @@ class Bot(object):
             self.logger.info("artifact purchase is disabled, artifact parsing is not required and will be skipped.")
             return lst
 
-        # Grabbing all configuration values used to determine which artifacts are
-        # upgraded when called.
+        # Grabbing all configuration values used to determine which artifacts are upgraded when called.
         upgrade_tiers = self.configuration.upgrade_owned_tier.all()
         ignore_artifacts = self.configuration.ignore_artifacts.all()
         upgrade_artifacts = self.configuration.upgrade_artifacts.all()
+
         if len(upgrade_tiers) > 0:
-                upgrade_tiers = upgrade_tiers.values_list("tier", flat=True)
+            upgrade_tiers = upgrade_tiers.values_list("tier", flat=True)
         if len(ignore_artifacts) > 0:
-                ignore_artifacts = ignore_artifacts.values_list("name", flat=True)
+            ignore_artifacts = ignore_artifacts.values_list("name", flat=True)
         if len(upgrade_artifacts) > 0:
-                upgrade_artifacts = upgrade_artifacts.values_list("name", flat=True)
+            upgrade_artifacts = upgrade_artifacts.values_list("name", flat=True)
 
         if testing:
             artifacts = self.stats.artifact_statistics.artifacts.all()
@@ -1631,7 +1616,8 @@ class Bot(object):
                         sid=self.configuration.raid_notifications_twilio_account_sid,
                         token=self.configuration.raid_notifications_twilio_auth_token,
                         from_num=self.configuration.raid_notifications_twilio_from_number,
-                        to_num=self.configuration.raid_notifications_twilio_to_number)
+                        to_num=self.configuration.raid_notifications_twilio_to_number,
+                        instance=self.instance)
 
                     self.logger.info("a notification has been sent to {to_num} from {from_num}".format(
                         to_num=self.configuration.raid_notifications_twilio_to_number,
@@ -2256,8 +2242,8 @@ class Bot(object):
                     # Any explicit functions can be executed after the main game loop has finished.
                     # The Queue handles the validation to ensure only available functions can be created...
                     for qfunc in Queue.objects.filter(instance=self.instance).order_by("-created"):
-                        if qfunc.function not in bot_property.queueables():
-                            self.logger.info("queued function: {func} encountered but this function does not exist on the bot... ignoring function!".format(
+                        if not bot_property.queueables(function=qfunc.function, forceables=True):
+                            self.logger.warning("queued function: {func} encountered but this function does not exist on the bot... ignoring function!".format(
                                 func=qfunc.function))
 
                             qfunc.finish()
@@ -2271,7 +2257,7 @@ class Bot(object):
                             ceiling=self.configuration.post_action_max_wait_time
                         )
 
-                        if qfunc.function in bot_property.forceables():
+                        if bot_property.forceables(function=qfunc.function):
                             wait(force=True)
                         else:
                             wait()

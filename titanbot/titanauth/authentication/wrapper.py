@@ -1,9 +1,3 @@
-"""
-wrapper.py
-
-Encapsulating functionality that handles the interactions between the dashboard system
-and the external authentication system.
-"""
 from titanauth.models.user_reference import ExternalAuthReference
 from titanauth.authentication.constants import (
     AUTH_AUTHENTICATE_URL, AUTH_STATE_URL, AUTH_RELEASE_URL
@@ -31,7 +25,7 @@ class AuthWrapper(object):
             url=AUTH_AUTHENTICATE_URL,
             data={
                 "email": self.reference.email,
-                "token": self.reference.token  # Hashing the token, let's not send it over plain text :)
+                "token": self.reference.token
             }
         )
 

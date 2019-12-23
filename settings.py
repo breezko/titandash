@@ -1,8 +1,3 @@
-"""
-settings.py
-
-Store all project specific settings here.
-"""
 import os
 import pathlib
 import json

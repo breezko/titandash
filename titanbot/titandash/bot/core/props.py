@@ -1,9 +1,3 @@
-"""
-props.py
-
-A Props object may be used to improve the way the Bot and BotInstance interacts
-together. Ensure that the properties specified exist on both the Bot and BotInstance.
-"""
 from titandash.models.bot import BotInstance
 
 

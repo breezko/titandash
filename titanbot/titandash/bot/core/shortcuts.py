@@ -1,10 +1,3 @@
-"""
-shortcuts.py
-
-Encapsulating the threading functionality that is used by the keyboard shortcuts present
-within the Bot. Used to ensure the Thread is stoppable while still using our
-while True loop to always be waiting for I/O.
-"""
 from django.utils import timezone
 
 from titandash.models.queue import Queue
@@ -47,6 +40,7 @@ def add_handle(instance, logger):
 
     INSTANCES.append(instance)
     LOGGERS.append(logger)
+
     logger.info("{instance} added to shortcut module.".format(instance=instance))
 
 
@@ -169,7 +163,7 @@ def on_press(event):
             if combo in _FUNCTION_SHORTCUTS:
                 if TIMESTAMP > RESUME:
                     _queue(function=_FUNCTION_SHORTCUTS[combo])
-                    _log(message="{combo} pressed, adding '{func}' to queued functions...".format(combo=combo, func=FUNCTION_SHORTCUTS[combo]))
+                    _log(message="{combo} pressed, adding '{func}' to queued functions...".format(combo=combo, func=_FUNCTION_SHORTCUTS[combo]))
                     RESUME = RESUME + datetime.timedelta(seconds=1)
 
 

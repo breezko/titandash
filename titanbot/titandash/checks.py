@@ -52,8 +52,7 @@ def check_bot_properties(app_configs, **kwargs):
     errors = []
 
     shortcuts = BotProperty.shortcuts()
-    queueables = BotProperty.queueables()
-    forceables = BotProperty.forceables()
+    queueables = BotProperty.queueables(forceables=True)
 
     # Checking for any derived bot properties that contain duplicate shortcut values.
     # A single shortcut can only be used once, otherwise the bot will likely just queue
@@ -74,7 +73,7 @@ def check_bot_properties(app_configs, **kwargs):
     # Checking for any derived bot properties that have specified both the queueable parameter, and forceable,
     # since a forceable function is technically a queueable, there's no need to include both arguments.
     queueables_duplicated = _duplicates(
-        lst=queueables + forceables,
+        lst=queueables,
         key="name",
         condense=True
     )
