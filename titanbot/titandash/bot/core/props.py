@@ -4,30 +4,46 @@ props.py
 A Props object may be used to improve the way the Bot and BotInstance interacts
 together. Ensure that the properties specified exist on both the Bot and BotInstance.
 """
-from titandash.bot.core.constants import PROPERTIES
+from titandash.models.bot import BotInstance
 
 
-PROP_KEYS = {p for p in PROPERTIES}
+__base__ = ("fields", "instance")
 
 
 class Props(object):
     """
-    Property Container used by a Bot instance to encapsulate our properties that are present in both
-    the Bot class, as well as the BotInstance associated with a session.
-    """
-    def __init__(self, instance, props):
-        self.instance = instance
-        self.props = props
+    Property container used to encapsulate saving functionality and instance saving into single functions.
 
-    def __getattribute__(self, item):
-        if item in PROP_KEYS:
+    Saving a bot instance handles our websocket implementation signals, so we handle setting and getting
+    of properties here.
+    """
+    def __init__(self, instance):
+        """
+        Setting up our instance and building out the list of valid properties.
+        """
+        self.fields = [f.name for f in BotInstance._meta.get_fields() if not f.name.startswith('_')]
+        self.instance = instance
+
+    def __getattr__(self, item):
+        """
+        Custom attribute getter to only ever retrieve values from our base fields (which should be present in our init,
+        and the instance specified.
+        """
+        if item in __base__:
+            return super(Props, self).__getattribute__(item)
+        if item in self.fields:
             return getattr(self.instance, item)
-        return super(Props, self).__getattribute__(item)
 
     def __setattr__(self, key, value):
-        if key in PROP_KEYS:
+        """
+        Custom attribute setter to ensure our instance is updated and saved when our derived properties
+        are set on the Props object.
+        """
+        if key in __base__:
+            super(Props, self).__setattr__(key, value)
+        elif key in self.fields:
             # Externally setting the instance value as well, this ensures our
             # sockets are still firing properly when values change.
             setattr(self.instance, key, value)
+            # Calling save will actually send the socket signal.
             self.instance.save()
-        super(Props, self).__setattr__(key, value)
