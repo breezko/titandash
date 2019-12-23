@@ -3,8 +3,8 @@ from django.db.models.signals import post_migrate
 
 
 class TitandashConfig(AppConfig):
-    name = 'titandash'
-    verbose_name = 'TitanDash'
+    name = "titandash"
+    verbose_name = "TitanDash"
 
     def ready(self):
         post_migrate.connect(migrate_callback, sender=self)
