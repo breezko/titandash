@@ -3,14 +3,21 @@ utilities.py
 
 Any utility or backing functions can be placed here and imported when needed.
 """
+from django.core.cache import cache
+
 from settings import LOG_DIR
+
 from titandash.bot.external.imagesearch import *
+from titandash.models.globals import GlobalSettings
+
 from .maps import MASTER_LOCS
 from .constants import (
-    STATS_DURATION_RE, STATS_LOOKUP_MULTIPLIER, STATS_TIMEDELTA_STR,
+    STATS_LOOKUP_MULTIPLIER, STATS_TIMEDELTA_STR,
     LOGGER_NAME, LOGGER_FORMAT, LOGGER_FILE_NAME, LOGGER_FILE_NAME_STRFMT,
     RAID_NOTIFICATION_MESSAGE
 )
+
+from pyautogui import _failSafeCheck
 
 from channels.generic.websocket import async_to_sync
 from channels.layers import get_channel_layer
@@ -23,9 +30,66 @@ from pyautogui import *
 import datetime
 import logging
 import time
-import math
 
 logger = logging.getLogger(LOGGER_NAME)
+
+
+class GlobalsChecker:
+    """
+    Using a pseudo lazy failsafe checking mechanism to avoid making multiple queries to our database
+    constantly to check if failsafe functionality is setup.
+    """
+    def __init__(self):
+        self.cache_key = "globals_cache"
+
+    def _get_cache(self):
+        """
+        Retrieve the cached instance of our global settings instance.
+
+        Resetting the cache every five seconds so that we retain a good amount of cached
+        information, but still allow changes made to the instance to propagate into checks.
+        """
+        return cache.get_or_set(
+            key=self.cache_key,
+            default=self.__instance,
+            timeout=5
+        )
+
+    @staticmethod
+    def __instance():
+        """
+        Static method used to retrieve the global settings instance object from the database.
+        """
+        return GlobalSettings.objects.grab()
+
+    def _failsafe_enabled(self):
+        """
+        Determine if our cached globals currently have failsafe functionality enabled.
+        """
+        return self._get_cache().failsafe_enabled
+
+    def _events_enabled(self):
+        """
+        Determine if our cached globals currently have event functionality enabled.
+        :return:
+        """
+        return self._get_cache().events_enabled
+
+    def failsafe(self):
+        """
+        Perform a failsafe check if it's currently enabled.
+        """
+        if self._failsafe_enabled():
+            _failSafeCheck()
+
+    def events(self):
+        """
+        Return a boolean to represent if events are enabled.
+        """
+        return self._events_enabled()
+
+
+globals = GlobalsChecker()
 
 
 def sleep(seconds):
@@ -57,6 +121,7 @@ def strfdelta(timedelta, fmt=STATS_TIMEDELTA_STR):
     for key, value in d.items():
         if value < 10 and "D" not in key:
             d[key] = "0" + str(value)
+
     return f.format(fmt, **d)
 
 
@@ -97,65 +162,25 @@ def convert(value):
     return number
 
 
-def diff(old, new):
-    """
-    Determine the difference between values. The accepted values here may be
-    datetime objects, floats, or integers.
-    """
-    if isinstance(old, (int, float)) and isinstance(new, (int, float)):
-        value = new - old
-
-        # Infinity/NAN values should be dealt with by just returning a readable string.
-        # Users can manually audit the changes since they're exponential.
-        if math.isnan(value) or math.isinf(value):
-            return "TOO BIG"
-
-        try:
-            return int(value)
-        except ValueError:
-            return value
-
-    # Maybe a date is being diffed?
-    if isinstance(old, str) and isinstance(new, str):
-        try:
-            old_params = {
-                name: float(param) for name, param in STATS_DURATION_RE.match(old).groupdict().items() if param
-            }
-            new_params = {
-                name: float(param) for name, param in STATS_DURATION_RE.match(new).groupdict().items() if param
-            }
-
-            old_td = datetime.timedelta(**old_params)
-            new_td = datetime.timedelta(**new_params)
-
-            delta = new_td - old_td
-            return strfdelta(delta)
-
-        # Gracefully exit and return None, treated as null in JSON.
-        except Exception as exc:
-            logger.error("error occurred while getting diff between {old}, {new} - {exc}".format(
-                old=old, new=new, exc=exc))
-            return "ERROR DIFFING"
-    return None
-
-
 def delta_from_values(values):
     """
     Generate a delta from the given values. The values expected here should contain the number and
     letter associated with the value being parsed (ie: ["1d", "4h", "32m"])
     """
-    kwargs = {"days": 0, "hours": 0, "minutes": 0}
+    kwargs = {
+        "days": 0,
+        "hours": 0,
+        "minutes": 0
+    }
 
     try:
         for value in values:
             # DAYS.
             if value.endswith("d"):
                 kwargs["days"] = int(value[:-1])
-
             # HOURS.
             if value.endswith("h"):
                 kwargs["hours"] = int(value[:-1])
-
             # MINUTES.
             if value.endswith("m"):
                 kwargs["minutes"] = int(value[:-1])
@@ -167,17 +192,25 @@ def delta_from_values(values):
     if delta.total_seconds() == 0:
         return None
 
-    return datetime.timedelta(**kwargs)
+    return delta
 
 
-def send_raid_notification(sid, token, from_num, to_num):
+def send_raid_notification(sid, token, from_num, to_num, instance=None):
     """
     Using the Twilio Rest Client, send a sms message to the specified phone number.
     """
+    if instance:
+        msg = "{instance}: {body}".format(
+            instance=instance,
+            body=RAID_NOTIFICATION_MESSAGE
+        )
+    else:
+        msg = RAID_NOTIFICATION_MESSAGE
+
     return Client(sid, token).messages.create(
         to=to_num,
         from_=from_num,
-        body=RAID_NOTIFICATION_MESSAGE
+        body=msg
     )
 
 
@@ -190,6 +223,7 @@ def gen_offset(point, amount):
 
     rand_x = random.randint(-amount, amount)
     rand_y = random.randint(-amount, amount)
+
     return point[0] + rand_x, point[1] + rand_y
 
 
@@ -261,7 +295,7 @@ def in_transition_func(*args, max_loops):
 
         # Check the screen for any images that would represent a non active transition state.
         # If any of these are found, it's safe to say that we are NOT in a transition.
-        if _self.grabber.search(image=[_self.images.exit_panel, _self.images.clan_raid_ready,_self.images.clan_no_raid, _self.images.daily_reward,
+        if _self.grabber.search(image=[_self.images.exit_panel, _self.images.clan_raid_ready, _self.images.clan_no_raid, _self.images.daily_reward,
                                        _self.images.fight_boss, _self.images.hatch_egg, _self.images.leave_boss, _self.images.settings, _self.images.tournament,
                                        _self.images.pet_damage, _self.images.master_damage], bool_only=True):
             break
@@ -284,16 +318,22 @@ def in_transition_func(*args, max_loops):
             raise TerminationEncountered()
 
 
-class TitanBotHandler(logging.StreamHandler):
+class TitanBotLoggingHandler(logging.StreamHandler):
     def __init__(self, instance, stream=None):
-        super(TitanBotHandler, self).__init__()
+        super(TitanBotLoggingHandler, self).__init__()
+
         self.instance = instance
         self.channel_layer = get_channel_layer()
         self.group_name = 'titan_log'
 
     def format_record(self, record):
         return "[{asctime}] {levelname} [{instance}] [{filename} - {funcName} ] {message}".format(
-            asctime=record.asctime, levelname=record.levelname, instance=self.instance.name, filename=record.filename, funcName=record.funcName, message=record.message
+            asctime=record.asctime,
+            levelname=record.levelname,
+            instance=self.instance.name,
+            filename=record.filename,
+            funcName=record.funcName,
+            message=record.message
         )
 
     def emit(self, record):
@@ -332,7 +372,7 @@ def make_logger(instance, log_level="INFO", log_format=LOGGER_FORMAT, log_name=L
         file_handler.setFormatter(log_formatter)
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(log_formatter)
-        socket_handler = TitanBotHandler(instance=instance)
+        socket_handler = TitanBotLoggingHandler(instance=instance)
         socket_handler.setFormatter(log_formatter)
 
         _logger.addHandler(file_handler)

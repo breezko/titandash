@@ -1,14 +1,6 @@
-"""
-maps.py
-
-Map any values into a single location useful for determining locations on screen
-and mapping the proper values and coordinates to their respective keys.
-"""
 from settings import IMAGE_DIR
 
-# All points in game that are relevant to the given resolution can be stored here.
-# Not all locations need to be stored here, only locations that otherwise would be
-# more of an issue trying to click on after looking for a different image.
+# All points in game that are relevant to the expected resolution can be stored here.
 GAME_LOCS = {
     "BOTTOM_BAR": {
         "master": (39, 781),
@@ -405,9 +397,16 @@ STAGE_COORDS = {
     "region": (214, 37, 268, 50),
 }
 
+
 PRESTIGE_COORDS = {
-    "time_since": (301, 155, 380, 177),
-    "advance_start": (136, 584, 212, 612),
+    "base": {
+        "time_since": (301, 155, 380, 177),
+        "advance_start": (136, 584, 212, 612),
+    },
+    "event": {
+        "time_since": (301, 117, 380, 136),
+        "advance_start": (136, 565, 212, 584),
+    }
 }
 
 # The regions for each skill present on the master screen if the panel

@@ -1,9 +1,3 @@
-"""
-stats.py
-
-The stats module will encapsulate all functionality related to the stats
-panel located inside of the heroes panel in game.
-"""
 from settings import BOT_VERSION
 
 from django.utils import timezone
@@ -17,7 +11,7 @@ from .maps import (
     STATS_COORDS, STAGE_COORDS, GAME_LOCS, PRESTIGE_COORDS,
     ARTIFACT_MAP, CLAN_COORDS, CLAN_RAID_COORDS
 )
-from .utilities import convert, delta_from_values
+from .utilities import convert, delta_from_values, globals
 
 from PIL import Image
 
@@ -368,7 +362,7 @@ class Stats:
         within the Bot if we know what the users minimum stage value currently is.
         """
         self.logger.info("attempting to parse out the advance start value for current prestige")
-        region = PRESTIGE_COORDS["advance_start"]
+        region = PRESTIGE_COORDS["event" if globals.events() else "base"]["advance_start"]
 
         if test_image:
             image = self._process_stage(test_image)
@@ -394,7 +388,7 @@ class Stats:
         This method expects the current in game panel to be the one right before a prestige takes place.
         """
         self.logger.info("Attempting to parse out the time since last prestige")
-        region = PRESTIGE_COORDS["time_since"]
+        region = PRESTIGE_COORDS["event" if globals.events() else "base"]["time_since"]
 
         if test_image:
             image = self._process(scale=3, image=test_image)

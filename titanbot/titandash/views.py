@@ -16,10 +16,12 @@ from titandash.models.statistics import Session, Statistics, Log, ArtifactStatis
 from titandash.models.clan import RaidResult
 from titandash.models.artifact import Artifact, Tier
 from titandash.models.configuration import Configuration, ThemeConfig
+from titandash.models.globals import GlobalSettings
 from titandash.models.prestige import Prestige
 from titandash.models.queue import Queue
+
 from titandash.bot.core.window import WindowHandler, Window
-from titandash.bot.core.constants import QUEUEABLE_FUNCTIONS, QUEUEABLE_TOOLTIPS, SHORTCUT_FUNCTIONS
+from titandash.bot.core.decorators import BotProperty
 
 from io import BytesIO
 
@@ -49,11 +51,11 @@ def dashboard(request):
     ctx["windows"].reverse()
 
     # Grab all queueable functions.
-    for queue in QUEUEABLE_FUNCTIONS:
+    for prop in BotProperty.all():
         ctx["queueable"].append({
-            "name": title(queue),
-            "func": queue,
-            "tooltip": QUEUEABLE_TOOLTIPS[queue]
+            "name": title(prop["name"]),
+            "func": prop["name"],
+            "tooltip": prop["tooltip"] if prop["tooltip"] else None
         })
 
     return render(request, "dashboard.html", context=ctx)
@@ -291,6 +293,45 @@ def import_configuration(request):
     })
 
 
+def globals(request):
+    """Retrieve the current global settings instance."""
+    global_settings = GlobalSettings.objects.grab()
+
+    ctx = global_settings.form_dict()
+    ctx.update({
+        "GLOBALS_JSON": json.dumps(global_settings.json())
+    })
+
+    return render(request, "globals.html", context=ctx)
+
+
+def save_globals(request):
+    """
+    Attempt to save the global settings instance with the specified values taken from the request.
+    """
+    # Boolean Type Options.
+    failsafe_settings = request.POST.get("failsafe_settings")
+    event_settings = request.POST.get("event_settings")
+
+    if not failsafe_settings or not event_settings:
+        return JsonResponse(data={
+            "status": "error",
+            "message": "Missing required values."
+        })
+
+    failsafe_settings = failsafe_settings.lower()
+    event_settings = event_settings.lower()
+
+    GlobalSettings.objects.grab(qs=True).update(**{
+        "failsafe_settings": failsafe_settings,
+        "event_settings": event_settings
+    })
+
+    return JsonResponse(data={
+        "status": "success",
+    })
+
+
 def theme_change(request):
     selected = request.GET.get("theme")
     if not selected:
@@ -385,7 +426,7 @@ def project_settings(request):
 
 def shortcuts(request):
     """View all shortcuts available for use with the bot."""
-    ctx = {"shortcuts": {title(k): v.split("+") for k, v in SHORTCUT_FUNCTIONS.items()}}
+    ctx = {"shortcuts": {title(prop["name"]): prop["shortcut"].split("+") for prop in BotProperty.shortcuts()}}
     return render(request, "shortcuts.html", context=ctx)
 
 

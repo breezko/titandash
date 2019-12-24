@@ -1,9 +1,3 @@
-"""
-imagesearch.py
-
-External wrapping library taken from https://github.com/drov0/python-imagesearch/blob/master/imagesearch.py
-Provides some helpful functions used by the Bot Grabber instance to search for images on screen.
-"""
 import cv2
 import numpy as np
 import random
@@ -77,4 +71,4 @@ def click_image(window, image, pos, action, timestamp, offset=5, pause=0):
 
 
 def r(num, rand):
-    return num + rand*random.random()
+    return num + rand * random.random()

@@ -60,6 +60,7 @@ You can also visit our homepage, [here](https://titanda.sh) for more information
 - View all raid results instances and view data about damage done and who dealt damage.
 - Create multiple configurations that can be swapped out quickly when needed (farming, tournaments, push).
 - Import/export your configurations in a small, shareable string.
+- View and edit globally available settings that are used by every bot session.
 - Review all current statistics taken from the game, as well as statistics related to the bot.
 - View all prestiges and review additional information (average stage, average duration).
 - View all artifact statistics and whether or not you currently own each one.

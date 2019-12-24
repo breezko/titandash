@@ -14,13 +14,13 @@ class ExternalAuthReferenceManager(models.Manager):
         if self.all().count() == 0:
             return self.create(email=email, token=token)
 
-        instance = self.first()
-        instance.email = email
-        instance.token = token
-        instance.valid = False
+        self.all().update(
+            email=email,
+            token=token,
+            valid=False
+        )
 
-        # Return modified instance.
-        return instance
+        return self.first()
 
     def valid(self):
         """

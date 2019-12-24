@@ -26,7 +26,7 @@ class CacheBusterNode(StaticNode):
         )
 
 
-@register.tag('static')
+@register.tag("static")
 def do_static(parser, token):
     return CacheBusterNode.handle_token(parser, token)
 
