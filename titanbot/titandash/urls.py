@@ -13,6 +13,9 @@ urlpatterns = [
     path('configurations/delete/', views.delete_configuration, name='delete_configuration'),
     path('configurations/import/', views.import_configuration, name='import_configuration'),
     path('configurations/save/', views.save_configuration, name='save_configuration'),
+    # GLOBAL SETTINGS.
+    path('globals', views.globals, name='globals'),
+    path('globals/save/', views.save_globals, name='save_globals'),
     # SECONDARY URLS.
     path('project_settings', views.project_settings, name='settings'),
     path('all_prestiges', views.all_prestiges, name='all_prestiges'),
