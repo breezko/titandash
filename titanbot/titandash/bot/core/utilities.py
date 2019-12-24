@@ -3,14 +3,21 @@ utilities.py
 
 Any utility or backing functions can be placed here and imported when needed.
 """
+from django.core.cache import cache
+
 from settings import LOG_DIR
+
 from titandash.bot.external.imagesearch import *
+from titandash.models.globals import GlobalSettings
+
 from .maps import MASTER_LOCS
 from .constants import (
-    STATS_DURATION_RE, STATS_LOOKUP_MULTIPLIER, STATS_TIMEDELTA_STR,
+    STATS_LOOKUP_MULTIPLIER, STATS_TIMEDELTA_STR,
     LOGGER_NAME, LOGGER_FORMAT, LOGGER_FILE_NAME, LOGGER_FILE_NAME_STRFMT,
     RAID_NOTIFICATION_MESSAGE
 )
+
+from pyautogui import _failSafeCheck
 
 from channels.generic.websocket import async_to_sync
 from channels.layers import get_channel_layer
@@ -23,9 +30,66 @@ from pyautogui import *
 import datetime
 import logging
 import time
-import math
 
 logger = logging.getLogger(LOGGER_NAME)
+
+
+class GlobalsChecker:
+    """
+    Using a pseudo lazy failsafe checking mechanism to avoid making multiple queries to our database
+    constantly to check if failsafe functionality is setup.
+    """
+    def __init__(self):
+        self.cache_key = "globals_cache"
+
+    def _get_cache(self):
+        """
+        Retrieve the cached instance of our global settings instance.
+
+        Resetting the cache every five seconds so that we retain a good amount of cached
+        information, but still allow changes made to the instance to propagate into checks.
+        """
+        return cache.get_or_set(
+            key=self.cache_key,
+            default=self.__instance,
+            timeout=5
+        )
+
+    @staticmethod
+    def __instance():
+        """
+        Static method used to retrieve the global settings instance object from the database.
+        """
+        return GlobalSettings.objects.grab()
+
+    def _failsafe_enabled(self):
+        """
+        Determine if our cached globals currently have failsafe functionality enabled.
+        """
+        return self._get_cache().failsafe_enabled
+
+    def _events_enabled(self):
+        """
+        Determine if our cached globals currently have event functionality enabled.
+        :return:
+        """
+        return self._get_cache().events_enabled
+
+    def failsafe(self):
+        """
+        Perform a failsafe check if it's currently enabled.
+        """
+        if self._failsafe_enabled():
+            _failSafeCheck()
+
+    def events(self):
+        """
+        Return a boolean to represent if events are enabled.
+        """
+        return self._events_enabled()
+
+
+globals = GlobalsChecker()
 
 
 def sleep(seconds):

@@ -16,6 +16,7 @@ from titandash.models.statistics import Session, Statistics, Log, ArtifactStatis
 from titandash.models.clan import RaidResult
 from titandash.models.artifact import Artifact, Tier
 from titandash.models.configuration import Configuration, ThemeConfig
+from titandash.models.globals import GlobalSettings
 from titandash.models.prestige import Prestige
 from titandash.models.queue import Queue
 
@@ -289,6 +290,45 @@ def import_configuration(request):
                 "formatted": config.updated
             }
         }
+    })
+
+
+def globals(request):
+    """Retrieve the current global settings instance."""
+    global_settings = GlobalSettings.objects.grab()
+
+    ctx = global_settings.form_dict()
+    ctx.update({
+        "GLOBALS_JSON": json.dumps(global_settings.json())
+    })
+
+    return render(request, "globals.html", context=ctx)
+
+
+def save_globals(request):
+    """
+    Attempt to save the global settings instance with the specified values taken from the request.
+    """
+    # Boolean Type Options.
+    failsafe_settings = request.POST.get("failsafe_settings")
+    event_settings = request.POST.get("event_settings")
+
+    if not failsafe_settings or not event_settings:
+        return JsonResponse(data={
+            "status": "error",
+            "message": "Missing required values."
+        })
+
+    failsafe_settings = failsafe_settings.lower()
+    event_settings = event_settings.lower()
+
+    GlobalSettings.objects.grab(qs=True).update(**{
+        "failsafe_settings": failsafe_settings,
+        "event_settings": event_settings
+    })
+
+    return JsonResponse(data={
+        "status": "success",
     })
 
 

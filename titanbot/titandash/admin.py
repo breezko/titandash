@@ -13,6 +13,7 @@ from .models.statistics import (
     PrestigeStatistics, Session
 )
 from .models.clan import Clan, Member, RaidResult, RaidResultDamage
+from .models.globals import GlobalSettings
 
 
 @register(BotInstance)
@@ -107,3 +108,8 @@ class RaidResultDamageAdmin(admin.ModelAdmin):
 class RaidResultAdmin(admin.ModelAdmin):
     filter_horizontal = ["attacks"]
     list_display = ["__str__", "instance", "digest", "parsed", "clan"]
+
+
+@register(GlobalSettings)
+class GlobalSettingsAdmin(admin.ModelAdmin):
+    list_display = ["pk", "failsafe_settings", "event_settings"]

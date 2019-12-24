@@ -397,9 +397,16 @@ STAGE_COORDS = {
     "region": (214, 37, 268, 50),
 }
 
+
 PRESTIGE_COORDS = {
-    "time_since": (301, 155, 380, 177),
-    "advance_start": (136, 584, 212, 612),
+    "base": {
+        "time_since": (301, 155, 380, 177),
+        "advance_start": (136, 584, 212, 612),
+    },
+    "event": {
+        "time_since": (301, 117, 380, 136),
+        "advance_start": (136, 565, 212, 584),
+    }
 }
 
 # The regions for each skill present on the master screen if the panel
