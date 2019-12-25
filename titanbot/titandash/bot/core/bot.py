@@ -1329,7 +1329,10 @@ class Bot(object):
 
                         self.logger.info("joining new tournament now...")
                         self.click(point=self.locs.join, pause=2)
-                        self.click(point=self.locs.tournament_prestige)
+
+                        # Looking for the final prestige join confirmation. Replicating base prestige functionality.
+                        prestige_final_found, prestige_final_position = self.grabber.search(image=self.images.confirm_prestige_final)
+                        self.click_image(image=self.images.confirm_prestige_final, pos=prestige_final_position)
 
                         # Return generated prestige and advanced start right away,
                         # setting values in the prestige function directly. Wait should
