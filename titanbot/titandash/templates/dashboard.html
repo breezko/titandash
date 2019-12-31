@@ -109,7 +109,14 @@
                         <div>
                             <label for="dashboardBotWindowSelect">Window:</label>
                             <select style="width: 100%;" id="dashboardBotWindowSelect" class="form-control">
-                                {% for window in windows %}
+                                {# Display Filtered Options In List. #}
+                                <option disabled value="">---------------- Filtered Windows ----------------</option>
+                                {% for filtered in windows.filtered %}
+                                    <option value="{{ filtered.hwnd }}">{{ filtered.formatted }}</option>
+                                {% endfor %}
+                                {# Display All Options In List. #}
+                                <option disabled value="">---------------- All Windows ----------------</option>
+                                {% for window in windows.all %}
                                     <option value="{{ window.hwnd }}">{{ window.formatted }}</option>
                                 {% endfor %}
                             </select>
