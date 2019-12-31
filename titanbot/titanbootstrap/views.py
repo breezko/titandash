@@ -196,7 +196,7 @@ def perform_requirements(request):
         # we can safely assume the requirements are now uo to date.
         return JsonResponse(data={
             "status": "DONE",
-            "output": subprocess.check_output(["pip", "install", "-r", os.path.join(settings.ROOT_DIR, "requirements.txt")])
+            "output": str(subprocess.check_output(["pip", "install", "-r", os.path.join(settings.ROOT_DIR, "requirements.txt")]))
         })
 
     # Catching a broad exception clause to ensure that we can move forward
@@ -220,7 +220,7 @@ def perform_node_packages(request):
         # Also setting our working directory explicitly to ensure the install command uses proper package file.
         return JsonResponse(data={
             "status": "DONE",
-            "output": subprocess.check_output("npm install", shell=True, cwd=settings.ROOT_DIR)
+            "output": str(subprocess.check_output("npm install", shell=True, cwd=settings.ROOT_DIR))
         })
 
     # Catching a broad exception again to ensure processes move forward on errors.
