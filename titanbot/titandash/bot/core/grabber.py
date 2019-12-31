@@ -83,7 +83,7 @@ class Grabber:
 
         # Modify the position to reflect the current window location.
         if position[0] != -1:
-            position = (position[0] + self.window.x, position[1])
+            position = (position[0], position[1])
 
         return found, position
 
