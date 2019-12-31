@@ -1609,19 +1609,22 @@ class Bot(object):
         if not self.ensure_collapsed():
             return False
 
-        self.click(
-            point=self.locs.collect_clan_crate,
-            pause=2
-        )
-        found, pos = self.grabber.search(image=self.images.okay)
-        if found:
-            self.logger.info("clan crate is available, collecting!")
-            self.click_image(
-                image=self.images.okay,
-                pos=pos,
+        found = False
+        for i in range(5):
+            self.click(
+                point=self.locs.collect_clan_crate,
                 pause=1
             )
+            found, pos = self.grabber.search(image=self.images.okay)
+            if found:
+                self.logger.info("clan crate is available, collecting!")
+                self.click_image(
+                    image=self.images.okay,
+                    pos=pos,
+                    pause=1
+                )
 
+                return found
         return found
 
     @wrap_current_function
