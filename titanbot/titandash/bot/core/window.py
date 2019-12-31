@@ -57,8 +57,7 @@ class Window(object):
 
     @property
     def rect(self):
-        return win32gui.GetClientRect(self.hwnd) if not self.debug \
-            else [0, 0, self.EMULATOR_WIDTH, self.EMULATOR_HEIGHT]
+        return win32gui.GetClientRect(self.hwnd) if not self.debug else [0, 0, self.EMULATOR_WIDTH, self.EMULATOR_HEIGHT]
 
     @property
     def x_padding(self):
@@ -204,9 +203,10 @@ class Window(object):
             _SCREENSHOT_LOCK.release()
             return image
 
+        _SCREENSHOT_LOCK.release()
+
         # If we have a region available, we can crop the screenshot
         # to represent the specified region of the emulator.
-        _SCREENSHOT_LOCK.release()
         return image.crop(box=region)
 
     def json(self):

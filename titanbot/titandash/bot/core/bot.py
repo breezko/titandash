@@ -15,8 +15,8 @@ from .props import Props
 from .grabber import Grabber
 from .stats import Stats
 from .wrap import DynamicAttrs
-from .decorators import not_in_transition, wait_afterwards, wrap_current_function
 from .decorators import BotProperty as bot_property
+from .decorators import not_in_transition, wait_afterwards, wrap_current_function
 from .utilities import (
     click_on_point, click_on_image, drag_mouse, make_logger, strfdelta,
     strfnumber, sleep, send_raid_notification
@@ -34,6 +34,9 @@ import win32clipboard
 
 
 class TerminationEncountered(Exception):
+    """
+    Basic exception raised when a termination is encountered while a bot session is running.
+    """
     pass
 
 
@@ -41,19 +44,38 @@ class Bot(object):
     """
     Main Bot Class.
 
-    Initial setup is handled here, as well as some data setup for use during runtime.
+    Initialization of the core "bot" object. Handling many core functions and setup steps at this point.
 
-    Statistics, Configurations and Logging is all setup here.
+    Anything that requires an initial value or "flag" is handled here, once, when a new session is started within
+    the Bot.__init__ method. Additionally, many variables are set at this point that are used throughout a sessions
+    runtime.
     """
-    def __init__(self, configuration, window, enable_shortcuts, instance, logger=None, start=False, debug=False):
-        """
-        Initialize a new Bot. Setting up base variables as well as performing some bootstrapping
-        to ensure authentication is handled before moving on.
-        """
+    def __init__(self,
+                 configuration,
+                 window,
+                 enable_shortcuts,
+                 instance,
+                 logger=None,
+                 start=False,
+                 debug=False):
+
+        self.ADVANCED_START = None
         self.TERMINATE = False
         self.PAUSE = False
-        self.ERRORS = 0
-        self.ADVANCED_START = None
+
+        self.last_stage = None
+        self.owned_artifacts = None
+        self.next_artifact_index = None
+        self.next_artifact_upgrade = None
+        self.minigame_order = None
+        self.enabled_perks = None
+        self.scheduler = None
+
+        self.current_prestige_master_levelled = False
+        self.current_prestige_skill_levels = {
+            skill: 0 for skill in SKILLS
+        }
+
         self.configuration = configuration
         self.window = window
         self.enable_shortcuts = enable_shortcuts
@@ -61,29 +83,43 @@ class Bot(object):
         self.instance.configuration = configuration
         self.instance.window = window.json()
         self.instance.shortcuts = enable_shortcuts
-        self.instance.errors = self.ERRORS
 
-        # Initialize and setup our Props object which is used to handle BotInstance
-        # realtime updates using our Django Channels sockets.
-        self.props = Props(instance=self.instance)
-        self.last_stage = None
-
-        self.logger = logger if logger else make_logger(instance, self.configuration.logging_level, log_file=None)
-        if not self.configuration.enable_logging:
-            self.logger.disabled = True
-
-        # Bot Utilities.
-        self.grabber = Grabber(window=self.window, logger=self.logger)
-        self.stats = Stats(instance=self.instance, window=self.window, grabber=self.grabber, configuration=self.configuration, logger=self.logger)
-
-        # Instance Log (Handled by statistics initialization).
-        self.instance.log = self.stats.session.log
+        self.logger = logger if logger else make_logger(
+            instance=instance,
+            log_level=self.configuration.logging_level,
+            log_file=None,
+            enabled=self.configuration.enable_logging
+        )
+        self.props = Props(
+            instance=self.instance
+        )
+        self.grabber = Grabber(
+            window=self.window,
+            logger=self.logger
+        )
+        self.stats = Stats(
+            instance=self.instance,
+            window=self.window,
+            grabber=self.grabber,
+            configuration=self.configuration,
+            logger=self.logger
+        )
 
         # Data Containers.
-        self.images = DynamicAttrs(attrs=IMAGES, logger=self.logger)
-        self.locs = DynamicAttrs(attrs=GAME_LOCS, logger=self.logger)
-        self.colors = DynamicAttrs(attrs=GAME_COLORS, logger=self.logger)
+        self.images = DynamicAttrs(
+            attrs=IMAGES,
+            logger=self.logger
+        )
+        self.locs = DynamicAttrs(
+            attrs=GAME_LOCS,
+            logger=self.logger
+        )
+        self.colors = DynamicAttrs(
+            attrs=GAME_COLORS,
+            logger=self.logger
+        )
 
+        self.instance.log = self.stats.session.log
         self.instance.start(session=self.stats.session)
 
         self.logger.info("==========================================================================================")
@@ -96,27 +132,12 @@ class Bot(object):
         self.logger.info("c: {configuration}".format(configuration=self.configuration))
         self.logger.info("==========================================================================================")
 
-        # Online Authentication.
         if not debug:
             AuthWrapper().online()
 
-        # Minigame Order (Set once on initialization and used through session).
-        self.minigame_order = self.order_minigames()
+        self.calculate_minigames_order()
+        self.calculate_enabled_perks()
 
-        # Session Artifacts Information.
-        self.owned_artifacts = None
-        self.next_artifact_index = None
-        self.next_artifact_upgrade = None
-
-        # Current Prestige Information.
-        self.current_prestige_master_levelled = False
-        self.current_prestige_skill_levels = {skill: 0 for skill in SKILLS}
-
-        # Enabled Perks.
-        self.enabled_perks = [k[0] for k in PERK_CHOICES if k[0] != NO_PERK and getattr(self.configuration, "enable_{key}".format(key=k[0]))]
-
-        # Setup the datetime objects used initially to determine when the bot
-        # will perform specific actions in game.
         self.calculate_next_prestige()
         self.calculate_next_perk_check()
         self.calculate_next_stats_update()
@@ -131,38 +152,65 @@ class Bot(object):
         self.calculate_next_clan_result_parse()
         self.calculate_next_break()
 
-        # Background Function Scheduler.
-        self.scheduler = BackgroundScheduler()
-        # Add "Jobs" To Scheduler.
-        for prop in bot_property.intervals():
-            self.scheduler.add_job(
-                func=getattr(self, prop["name"]),
-                trigger='interval',
-                seconds=prop["interval"],
-                id=prop["name"]
-            )
-
-        # Begin "Bot" Loop.
-        if start:
-            self.run()
+        self.setup_scheduler()
+        self.run(
+            start=start
+        )
 
     def click(self, point, clicks=1, interval=0.0, button="left", pause=0.0, offset=5):
         """
         Local click method for use with the bot, ensuring we pass the window being used into the click function.
         """
-        click_on_point(point=point, window=self.window, clicks=clicks, interval=interval, button=button, pause=pause, offset=offset)
+        click_on_point(
+            point=point,
+            window=self.window,
+            clicks=clicks,
+            interval=interval,
+            button=button,
+            pause=pause,
+            offset=offset
+        )
 
     def click_image(self, image, pos, button="left", pause=0.0):
         """
         Local image click method for use with the bot, ensuring we pass the window being used into the image click function.
         """
-        click_on_image(window=self.window, image=image, pos=pos, button=button, pause=pause)
+        click_on_image(
+            window=self.window,
+            image=image,
+            pos=pos,
+            button=button,
+            pause=pause
+        )
 
     def drag(self, start, end, button="left", pause=0.5):
         """
         Local drag method for use with the bot, ensuring we pass the window being used into the drag function.
         """
-        drag_mouse(start=start, end=end, window=self.window, button=button, pause=pause)
+        drag_mouse(
+            start=start,
+            end=end,
+            window=self.window,
+            button=button,
+            pause=pause
+        )
+
+    def setup_scheduler(self):
+        """
+        Setup the background scheduler object present on a bot instance, ensuring that jobs with defined
+        intervals are successfully added to the scheduler.
+        """
+        self.scheduler = BackgroundScheduler()
+
+        # Add each individual job to the background scheduler that should
+        # happen every X seconds based on the interval present int he property.
+        for prop in bot_property.intervals():
+            self.scheduler.add_job(
+                func=getattr(self, prop["name"]),
+                seconds=prop["interval"],
+                trigger="interval",
+                id=prop["name"]
+            )
 
     @wrap_current_function
     def get_upgrade_artifacts(self, testing=False):
@@ -216,8 +264,8 @@ class Bot(object):
 
         if self.configuration.shuffle_artifacts:
             random.shuffle(lst)
-
-        return lst
+        if lst:
+            self.owned_artifacts = lst
 
     @wrap_current_function
     def update_next_artifact_upgrade(self):
@@ -273,7 +321,7 @@ class Bot(object):
         numeric friendly conditionals.
 
         Note, we do not wrap our current function implementation since we use this function
-        through our background scheduler.
+        through our background scheduler implementation.
         """
         try:
             stage = int(self.stats.stage_ocr())
@@ -292,7 +340,7 @@ class Bot(object):
             pass
 
     @wrap_current_function
-    def order_minigames(self):
+    def calculate_minigames_order(self):
         """
         Determine the order of minigame execution.
         """
@@ -307,7 +355,45 @@ class Bot(object):
         if self.configuration.enable_flash_zip:
             minigames.append("flash_zip")
 
-        return minigames
+        self.minigame_order = minigames
+
+    @wrap_current_function
+    def calculate_enabled_perks(self):
+        """
+        Retrieve a list of all enabled perks based on the configuration specified.
+        """
+        enabled_perks = []
+
+        for perk in PERK_CHOICES:
+            if perk[0] != NO_PERK:
+                if getattr(self.configuration, "enable_{key}".format(key=perk), False):
+                    enabled_perks.append(perk[0])
+
+        self.enabled_perks = enabled_perks
+
+    def _calculate(self, attr, interval=None, dt=None, log=True):
+        """
+        Base calculation method for any bot functions that should be ran on an interval configured by the user or bot.
+        """
+        if interval and dt:
+            raise ValueError("Only one of 'interval' or 'dt' should be present, but not both.")
+
+        # Calculate current datetime for use with interval based
+        # datetimes, the timestamp is also used if a log is outputted.
+        now = timezone.now()
+
+        # Interval based calculations require an interval to be specified
+        # in seconds only.
+        if interval:
+            dt = now + datetime.timedelta(
+                seconds=interval
+            )
+
+        # Props.attr = dt
+        setattr(self.props, attr, dt)
+
+        if log:
+            self.logger.info(msg="{attr} should be executed in {time}".format(attr=attr, time=strfdelta(timedelta=(dt - now))))
 
     @wrap_current_function
     def calculate_next_skill_execution(self, skill=None):
@@ -324,23 +410,10 @@ class Bot(object):
         for skill in calculating:
             interval = getattr(self.configuration, interval_key.format(skill=skill), 0)
             if interval != 0:
-                dt = now + datetime.timedelta(seconds=interval)
-                setattr(self.props, next_key.format(skill=skill), dt)
-                self.logger.info("{skill} will be activated in {time}.".format(skill=skill, time=strfdelta(dt - now)))
-
-    @wrap_current_function
-    def bump_timed_variables(self, delta):
-        """
-        Bump the bot variables that are used to determine when functionality takes place (ie: next_xxx)
-        by the specified delta.
-
-        This is useful to us if a user has to wait for things to happens (ie: wait for an ad).
-        """
-        for prop in [prop for prop in self.props.fields if prop.split("_")[0] == "next"]:
-            # Ignore None attributes so that disabled functionality isn't
-            # also bumped unnecessarily.
-            if getattr(self.props, prop):
-                setattr(self.props, prop, getattr(self.props, prop) + delta)
+                self._calculate(
+                    attr=next_key.format(skill=skill),
+                    interval=interval
+                )
 
     def should_prestige(self):
         """
@@ -355,8 +428,7 @@ class Bot(object):
         # Is a randomized threshold prestige already waiting to be executed?
         if self.configuration.enable_prestige_threshold_randomization:
             if self.props.next_randomized_prestige:
-                now = timezone.now()
-                if now > self.props.next_randomized_prestige:
+                if timezone.now() > self.props.next_randomized_prestige:
                     self.logger.info("prestige randomization datetime has been surpassed, a prestige will now be executed.")
                     return True
 
@@ -369,9 +441,9 @@ class Bot(object):
         # reached... This also determines whether or not we should generate the random
         # datetime until the prestige will really take place.
         ready = False
+        now = timezone.now()
 
         if self.configuration.prestige_x_minutes != 0:
-            now = timezone.now()
             self.logger.info("timed prestige is enabled, and should take place in {time}".format(time=strfdelta(self.props.next_prestige - now)))
 
             # Is the hard time limit set? If it is, perform prestige no matter what,
@@ -418,7 +490,6 @@ class Bot(object):
         # Using threshold randomization to ensure that prestiges are quite random.
         if ready:
             if self.configuration.enable_prestige_threshold_randomization:
-                now = timezone.now()
                 jitter = random.randint(self.configuration.prestige_random_min_time, self.configuration.prestige_random_max_time)
                 dt = now + datetime.timedelta(minutes=jitter)
                 self.props.next_randomized_prestige = dt
@@ -438,10 +509,10 @@ class Bot(object):
         """
         Calculate when the next timed prestige will take place.
         """
-        now = timezone.now()
-        dt = now + datetime.timedelta(seconds=self.configuration.prestige_x_minutes * 60)
-        self.props.next_prestige = dt
-        self.logger.info("the next timed prestige will take place in {time}".format(time=strfdelta(dt - now)))
+        self._calculate(
+            attr="next_prestige",
+            interval=self.configuration.prestige_x_minutes * 60
+        )
 
     @wrap_current_function
     def calculate_next_perk_check(self):
@@ -452,10 +523,10 @@ class Bot(object):
             if self.configuration.enable_perk_only_tournament:
                 return
 
-            now = timezone.now()
-            dt = now + datetime.timedelta(hours=self.configuration.use_perks_every_x_hours)
-            self.props.next_perk_check = dt
-            self.logger.info("the next timed perk check will take place in {time}".format(time=strfdelta(dt - now)))
+            self._calculate(
+                attr="next_perk_check",
+                interval=self.configuration.use_perks_every_x_hours * 60 * 60
+            )
 
     @wrap_current_function
     @bot_property(queueable=True, tooltip="Calculate the next time that the master level process will take place.")
@@ -463,10 +534,10 @@ class Bot(object):
         """
         Calculate when the next sword master levelling process will be ran.
         """
-        now = timezone.now()
-        dt = now + datetime.timedelta(seconds=self.configuration.master_level_every_x_seconds)
-        self.props.next_master_level = dt
-        self.logger.info("sword master levelling process will be initiated in {time}".format(time=strfdelta(dt - now)))
+        self._calculate(
+            attr="next_master_level",
+            interval=self.configuration.master_level_every_x_seconds
+        )
 
     @wrap_current_function
     @bot_property(queueable=True, tooltip="Calculate the next time that the heroes level process will take place.")
@@ -474,10 +545,10 @@ class Bot(object):
         """
         Calculate when the next heroes level process will be ran.
         """
-        now = timezone.now()
-        dt = now + datetime.timedelta(seconds=self.configuration.hero_level_every_x_seconds)
-        self.props.next_heroes_level = dt
-        self.logger.info("heroes levelling process will be initiated in {time}".format(time=strfdelta(dt - now)))
+        self._calculate(
+            attr="next_heroes_level",
+            interval=self.configuration.hero_level_every_x_seconds
+        )
 
     @wrap_current_function
     @bot_property(queueable=True, tooltip="Calculate the next time that the skills level process will take place.")
@@ -485,20 +556,20 @@ class Bot(object):
         """
         Calculate when the next skills level process will be ran.
         """
-        now = timezone.now()
-        dt = now + datetime.timedelta(seconds=self.configuration.level_skills_every_x_seconds)
-        self.props.next_skills_level = dt
-        self.logger.info("skills levelling process will be initiated in {time}".format(time=strfdelta(dt - now)))
+        self._calculate(
+            attr="next_skills_level",
+            interval=self.configuration.level_skills_every_x_seconds
+        )
 
     @wrap_current_function
     def calculate_next_miscellaneous_actions(self):
         """
         Calculate when the next miscellaneous function process will be ran.
         """
-        now = timezone.now()
-        dt = now + datetime.timedelta(minutes=15)
-        self.props.next_miscellaneous_actions = dt
-        self.logger.info("miscellaneous actions will be initiated in {time}".format(time=strfdelta(dt - now)))
+        self._calculate(
+            attr="next_miscellaneous_actions",
+            interval=900
+        )
 
     @wrap_current_function
     @bot_property(queueable=True, tooltip="Calculate the next time that the skills activation process will take place.")
@@ -506,10 +577,10 @@ class Bot(object):
         """
         Calculate when the next skills activation process will be ran.
         """
-        now = timezone.now()
-        dt = now + datetime.timedelta(seconds=self.configuration.activate_skills_every_x_seconds)
-        self.props.next_skills_activation = dt
-        self.logger.info("skills activation process will be initiated in {time}".format(time=strfdelta(dt - now)))
+        self._calculate(
+            attr="next_skills_activation",
+            interval=self.configuration.activate_skills_every_x_seconds
+        )
 
     @wrap_current_function
     @bot_property(queueable=True, tooltip="Calculate the next time a statistics update will take place.")
@@ -517,10 +588,10 @@ class Bot(object):
         """
         Calculate when the next stats update should take place.
         """
-        now = timezone.now()
-        dt = now + datetime.timedelta(seconds=self.configuration.update_stats_every_x_minutes * 60)
-        self.props.next_stats_update = dt
-        self.logger.info("in game statistics update in game will be initiated in {time}".format(time=strfdelta(dt - now)))
+        self._calculate(
+            attr="next_stats_update",
+            interval=self.configuration.update_stats_every_x_minutes * 60
+        )
 
     @wrap_current_function
     @bot_property(queueable=True, tooltip="Calculate the next time a daily achievement check will take place")
@@ -528,10 +599,10 @@ class Bot(object):
         """
         Calculate when the next daily achievement check should take place.
         """
-        now = timezone.now()
-        dt = now + datetime.timedelta(hours=self.configuration.daily_achievements_check_every_x_hours)
-        self.props.next_daily_achievement_check = dt
-        self.logger.info("daily achievement check in game will be initiated in {time}".format(time=strfdelta(dt - now)))
+        self._calculate(
+            attr="next_daily_achievement_check",
+            interval=self.configuration.daily_achievements_check_every_x_hours * 60 * 60
+        )
 
     @wrap_current_function
     @bot_property(queueable=True, tooltip="Calculate the next time a milestone check will take place.")
@@ -539,10 +610,10 @@ class Bot(object):
         """
         Calculate when the next milestone check should take place.
         """
-        now = timezone.now()
-        dt = now + datetime.timedelta(hours=self.configuration.milestones_check_every_x_hours)
-        self.props.next_milestone_check = dt
-        self.logger.info("milestone check in game will be initiated in {time}".format(time=strfdelta(dt - now)))
+        self._calculate(
+            attr="next_milestone_check",
+            interval=self.configuration.milestones_check_every_x_hours * 60 * 60
+        )
 
     @wrap_current_function
     @bot_property(queueable=True, tooltip="Calculate the next time raid notification check will take place.")
@@ -550,10 +621,10 @@ class Bot(object):
         """
         Calculate when the next raid notifications check should take place.
         """
-        now = timezone.now()
-        dt = now + datetime.timedelta(minutes=self.configuration.raid_notifications_check_every_x_minutes)
-        self.props.next_raid_notifications_check = dt
-        self.logger.info("raid notifications check will be initiated in {time}".format(time=strfdelta(dt - now)))
+        self._calculate(
+            attr="next_raid_notifications_check",
+            interval=self.configuration.raid_notifications_check_every_x_minutes * 60
+        )
 
     @wrap_current_function
     @bot_property(queueable=True, tooltip="Calculate the next time a clan result parse will take place.")
@@ -561,10 +632,10 @@ class Bot(object):
         """
         Calculate when the next clan result parse should take place.
         """
-        now = timezone.now()
-        dt = now + datetime.timedelta(minutes=self.configuration.parse_clan_results_every_x_minutes)
-        self.props.next_clan_results_parse = dt
-        self.logger.info("clan results parse in game will be initiated in {time}".format(time=strfdelta(dt - now)))
+        self._calculate(
+            attr="next_clan_results_parse",
+            interval=self.configuration.parse_clan_results_every_x_minutes * 60
+        )
 
     @wrap_current_function
     @bot_property(queueable=True, tooltip="Calculate the next time a break will take place.")
@@ -585,9 +656,19 @@ class Bot(object):
             resume_jitter = random.randint(self.configuration.breaks_minutes_min, self.configuration.breaks_minutes_max)
             next_break_res = next_break_dt + datetime.timedelta(minutes=resume_jitter + 10)
 
-            self.props.next_break = next_break_dt
-            self.props.resume_from_break = next_break_res
+            self._calculate(
+                attr="next_break",
+                dt=next_break_dt,
+                log=False
+            )
+            self._calculate(
+                attr="resume_from_break",
+                dt=next_break_res,
+                log=False
+            )
 
+            # Using a custom log message to ensure proper, readable information is outputted
+            # about the current breaks datetimes.
             self.logger.info("the next in game break will take place in {time_1} and resume in {time_2}".format(
                 time_1=strfdelta(next_break_dt - now),
                 time_2=strfdelta(next_break_res - now)
@@ -601,10 +682,8 @@ class Bot(object):
         Perform all actions related to the levelling of all heroes in game.
         """
         if self.configuration.enable_heroes:
-            now = timezone.now()
-            if force or now > self.props.next_heroes_level:
-                self.logger.info("{begin_force} heroes levelling process in game now.".format(
-                    begin_force="beginning" if not force else "forcing"))
+            if force or timezone.now() > self.props.next_heroes_level:
+                self.logger.info("{begin_force} heroes levelling process in game now.".format(begin_force="beginning" if not force else "forcing"))
 
                 if not self.goto_heroes(collapsed=False):
                     return False
@@ -616,20 +695,34 @@ class Bot(object):
                 if self.grabber.search(self.images.max_level, bool_only=True):
                     self.logger.info("a max levelled hero has been found! Only first set of heroes will be levelled.")
                     for point in HEROES_LOCS["level_heroes"][::-1][1:]:
-                        self.click(point=point, clicks=self.configuration.hero_level_intensity, interval=0.07)
+                        self.click(
+                            point=point,
+                            clicks=self.configuration.hero_level_intensity,
+                            interval=0.07
+                        )
 
                     # Early exit as well.
                     self.calculate_next_heroes_level()
                     return True
 
-                # Always level the first set of heroes in the list.
                 self.logger.info("levelling the first set of heroes available...")
+                # Always level the first set of heroes in the list.
+                # HEROES_LOCS "level_heroes" is a tuple of coords.
+                # [::-1] reverses out set of tuples.
+                # [1:] skips the first index present in the reversed list.
                 for point in HEROES_LOCS["level_heroes"][::-1][1:]:
-                    self.click(point=point, clicks=self.configuration.hero_level_intensity, interval=0.07)
+                    self.click(
+                        point=point,
+                        clicks=self.configuration.hero_level_intensity,
+                        interval=0.07
+                    )
 
                 # Travel to the bottom of the panel.
                 for i in range(6):
-                    self.drag(start=self.locs.scroll_start, end=self.locs.scroll_bottom_end)
+                    self.drag(
+                        start=self.locs.scroll_start,
+                        end=self.locs.scroll_bottom_end
+                    )
 
                     # Have we found any max level heroes yet?
                     if self.grabber.search(image=self.images.max_level, bool_only=True):
@@ -645,15 +738,27 @@ class Bot(object):
                 while not self.grabber.search(image=self.images.masteries, bool_only=True):
                     self.logger.info("levelling heroes on screen...")
                     for point in HEROES_LOCS["level_heroes"]:
-                        self.click(point=point, clicks=self.configuration.hero_level_intensity, interval=0.07)
+                        self.click(
+                            point=point,
+                            clicks=self.configuration.hero_level_intensity,
+                            interval=0.07
+                        )
 
                     self.logger.info("dragging hero panel to next set of heroes...")
-                    self.drag(start=drag_start, end=drag_end, pause=1)
+                    self.drag(
+                        start=drag_start,
+                        end=drag_end,
+                        pause=1
+                    )
 
                 # Performing one additional heroes level after the top
                 # has been reached...
                 for point in HEROES_LOCS["level_heroes"]:
-                    self.click(point=point, clicks=self.configuration.hero_level_intensity, interval=0.07)
+                    self.click(
+                        point=point,
+                        clicks=self.configuration.hero_level_intensity,
+                        interval=0.07
+                    )
 
                 # Recalculate the next heroes level process.
                 self.calculate_next_heroes_level()
@@ -667,20 +772,21 @@ class Bot(object):
         Perform all actions related to the levelling of the sword master in game.
         """
         if self.configuration.enable_master:
-            now = timezone.now()
-            if force or now > self.props.next_master_level:
-                self.logger.info("{begin_force} master levelling process in game now.".format(
-                    begin_force="beginning" if not force else "forcing"))
+            if force or timezone.now() > self.props.next_master_level:
+                self.logger.info("{begin_force} master levelling process in game now.".format(begin_force="beginning" if not force else "forcing"))
 
+                # Creating base "level" flag. Since master levelling can be configured to either take place
+                # every x seconds, or once per prestige, we determine once based on prestige settings.
                 level = True
-                # If the user has specified to only level the sword master once after every prestige
-                # and once at the beginning of their session.
+                # Levelling sword master once when a prestige takes place.
                 if self.configuration.master_level_only_once:
                     if self.current_prestige_master_levelled:
                         level = False
                     else:
                         self.logger.info("levelling the sword master once until the next prestige...")
                         self.current_prestige_master_levelled = True
+
+                # Levelling the sword master every x seconds.
                 else:
                     self.logger.info("levelling the sword master {clicks} time(s)".format(clicks=self.configuration.master_level_intensity))
 
@@ -692,7 +798,10 @@ class Bot(object):
 
                     # Level our sword master given the specified amount of clicks
                     # through the users configuration.
-                    self.click(point=MASTER_LOCS["master_level"], clicks=self.configuration.master_level_intensity)
+                    self.click(
+                        point=MASTER_LOCS["master_level"],
+                        clicks=self.configuration.master_level_intensity
+                    )
 
                 # Recalculate the next sword master level process.
                 self.calculate_next_master_level()
@@ -712,11 +821,10 @@ class Bot(object):
 
         # Looping through all in game skills, parsing out the current level.
         for skill in SKILLS:
-            self.current_prestige_skill_levels[skill] = self.stats.skill_ocr(region=SKILL_LEVEL_COORDS[skill])
-            self.logger.info("{skill} parsed as level {level}".format(
-                skill=skill,
-                level=self.current_prestige_skill_levels[skill]
-            ))
+            self.current_prestige_skill_levels[skill] = self.stats.skill_ocr(
+                region=SKILL_LEVEL_COORDS[skill]
+            )
+            self.logger.info("{skill} parsed as level {level}".format(skill=skill, level=self.current_prestige_skill_levels[skill]))
 
     def enabled_skills(self):
         """
@@ -806,40 +914,39 @@ class Bot(object):
             # Click on our point top begin the level process
             # for the current in game skill.
             self.logger.info("levelling {skill} {clicks} time(s) now...".format(skill=key, clicks=clicks))
-            self.click(point=point, pause=1, clicks=clicks, interval=0.3)
+            self.click(
+                point=point,
+                clicks=clicks,
+                interval=0.3,
+                pause=1,
+            )
 
             # Should the skill in question be levelled to it's maximum amount available?
             if max_skill:
                 if self.grabber.point_is_color(point=color, color=self.colors.WHITE):
-                    self.click(point=color, pause=0.5)
+                    self.click(
+                        point=color,
+                        pause=0.5
+                    )
 
         def can_level(key):
             """
             Check to see if a skill can currently be levelled or not.
             """
-            if self.grabber.point_is_color(point=SKILL_CAN_LEVEL_LOCS[key], color=self.colors.SKILL_CANT_LEVEL):
-                return False
-            else:
-                return True
+            return not self.grabber.point_is_color(point=SKILL_CAN_LEVEL_LOCS[key], color=self.colors.SKILL_CANT_LEVEL)
 
         def active(key):
             """
             Check to see if a skill is currently active or not.
             """
-            if self.grabber.search(image=self.images.cancel_active_skill, region=MASTER_COORDS["skills"][key], bool_only=True):
-                return True
-            else:
-                return False
+            return self.grabber.search(image=self.images.cancel_active_skill, region=MASTER_COORDS["skills"][key], bool_only=True)
 
         # Actual skill levelling process begins here.
         if self.configuration.enable_level_skills:
-            now = timezone.now()
-            if force or now > self.props.next_skills_level:
-                self.logger.info("{begin_force} skills levelling process in game now.".format(
-                    begin_force="beginning" if not force else "forcing"))
+            if force or timezone.now() > self.props.next_skills_level:
+                self.logger.info("{begin_force} skills levelling process in game now.".format(begin_force="beginning" if not force else "forcing"))
 
                 capped, uncapped = self.levels_capped()
-
                 # Do we have any uncapped skills yet? If so, we should begin
                 # the process to level those skills specifically to their specified level cap.
                 if uncapped:
@@ -862,17 +969,25 @@ class Bot(object):
                         # about to level should be levelled to it's max level. Which we can
                         # determine based on the chosen value == SKILL_MAX_LEVEL.
                         if values["chosen"] == SKILL_MAX_LEVEL:
-                            level_skill(key=skill, max_skill=True)
+                            level_skill(
+                                key=skill,
+                                max_skill=True
+                            )
 
                         # Otherwise, we want to level the current skill upto the
                         # cap set by our user.
                         else:
-                            level_skill(key=skill, clicks=values["remaining"])
+                            level_skill(
+                                key=skill,
+                                clicks=values["remaining"]
+                            )
 
                         # After we have levelled our skill to it's appropriate values.
                         # We need to perform an OCR check on the skill in it's current state
                         # so that our current prestige level information is up to date.
-                        self.current_prestige_skill_levels[skill] = self.stats.skill_ocr(region=SKILL_LEVEL_COORDS[skill])
+                        self.current_prestige_skill_levels[skill] = self.stats.skill_ocr(
+                            region=SKILL_LEVEL_COORDS[skill]
+                        )
 
                 # Recalculate the next skill level process.
                 self.calculate_next_skills_level()
@@ -893,20 +1008,16 @@ class Bot(object):
         If chosen, skills should also wait to be activated until the longest interval is reached.
         """
         if self.configuration.enable_activate_skills:
-            now = timezone.now()
-            if force or now > self.props.next_skills_activation:
-                self.logger.info("{begin_force} skills activation process in game now.".format(
-                    begin_force="beginning" if not force else "forcing"))
+            if force or timezone.now() > self.props.next_skills_activation:
+                self.logger.info("{begin_force} skills activation process in game now.".format(begin_force="beginning" if not force else "forcing"))
 
                 # Skill activation will take place now, we need to determine whether or not any skills
                 # are enabled and ready to be activated.
                 enabled = self.enabled_skills()
-
                 # If we have enabled skills, begin our loop to activate them
                 # if the intervals are correct.
                 if enabled:
                     self.no_panel()
-
                     next_key = "next_{skill}"
 
                     # Looping through each skill that's enabled to be activated.
@@ -915,12 +1026,16 @@ class Bot(object):
                         prop = getattr(self.props, next_key.format(skill=skill))
 
                         # Is this skill ready to be activated?
-                        if force or now > prop:
+                        if force or timezone.now() > prop:
                             self.logger.info("activating {skill} now...".format(skill=skill))
-                            self.click(point=getattr(self.locs, skill), pause=0.2)
+                            self.click(
+                                point=getattr(self.locs, skill),
+                                clicks=3,
+                                pause=0.2
+                            )
                             self.calculate_next_skill_execution(skill=skill)
                         else:
-                            self.logger.info("{skill} will be activated in {time}".format(skill=skill, time=strfdelta(prop - now)))
+                            self.logger.info("{skill} will be activated in {time}".format(skill=skill, time=strfdelta(prop - timezone.now())))
 
                 # Recalculate the next skill activation process.
                 self.calculate_next_skills_activation()
@@ -943,7 +1058,10 @@ class Bot(object):
         # Attempting to open the purchase panel for this perk.
         # If it is already active, no window will be opened, which we
         # can use to determine whether or not to continue.
-        self.click(point=getattr(self.locs, perk), pause=1)
+        self.click(
+            point=getattr(self.locs, perk),
+            pause=1
+        )
 
         if not self.grabber.search(image=self.images.perks_header, bool_only=True):
             self.logger.info("unable to open {perk} purchase panel, it's probably already active...".format(perk=perk))
@@ -955,14 +1073,23 @@ class Bot(object):
         if self.grabber.search(image=self.images.perks_diamond, region=PERK_COORDS["purchase"], bool_only=True):
             if self.configuration.enable_perk_diamond_purchase:
                 self.logger.info("purchasing {perk} now.".format(perk=perk))
-                return self.click(point=self.locs.perks_okay, pause=1)
+                return self.click(
+                    point=self.locs.perks_okay,
+                    pause=1
+                )
             else:
                 self.logger.info("{perk} requires diamonds to use, this is disabled currently, skipping...".format(perk=perk))
-                return self.click(point=self.locs.perks_cancel, pause=1)
+                return self.click(
+                    point=self.locs.perks_cancel,
+                    pause=1
+                )
 
         # Otherwise, go ahead with normal perk purchase.
         self.logger.info("using {perk} now.".format(perk=perk))
-        return self.click(point=self.locs.perks_okay, pause=1)
+        return self.click(
+            point=self.locs.perks_okay,
+            pause=1
+        )
 
     @wrap_current_function
     @not_in_transition
@@ -980,16 +1107,16 @@ class Bot(object):
 
             if self.props.next_perk_check:
                 if force or timezone.now() > self.props.next_perk_check:
-                    self.logger.info("{force_or_initiate} perks check now.".format(
-                        force_or_initiate="forcing" if force else "beginning"))
-
+                    self.logger.info("{force_or_initiate} perks check now.".format(force_or_initiate="forcing" if force else "beginning"))
                     # Travel to the bottom of the master panel, expanded so we
                     # can view all of the perks in game.
                     self.goto_master(collapsed=False, top=False)
 
                     # Looping through enabled perks in game, attempting to use each one.
                     for perk in self.enabled_perks:
-                        self.use_perk(perk=perk)
+                        self.use_perk(
+                            perk=perk
+                        )
 
                     self.calculate_next_perk_check()
                     return True
@@ -1002,11 +1129,8 @@ class Bot(object):
         Update the bot stats by travelling to the stats page in the heroes panel and performing OCR update.
         """
         if self.configuration.enable_stats:
-            now = timezone.now()
-            if force or now > self.props.next_stats_update:
-                self.logger.info("{force_or_initiate} in game statistics update now.".format(
-                    force_or_initiate="forcing" if force else "beginning"))
-
+            if force or timezone.now() > self.props.next_stats_update:
+                self.logger.info("{force_or_initiate} in game statistics update now.".format(force_or_initiate="forcing" if force else "beginning"))
                 # Leaving boss fight here so that a stage transition does not take place
                 # in the middle of a stats update.
                 if not self.leave_boss():
@@ -1014,28 +1138,40 @@ class Bot(object):
 
                 # Sleeping slightly before attempting to goto top of heroes panel so that new hero
                 # levels doesn't cause the 'top' of the panel to disappear after travelling.
-                sleep(3)
+                sleep(2)
                 if not self.goto_heroes():
                     return False
 
                 # Ensure we are at the top of the stats screen while collapsed.
                 while not self.grabber.search(self.images.stats, bool_only=True):
-                    self.drag(start=self.locs.scroll_start, end=self.locs.scroll_top_end)
+                    self.drag(
+                        start=self.locs.scroll_start,
+                        end=self.locs.scroll_top_end
+                    )
                 # Ensure the stats panel has been opened before continuing.
                 while not self.grabber.search(self.images.stats_title, bool_only=True):
-                    self.click(point=HEROES_LOCS["stats_collapsed"], pause=1)
+                    self.click(
+                        point=HEROES_LOCS["stats_collapsed"],
+                        pause=1
+                    )
 
                 # Scrolling to the bottom of the stats panel.
-                sleep(2)
+                sleep(1)
                 for i in range(5):
-                    self.drag(start=self.locs.scroll_start, end=self.locs.scroll_bottom_end)
+                    self.drag(
+                        start=self.locs.scroll_start,
+                        end=self.locs.scroll_bottom_end
+                    )
 
                 self.stats.update_ocr()
                 self.stats.statistics.bot_statistics.updates += 1
                 self.stats.statistics.bot_statistics.save()
 
                 self.calculate_next_stats_update()
-                self.click(point=MASTER_LOCS["screen_top"], clicks=3)
+                self.click(
+                    point=MASTER_LOCS["screen_top"],
+                    clicks=3
+                )
 
     @wrap_current_function
     @not_in_transition
@@ -1046,8 +1182,7 @@ class Bot(object):
         """
         if self.configuration.enable_auto_prestige:
             if self.should_prestige() or force:
-                self.logger.info("{begin_force} prestige process in game now.".format(
-                    begin_force="beginning" if not force else "forcing"))
+                self.logger.info("{begin_force} prestige process in game now.".format(begin_force="beginning" if not force else "forcing"))
 
                 # Leaving boss fight if one is available, and waiting slightly to ensure out current
                 # stage is up to date before we begin the prestige.
@@ -1062,11 +1197,9 @@ class Bot(object):
                 # Reset the current prestige skill level values, since they all go back to
                 # zero on a prestige, We can reset and be sure they're all zero.
                 self.current_prestige_skill_levels = {skill: 0 for skill in SKILLS}
-
                 # Reset the current prestige variables, so that after this prestige is finished,
                 # we perform those functions then disable them when needed.
                 self.current_prestige_master_levelled = False
-
                 # Reset the prestige randomization variable if it is currently
                 # being used, so that our next prestige process is reset.
                 if self.configuration.enable_prestige_threshold_randomization:
@@ -1097,33 +1230,49 @@ class Bot(object):
                     if self.configuration.enable_perk_usage:
                         if self.configuration.enable_perk_only_tournament:
                             for perk in self.enabled_perks:
-                                self.use_perk(perk=perk)
+                                self.use_perk(
+                                    perk=perk
+                                )
 
                     return True
 
+                # Performing the base prestige functionality, no tournament is available to join.
                 if not self.goto_master(collapsed=False, top=False):
                     return False
 
                 # Click on the prestige button, and check for the prompt confirmation being present. Sleeping
                 # slightly here to ensure that connections issues do not cause the prestige to be misfire.
-                self.click(point=MASTER_LOCS["prestige"], pause=3)
+                self.click(
+                    point=MASTER_LOCS["prestige"],
+                    pause=3
+                )
                 prestige_found, prestige_position = self.grabber.search(self.images.confirm_prestige)
                 if prestige_found:
                     # Parsing the advanced start value that is present before a prestige takes place...
                     # This is used to improve stage parsing to not allow values < the advanced start value.
                     # Also handling the prestige generation here, which is set on our instance.
-                    prestige, advanced_start = self.stats.update_prestige(artifact=self.next_artifact_upgrade, current_stage=self.props.current_stage)
+                    prestige, advanced_start = self.stats.update_prestige(
+                        artifact=self.next_artifact_upgrade,
+                        current_stage=self.props.current_stage
+                    )
                     self.props.last_prestige = prestige
-                    self.parse_advanced_start(advanced_start)
+                    self.parse_advanced_start(stage_text=advanced_start)
                     self.props.current_stage = self.ADVANCED_START
 
                     # Click on the prestige confirmation box.
-                    self.click_image(image=self.images.confirm_prestige, pos=prestige_position, pause=1)
+                    self.click_image(
+                        image=self.images.confirm_prestige,
+                        pos=prestige_position,
+                        pause=1
+                    )
                     # Waiting for a while after prestiging, this reduces the chance
                     # of a game crash taking place due to many clicks while game is resetting.
                     prestige_final_found, prestige_final_position = self.grabber.search(image=self.images.confirm_prestige_final)
-
-                    self.click_image(image=self.images.confirm_prestige_final, pos=prestige_final_position, pause=35)
+                    self.click_image(
+                        image=self.images.confirm_prestige_final,
+                        pos=prestige_final_position,
+                        pause=35
+                    )
 
                     if self.scheduler.state == STATE_PAUSED:
                         self.scheduler.resume()
@@ -1157,14 +1306,15 @@ class Bot(object):
                     # activate one of the perks chosen.
                     if self.configuration.enable_perk_usage:
                         if self.configuration.use_perk_on_prestige != NO_PERK:
-                            self.use_perk(perk=self.configuration.use_perk_on_prestige)
+                            self.use_perk(
+                                perk=self.configuration.use_perk_on_prestige
+                            )
 
                     # If the current stage currently is greater than the current max stage, lets update our stats
                     # to reflect that a new max stage has been reached. This allows for
                     if self.props.current_stage and self.stats.highest_stage:
                             if self.props.current_stage > self.stats.highest_stage:
-                                self.logger.info("current stage is greater than your previous max stage {max}, forcing a stats update to reflect new max stage.".format(
-                                    max=self.stats.highest_stage))
+                                self.logger.info("current stage is greater than your previous max stage {max}, forcing a stats update to reflect new max stage.".format(max=self.stats.highest_stage))
                                 self.update_stats(force=True)
 
     @wrap_current_function
@@ -1200,10 +1350,20 @@ class Bot(object):
                 if self.grabber.point_is_color(point=point, color=color):
                     # Click to enchant/discover artifact.
                     self.logger.info("performing...")
-                    self.click(point=point, pause=1)
-                    self.click(point=self.locs.purchase, pause=2)
-
-                    self.click(point=self.locs.close_top, clicks=5, interval=0.5, pause=2)
+                    self.click(
+                        point=point,
+                        pause=1
+                    )
+                    self.click(
+                        point=self.locs.purchase,
+                        pause=2
+                    )
+                    self.click(
+                        point=self.locs.close_top,
+                        clicks=5,
+                        interval=0.5,
+                        pause=2
+                    )
 
         # Check for discovery/enchantment first.
         if self.configuration.enable_artifact_discover_enchant:
@@ -1232,7 +1392,6 @@ class Bot(object):
                 return False
 
             artifact = self.next_artifact_upgrade
-
             # Access to current upgrade is present above,
             # go ahead and update the next artifact to purchase.
             self.update_next_artifact_upgrade()
@@ -1240,52 +1399,47 @@ class Bot(object):
 
             # Make sure that the proper spend max multiplier is used to fully upgrade an artifact.
             # 1.) Ensure that the percentage (%) multiplier is selected.
-            loops = 0
             while not self.grabber.search(self.images.percent_on, bool_only=True):
-                loops += 1
-                if loops == FUNCTION_LOOP_TIMEOUT:
-                    self.logger.warning("unable to set the artifact buy multiplier to use percentage, skipping...")
-                    self.ERRORS += 1
-                    return False
-
-                self.click(point=ARTIFACTS_LOCS["percent_toggle"], pause=0.5)
+                self.click(
+                    point=ARTIFACTS_LOCS["percent_toggle"],
+                    pause=0.5
+                )
 
             # 2.) Ensure that the SPEND Max multiplier is selected.
-            loops = 0
             while not self.grabber.search(self.images.spend_max, bool_only=True):
-                loops += 1
-                if loops == FUNCTION_LOOP_TIMEOUT:
-                    self.logger.warning("unable to set the spend multiplier to spend max... skipping.")
-                    self.ERRORS += 1
-                    return False
-
-                self.click(point=ARTIFACTS_LOCS["buy_multiplier"], pause=0.5)
-                self.click(point=ARTIFACTS_LOCS["buy_max"], pause=0.5)
+                self.click(
+                    point=ARTIFACTS_LOCS["buy_multiplier"],
+                    pause=0.5
+                )
+                self.click(
+                    point=ARTIFACTS_LOCS["buy_max"],
+                    pause=0.5
+                )
 
             # Looking for the artifact to upgrade here, dragging until it is finally found.
-            loops = 0
             while not self.grabber.search(ARTIFACT_MAP.get(artifact), precision=0.7, bool_only=True):
-                loops += 1
-                if loops == FUNCTION_LOOP_TIMEOUT:
-                    self.logger.warning("artifact: {artifact} couldn't be found on screen... skipping.".format(artifact=artifact))
-                    self.ERRORS += 1
-                    return False
-
-                self.drag(start=self.locs.scroll_start, end=self.locs.scroll_bottom_end, pause=1.5)
+                self.drag(
+                    start=self.locs.scroll_start,
+                    end=self.locs.scroll_bottom_end,
+                    pause=1.5
+                )
 
             # Making it here means the artifact in question has been found.
             found, position = self.grabber.search(ARTIFACT_MAP.get(artifact))
             new_x = position[0] + ARTIFACTS_LOCS["artifact_push"]["x"]
             new_y = position[1] + ARTIFACTS_LOCS["artifact_push"]["y"]
 
-            # Currently just upgrading the artifact to it's max level. Future updates may include the ability
-            # to determine how much to upgrade an artifact by.
-            self.click(point=(new_x, new_y), pause=1)
+            self.click(
+                point=(new_x, new_y),
+                pause=1
+            )
 
     @not_in_transition
     def check_tournament(self):
         """
         Check that a tournament is available/active. Tournament will be joined if a new possible.
+
+        Expecting a tuple to be returned here with the (prestige, advanced start) values.
         """
         if self.configuration.enable_tournaments:
             self.logger.info("checking for tournament ready to join or in progress.")
@@ -1304,35 +1458,55 @@ class Bot(object):
                 sleep(0.2)
 
             if tournament_found:
-                self.click(point=self.locs.tournament, pause=2)
+                self.click(
+                    point=self.locs.tournament,
+                    pause=2
+                )
                 found, position = self.grabber.search(self.images.join)
                 if found:
                     # A tournament is ready to be joined. First, we must travel the the base
                     # prestige screen, perform a prestige update, before joining the tournament.
                     self.logger.info("tournament is available to join. generating prestige instance before joining.")
-                    self.click(point=MASTER_LOCS["screen_top"], pause=1)
+                    self.click(
+                        point=MASTER_LOCS["screen_top"],
+                        pause=1
+                    )
                     if not self.goto_master(collapsed=False, top=False):
                         return False, None
 
-                    self.click(point=MASTER_LOCS["prestige"], pause=3)
+                    self.click(
+                        point=MASTER_LOCS["prestige"],
+                        pause=3
+                    )
                     prestige_found = self.grabber.search(self.images.confirm_prestige, bool_only=True)
                     if prestige_found:
                         # Parsing the advanced start value that is present before a prestige takes place...
                         # This is used to improve stage parsing to not allow values < the advanced start value.
                         prestige, advanced_start = self.stats.update_prestige(current_stage=self.props.current_stage, artifact=self.next_artifact_upgrade)
-                        self.click(point=MASTER_LOCS["screen_top"], pause=1)
+                        self.click(
+                            point=MASTER_LOCS["screen_top"],
+                            pause=1
+                        )
 
                         # Ensuring that any panels are collapsed, then attempting to join
                         # the tournament through the interface.
                         self.ensure_collapsed()
-                        self.click(point=self.locs.tournament, pause=2)
-
+                        self.click(
+                            point=self.locs.tournament,
+                            pause=2
+                        )
                         self.logger.info("joining new tournament now...")
-                        self.click(point=self.locs.join, pause=2)
+                        self.click(
+                            point=self.locs.join,
+                            pause=2
+                        )
 
                         # Looking for the final prestige join confirmation. Replicating base prestige functionality.
                         prestige_final_found, prestige_final_position = self.grabber.search(image=self.images.confirm_prestige_final)
-                        self.click_image(image=self.images.confirm_prestige_final, pos=prestige_final_position)
+                        self.click_image(
+                            image=self.images.confirm_prestige_final,
+                            pos=prestige_final_position
+                        )
 
                         # Return generated prestige and advanced start right away,
                         # setting values in the prestige function directly. Wait should
@@ -1344,8 +1518,15 @@ class Bot(object):
                     collect_found, collect_position = self.grabber.search(image=self.images.collect_prize)
                     if collect_found:
                         self.logger.info("tournament is over, attempting to collect reward now.")
-                        self.click(point=self.locs.collect_prize, pause=2)
-                        self.click(point=self.locs.game_middle, clicks=10, interval=0.5)
+                        self.click(
+                            point=self.locs.collect_prize,
+                            pause=2
+                        )
+                        self.click(
+                            point=self.locs.game_middle,
+                            clicks=10,
+                            interval=0.5
+                        )
 
             # No tournament was joined, and regardless of the reward being available
             # or not, if we reach this point, return our flags as False, None.
@@ -1367,13 +1548,27 @@ class Bot(object):
         if not self.ensure_collapsed():
             return False
 
-        self.click(point=self.locs.open_rewards, pause=0.5)
+        self.click(
+            point=self.locs.open_rewards,
+            pause=0.5
+        )
         rewards_found = self.grabber.search(self.images.daily_rewards_header, bool_only=True)
         if rewards_found:
             self.logger.info("daily rewards are available, collecting!")
-            self.click(point=self.locs.collect_rewards, pause=1)
-            self.click(point=self.locs.game_middle, clicks=5, interval=0.5, pause=1)
-            self.click(point=MASTER_LOCS["screen_top"], pause=1)
+            self.click(
+                point=self.locs.collect_rewards,
+                pause=1
+            )
+            self.click(
+                point=self.locs.game_middle,
+                clicks=5,
+                interval=0.5,
+                pause=1
+            )
+            self.click(
+                point=MASTER_LOCS["screen_top"],
+                pause=1
+            )
 
         return rewards_found
 
@@ -1389,8 +1584,16 @@ class Bot(object):
             if not self.ensure_collapsed():
                 return False
 
-            self.click(point=self.locs.hatch_egg, pause=0.5)
-            self.click(point=self.locs.game_middle, clicks=5, interval=0.5, pause=1)
+            self.click(
+                point=self.locs.hatch_egg,
+                pause=0.5
+            )
+            self.click(
+                point=self.locs.game_middle,
+                clicks=5,
+                interval=0.5,
+                pause=1
+            )
 
             return True
 
@@ -1404,11 +1607,18 @@ class Bot(object):
         if not self.ensure_collapsed():
             return False
 
-        self.click(point=self.locs.clan_crate, pause=0.5)
+        self.click(
+            point=self.locs.clan_crate,
+            pause=2
+        )
         found, pos = self.grabber.search(image=self.images.okay)
         if found:
             self.logger.info("clan crate is available, collecting!")
-            self.click_image(image=self.images.okay, pos=pos, pause=1)
+            self.click_image(
+                image=self.images.okay,
+                pos=pos,
+                pause=1
+            )
 
         return found
 
@@ -1422,16 +1632,34 @@ class Bot(object):
         if not self.ensure_collapsed():
             return False
 
-        self.click(point=self.locs.inbox, pause=0.5)
+        self.click(
+            point=self.locs.inbox,
+            pause=0.5
+        )
         inbox_found = self.grabber.search(self.images.inbox_header, bool_only=True)
         if inbox_found:
-            self.click(point=self.locs.inbox_clan, pause=0.2)
-            self.click(point=self.locs.inbox_news, pause=0.2)
-            self.click(point=self.locs.inbox_clan, pause=0.2)
-            self.click(point=self.locs.inbox_news, pause=0.2)
+            self.click(
+                point=self.locs.inbox_clan,
+                pause=0.2
+            )
+            self.click(
+                point=self.locs.inbox_news,
+                pause=0.2
+            )
+            self.click(
+                point=self.locs.inbox_clan,
+                pause=0.2
+            )
+            self.click(
+                point=self.locs.inbox_news,
+                pause=0.2
+            )
 
             # Close the inbox screen now.
-            self.click(point=MASTER_LOCS["screen_top"], pause=0.5)
+            self.click(
+                point=MASTER_LOCS["screen_top"],
+                pause=0.5
+            )
 
         return inbox_found
 
@@ -1443,8 +1671,7 @@ class Bot(object):
         Miscellaneous actions can be activated here when the generic cooldown is reached.
         """
         if force or timezone.now() > self.props.next_miscellaneous_actions:
-            self.logger.info("{force_or_initiate} miscellaneous actions now".format(
-                force_or_initiate="forcing" if force else "beginning"))
+            self.logger.info("{force_or_initiate} miscellaneous actions now".format(force_or_initiate="forcing" if force else "beginning"))
 
             # Running through all generic functions that should only be available once
             # every once in a while, meaning we do not have to check for them at all times.
@@ -1514,10 +1741,8 @@ class Bot(object):
         Perform a check for any completed daily achievements, collecting them as long as any are present.
         """
         if self.configuration.enable_daily_achievements:
-            now = timezone.now()
-            if force or now > self.props.next_daily_achievement_check:
-                self.logger.info("{force_or_initiate} daily achievement check now".format(
-                    force_or_initiate="forcing" if force else "beginning"))
+            if force or timezone.now() > self.props.next_daily_achievement_check:
+                self.logger.info("{force_or_initiate} daily achievement check now".format(force_or_initiate="forcing" if force else "beginning"))
 
                 if not self.goto_master():
                     return False
@@ -1525,7 +1750,10 @@ class Bot(object):
                     return False
 
                 # Open the achievements tab in game.
-                self.click(point=MASTER_LOCS["achievements"], pause=2)
+                self.click(
+                    point=MASTER_LOCS["achievements"],
+                    pause=2
+                )
 
                 # Are there any completed daily achievements?
                 # Note: The single "ad watch" daily is not completed here
@@ -1535,11 +1763,17 @@ class Bot(object):
                     if found:
                         # Collect the achievement reward here.
                         self.logger.info("completed daily achievement found, collecting now.")
-                        self.click_image(image=self.images.daily_collect, pos=pos)
+                        self.click_image(
+                            image=self.images.daily_collect,
+                            pos=pos
+                        )
 
                 # Exiting achievements screen now.
                 self.calculate_next_daily_achievement_check()
-                self.click(point=MASTER_LOCS["screen_top"], clicks=3)
+                self.click(
+                    point=MASTER_LOCS["screen_top"],
+                    clicks=3
+                )
 
     @wrap_current_function
     @not_in_transition
@@ -1549,10 +1783,8 @@ class Bot(object):
         Perform a check for the collection of a completed milestone reward.
         """
         if self.configuration.enable_milestones:
-            now = timezone.now()
-            if force or now > self.props.next_milestone_check:
-                self.logger.info("{force_or_initiate} milestone check now".format(
-                    force_or_initiate="forcing" if force else "beginning"))
+            if force or timezone.now() > self.props.next_milestone_check:
+                self.logger.info("{force_or_initiate} milestone check now".format(force_or_initiate="forcing" if force else "beginning"))
 
                 if not self.goto_master():
                     return False
@@ -1560,16 +1792,29 @@ class Bot(object):
                     return False
 
                 # Open the milestones tab in game.
-                self.click(point=MASTER_LOCS["achievements"], pause=2)
-                self.click(point=MASTER_LOCS["milestones"]["milestones_header"], pause=1)
+                self.click(
+                    point=MASTER_LOCS["achievements"],
+                    pause=2
+                )
+                self.click(
+                    point=MASTER_LOCS["milestones"]["milestones_header"],
+                    pause=1
+                )
 
                 # Loop forever until no more milestones can be collected.
                 while True:
                     # Is the collect button available and the correct color for collection?
                     if self.grabber.point_is_color(point=MASTER_LOCS["milestones"]["milestones_collect_point"], color=self.colors.COLLECT_GREEN):
                         self.logger.info("a completed milestone is complete, collecting now...")
-                        self.click(point=MASTER_LOCS["milestones"]["milestones_collect_point"], pause=1)
-                        self.click(point=self.locs.game_middle, clicks=5, interval=0.5)
+                        self.click(
+                            point=MASTER_LOCS["milestones"]["milestones_collect_point"],
+                            pause=1
+                        )
+                        self.click(
+                            point=self.locs.game_middle,
+                            clicks=5,
+                            interval=0.5
+                        )
                         sleep(3)
                     else:
                         self.logger.info("no milestone available for completion...")
@@ -1577,7 +1822,10 @@ class Bot(object):
 
                 # Exiting milestones screen now.
                 self.calculate_next_milestone_check()
-                self.click(point=MASTER_LOCS["screen_top"], clicks=3)
+                self.click(
+                    point=MASTER_LOCS["screen_top"],
+                    clicks=3
+                )
 
     @wrap_current_function
     @not_in_transition
@@ -1587,14 +1835,12 @@ class Bot(object):
         Perform all checks to see if a sms message will be sent to notify a user of an active raid.
         """
         if self.configuration.enable_raid_notifications:
-            now = timezone.now()
-            if force or now > self.props.next_raid_notifications_check:
-                self.logger.info("{force_or_initiate} raid notifications check now".format(
-                    force_or_initiate="forcing" if force else "beginning"))
+            if force or timezone.now() > self.props.next_raid_notifications_check:
+                self.logger.info("{force_or_initiate} raid notifications check now".format(force_or_initiate="forcing" if force else "beginning"))
 
                 # Has an attack reset value already been parsed?
                 if self.props.next_raid_attack_reset:
-                    if self.props.next_raid_attack_reset > now:
+                    if self.props.next_raid_attack_reset > timezone.now():
                         self.logger.info("the next raid attack reset is still in the future, no notification will be sent.")
                         self.calculate_next_raid_notifications_check()
                         return False
@@ -1606,7 +1852,10 @@ class Bot(object):
                 if not self.goto_clan():
                     return False
 
-                self.click(point=self.locs.clan_raid, pause=4)
+                self.click(
+                    point=self.locs.clan_raid,
+                    pause=4
+                )
 
                 if self.grabber.search(self.images.raid_fight, bool_only=True):
                     # Fights are available, lets also parse out the next time that attacks will be reset.
@@ -1620,7 +1869,8 @@ class Bot(object):
                         token=self.configuration.raid_notifications_twilio_auth_token,
                         from_num=self.configuration.raid_notifications_twilio_from_number,
                         to_num=self.configuration.raid_notifications_twilio_to_number,
-                        instance=self.instance)
+                        instance=self.instance
+                    )
 
                     self.logger.info("a notification has been sent to {to_num} from {from_num}".format(
                         to_num=self.configuration.raid_notifications_twilio_to_number,
@@ -1679,8 +1929,14 @@ class Bot(object):
 
                 # A clan is available, begin by opening the information panel
                 # to retrieve some generic information about the clan.
-                self.click(point=self.locs.clan_info, pause=2)
-                self.click(point=self.locs.clan_info_header, pause=2)
+                self.click(
+                    point=self.locs.clan_info,
+                    pause=2
+                )
+                self.click(
+                    point=self.locs.clan_info_header,
+                    pause=2
+                )
 
                 self.logger.info("attempting to parse out generic clan information now...")
 
@@ -1711,8 +1967,14 @@ class Bot(object):
                 self.logger.info("{clan} was parsed successfully.".format(clan=clan))
                 self.logger.info("attempting to parse out most recent raid results from clan...")
 
-                self.click(point=self.locs.clan_previous_raid, pause=2)
-                self.click(point=self.locs.clan_results_copy, pause=1)
+                self.click(
+                    point=self.locs.clan_previous_raid,
+                    pause=2
+                )
+                self.click(
+                    point=self.locs.clan_results_copy,
+                    pause=1
+                )
 
                 win32clipboard.OpenClipboard()
                 results = win32clipboard.GetClipboardData()
@@ -1725,7 +1987,11 @@ class Bot(object):
                 # Attempting to generate the raid result for logging purposes,
                 # if the raid found already exists, we'll simply return a False
                 # boolean to determine this and log some info.
-                raid = RaidResult.objects.generate(clipboard=results, clan=clan, instance=self.instance)
+                raid = RaidResult.objects.generate(
+                    clipboard=results,
+                    clan=clan,
+                    instance=self.instance
+                )
 
                 if not raid:
                     self.logger.warning("the parsed raid results already exist and likely haven't changed since the last parse.")
@@ -1742,11 +2008,19 @@ class Bot(object):
         if self.grabber.search(self.images.welcome_header, bool_only=True):
             found, pos = self.grabber.search(self.images.welcome_collect_no_vip)
             if found:
-                self.click_image(image=self.images.welcome_collect_no_vip, pos=pos, pause=1)
+                self.click_image(
+                    image=self.images.welcome_collect_no_vip,
+                    pos=pos,
+                    pause=1
+                )
             else:
                 found, pos = self.grabber.search(self.images.welcome_collect_vip)
                 if found:
-                    self.click_image(image=self.images.welcome_collect_vip, pos=pos, pause=1)
+                    self.click_image(
+                        image=self.images.welcome_collect_vip,
+                        pos=pos,
+                        pause=1
+                    )
 
     def rate_screen_check(self):
         """
@@ -1755,7 +2029,11 @@ class Bot(object):
         if self.grabber.search(self.images.rate_icon, bool_only=True):
             found, pos = self.grabber.search(self.images.large_exit_panel)
             if found:
-                self.click_image(image=self.images.large_exit_panel, pos=pos, pause=1)
+                self.click_image(
+                    image=self.images.large_exit_panel,
+                    pos=pos,
+                    pause=1
+                )
 
     def ad(self):
         """
@@ -1772,12 +2050,20 @@ class Bot(object):
             # VIP Unlocked...
             if self.grabber.search(self.images.collect_ad, bool_only=True):
                 self.logger.info("collecting vip ad now...")
-                self.click(point=self.locs.collect_ad, pause=1, offset=5)
                 self.stats.increment_ads()
+                self.click(
+                    point=self.locs.collect_ad,
+                    pause=1,
+                    offset=5
+                )
             # No VIP...
             if self.grabber.search(self.images.watch_ad, bool_only=True):
                 self.logger.info("declining fairy ad now...")
-                self.click(point=self.locs.no_thanks, pause=1, offset=5)
+                self.click(
+                    point=self.locs.no_thanks,
+                    pause=1,
+                    offset=5
+                )
 
     @wrap_current_function
     @not_in_transition
@@ -1795,19 +2081,21 @@ class Bot(object):
         Ensure that the boss is being fought if it isn't already.
         """
         loops = 0
-        while True:
-            loops += 1
-            if loops == BOSS_LOOP_TIMEOUT:
-                self.logger.warning("unable to enter boss fight currently...")
-                self.ERRORS += 1
-                return False
-
+        while loops != BOSS_LOOP_TIMEOUT:
             if self.grabber.search(self.images.fight_boss, bool_only=True):
                 self.logger.info("attempting to initiate boss fight in game. ({tries}/{max})".format(tries=loops, max=BOSS_LOOP_TIMEOUT))
-                self.click(point=self.locs.fight_boss, pause=0.8)
+                self.click(
+                    point=self.locs.fight_boss,
+                    pause=0.8
+                )
             else:
-                break
+                return True
 
+            # Looping indefinitely until our loops has reached the configured
+            # maximum boss loop timeout.
+            loops += 1
+
+        self.logger.warning("unable to enter boss fight, skipping...")
         return True
 
     @not_in_transition
@@ -1817,23 +2105,24 @@ class Bot(object):
         Ensure that there is no boss being fought (avoids transition).
         """
         loops = 0
-        while True:
-            loops += 1
-            if loops == BOSS_LOOP_TIMEOUT:
-                self.logger.warning("unable to leave boss fight, assuming boss could not be reached...")
-                self.ERRORS += 1
+        while loops != BOSS_LOOP_TIMEOUT:
+            if not self.grabber.search(self.images.fight_boss, bool_only=True):
+                self.logger.info("attempting to leave active boss fight in game. ({tries}/{max})".format(tries=loops, max=BOSS_LOOP_TIMEOUT))
+                self.click(
+                    point=self.locs.fight_boss,
+                    pause=0.8
+                )
+            else:
+                # Sleeping slightly when successful in leaving, since a transition state may occur
+                # right after, we should wait to be safe.
+                sleep(2)
                 return True
 
-            if not self.grabber.search(self.images.fight_boss, bool_only=True):
-                self.logger.info("attempting to leave active boss fight in game. ({tries}/{max})".format(
-                    tries=loops, max=BOSS_LOOP_TIMEOUT))
-                self.click(point=self.locs.fight_boss, pause=0.8)
-            else:
-                break
+            # Looping indefinitely until our loops has reached the configured
+            # maximum boss loop timeout.
+            loops += 1
 
-        # Sleeping for a bit after leaving boss fight in case some sort of
-        # transition takes places directly after.
-        sleep(3)
+        self.logger.warning("unable to leave boss fight, skipping...")
         return True
 
     @wrap_current_function
@@ -1854,7 +2143,9 @@ class Bot(object):
             self.logger.info("executing tapping process {repeats} time(s)".format(repeats=self.configuration.tapping_repeat))
             for i in range(self.configuration.tapping_repeat):
                 for index, point in enumerate(self.locs.fairies_map, start=1):
-                    self.click(point=point)
+                    self.click(
+                        point=point
+                    )
 
                     # Every fifth click, we should check to see if an ad is present on the
                     # screen now, since our clicks could potentially trigger a fairy ad.
@@ -1890,7 +2181,9 @@ class Bot(object):
                     if isinstance(point[0], str):
                         self.logger.info("executing/tapping {minigame}".format(minigame=point))
                     else:
-                        self.click(point=point)
+                        self.click(
+                            point=point
+                        )
 
                     # Every fifth click, we should check to see if an ad is present on the
                     # screen now, since our clicks could potentially trigger a fairy ad.
@@ -1956,13 +2249,15 @@ class Bot(object):
 
         loops = 0
         while not self.grabber.search(icon, bool_only=True):
-            loops += 1
             if loops == FUNCTION_LOOP_TIMEOUT:
                 self.logger.warning("error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
-                self.ERRORS += 1
                 return False
 
-            self.click(point=getattr(self.locs, panel), pause=1)
+            loops += 1
+            self.click(
+                point=getattr(self.locs, panel),
+                pause=1
+            )
 
         # The shop panel may not be expanded/collapsed. Skip when travelling to shop panel.
         if panel != "shop":
@@ -1970,20 +2265,28 @@ class Bot(object):
             loops = 0
             if collapsed:
                 while not self.grabber.search(self.images.expand_panel, bool_only=True):
-                    loops += 1
                     if loops == FUNCTION_LOOP_TIMEOUT:
                         self.logger.warning("unable to collapse panel: {panel}, exiting function early.".format(panel=panel))
-                        self.ERRORS += 1
                         return False
-                    self.click(point=self.locs.expand_collapse_top, pause=1, offset=1)
+
+                    loops += 1
+                    self.click(
+                        point=self.locs.expand_collapse_top,
+                        pause=1,
+                        offset=1
+                    )
             else:
                 while not self.grabber.search(self.images.collapse_panel, bool_only=True):
-                    loops += 1
                     if loops == FUNCTION_LOOP_TIMEOUT:
                         self.logger.warning("unable to expand panel: {panel}, exiting function early.".format(panel=panel))
-                        self.ERRORS += 1
                         return False
-                    self.click(point=self.locs.expand_collapse_bottom, pause=1, offset=1)
+
+                    loops += 1
+                    self.click(
+                        point=self.locs.expand_collapse_bottom,
+                        pause=1,
+                        offset=1
+                    )
 
         # At this point, the panel should at least be opened.
         find = top_find if top or bottom_find is None else bottom_find
@@ -1992,55 +2295,100 @@ class Bot(object):
         # before giving up and breaking out of loop.
         loops = 0
         end_drag = self.locs.scroll_top_end if top else self.locs.scroll_bottom_end
+
         while not self.grabber.search(find, bool_only=True):
-            loops += 1
             if loops == FUNCTION_LOOP_TIMEOUT:
-                self.logger.warning(
-                    "error occurred while travelling to {panel} panel, exiting function early.".format(
-                        panel=panel))
-                self.ERRORS += 1
+                self.logger.warning("error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
                 return False
 
-            self.drag(start=self.locs.scroll_start, end=end_drag, pause=0.5)
+            loops += 1
+            self.drag(
+                start=self.locs.scroll_start,
+                end=end_drag,
+                pause=0.5
+            )
 
-        # Reaching this point represents a successful panel travel to.
+        # Reaching this point represents that the specified panel
+        # was successfully reached in the game.
         return True
 
     def goto_master(self, collapsed=True, top=True):
         """
         Instruct the bot to travel to the sword master panel.
         """
-        return self.goto_panel("master", self.images.master_active, self.images.raid_cards, self.images.prestige, collapsed=collapsed, top=top)
+        return self.goto_panel(
+            "master",
+            self.images.master_active,
+            self.images.raid_cards,
+            self.images.prestige,
+            collapsed=collapsed,
+            top=top
+        )
 
     def goto_heroes(self, collapsed=True, top=True):
         """
         Instruct the bot to travel to the heroes panel.
         """
-        return self.goto_panel("heroes", self.images.heroes_active, self.images.masteries, self.images.maya_muerta, collapsed=collapsed, top=top)
+        return self.goto_panel(
+            "heroes",
+            self.images.heroes_active,
+            self.images.masteries,
+            self.images.maya_muerta,
+            collapsed=collapsed,
+            top=top
+        )
 
     def goto_equipment(self, collapsed=True, top=True):
         """
         Instruct the bot to travel to the heroes panel.
         """
-        return self.goto_panel("equipment", self.images.equipment_active, self.images.crafting, None, collapsed=collapsed, top=top)
+        return self.goto_panel(
+            "equipment",
+            self.images.equipment_active,
+            self.images.crafting,
+            None,
+            collapsed=collapsed,
+            top=top
+        )
 
     def goto_pets(self, collapsed=True, top=True):
         """
         Instruct the bot to travel to the pets panel.
         """
-        return self.goto_panel("pets", self.images.pets_active, self.images.next_egg, None, collapsed=collapsed, top=top)
+        return self.goto_panel(
+            "pets",
+            self.images.pets_active,
+            self.images.next_egg,
+            None,
+            collapsed=collapsed,
+            top=top
+        )
 
     def goto_artifacts(self, collapsed=True, top=True):
         """
         Instruct the bot to travel to the artifacts panel.
         """
-        return self.goto_panel("artifacts", self.images.artifacts_active, self.images.salvaged, None, collapsed=collapsed, top=top)
+        return self.goto_panel(
+            "artifacts",
+            self.images.artifacts_active,
+            self.images.salvaged,
+            None,
+            collapsed=collapsed,
+            top=top
+        )
 
     def goto_shop(self, collapsed=False, top=True):
         """
         Instruct the bot to travel to the shop panel.
         """
-        return self.goto_panel("shop", self.images.shop_active, self.images.shop_keeper, None, collapsed=collapsed, top=top)
+        return self.goto_panel(
+            "shop",
+            self.images.shop_active,
+            self.images.shop_keeper,
+            None,
+            collapsed=collapsed,
+            top=top
+        )
 
     @not_in_transition
     def goto_clan(self):
@@ -2056,7 +2404,9 @@ class Bot(object):
                 return False
 
             loops += 1
-            self.click(point=self.locs.clan)
+            self.click(
+                point=self.locs.clan
+            )
             sleep(3)
 
         return True
@@ -2068,15 +2418,18 @@ class Bot(object):
         """
         loops = 0
         while self.grabber.search(self.images.exit_panel, bool_only=True):
-            loops += 1
             if loops == FUNCTION_LOOP_TIMEOUT:
                 self.logger.warning("error occurred while attempting to close all panels, exiting early.")
-                self.ERRORS += 1
                 return False
 
+            loops += 1
             found, pos = self.grabber.search(image=self.images.exit_panel)
             if found:
-                self.click_image(image=self.images.exit_panel, pos=pos, pause=0.5)
+                self.click_image(
+                    image=self.images.exit_panel,
+                    pos=pos,
+                    pause=0.5
+                )
 
         return True
 
@@ -2086,15 +2439,19 @@ class Bot(object):
         Perform a soft shutdown of the bot, taking care of any cleanup or related tasks.
         """
         self.logger.info("beginning soft shutdown...")
-        self.update_stats(force=True)
+        self.update_stats(
+            force=True
+        )
 
     @wrap_current_function
     @bot_property(queueable=True, shortcut="p", tooltip="Pause all bot functionality.")
     def pause(self):
         """
-        Execute a pause for this Bot.
+        Execute a pause for the current bot session.
         """
         self.PAUSE = True
+
+        self.instance.pause()
         if self.scheduler.state == STATE_RUNNING:
             self.scheduler.pause()
 
@@ -2103,9 +2460,12 @@ class Bot(object):
     @wrap_current_function
     @bot_property(queueable=True, shortcut="r", tooltip="Resume all bot functionality.")
     def resume(self):
-        """Execute a resume for this Bot."""
+        """
+        Execute a resume for the current bot session.
+        """
         self.PAUSE = False
 
+        self.instance.resume()
         if self.scheduler.state == STATE_PAUSED:
             self.scheduler.resume()
 
@@ -2115,7 +2475,7 @@ class Bot(object):
     @bot_property(queueable=True, shortcut="e", tooltip="Terminate all bot functionality.")
     def terminate(self):
         """
-        Execute a termination of this Bot instance.
+        Execute a termination of the current bot session.
         """
         self.TERMINATE = True
 
@@ -2123,7 +2483,7 @@ class Bot(object):
     @bot_property(queueable=True, shortcut="shift+e", tooltip="Perform soft termination of all bot functionality.")
     def soft_terminate(self):
         """
-        Execute a soft shutdown/termination of this Bot instance.
+        Execute a soft shutdown/termination of the current bot session.
         """
         self.soft_shutdown()
         self.TERMINATE = True
@@ -2167,6 +2527,7 @@ class Bot(object):
 
         self.logger.info("loop functions have been setup...")
         self.logger.info("{loop_funcs}".format(loop_funcs=", ".join(lst)))
+
         return lst
 
     @wrap_current_function
@@ -2182,7 +2543,6 @@ class Bot(object):
         # Parse current skill levels, done once on initialization
         # and taken care of by our prestige function for every prestige.
         self.parse_current_skills()
-
         # Initial skill execution calculation, ensuring that all
         # skills with interval > 0 have a next execution datetime.
         self.calculate_next_skill_execution()
@@ -2210,113 +2570,104 @@ class Bot(object):
             self.perks(force=True)
 
     @wrap_current_function
-    def run(self):
+    def run(self, start=True):
         """
         A run encapsulates the entire bot runtime process into a single function that conditionally
         checks for different things that are currently happening in the game, then launches different
         automated action within the emulator.
         """
-        try:
-            if self.enable_shortcuts:
-                self.setup_shortcuts()
+        if start:
+            try:
+                if self.enable_shortcuts:
+                    self.setup_shortcuts()
 
-            self.goto_master()
-            self.initialize()
+                self.goto_master()
+                self.initialize()
+                self.get_upgrade_artifacts()
 
-            # Update the initial bots artifacts information that is used when upgrading
-            # artifacts in game. This is handled after stats have been updated.
-            self.owned_artifacts = self.get_upgrade_artifacts()
+                if self.configuration.enable_artifact_purchase:
+                    self.next_artifact_index = 0
+                    self.update_next_artifact_upgrade()
 
-            if self.configuration.enable_artifact_purchase:
-                self.next_artifact_index = 0
-                self.update_next_artifact_upgrade()
+                loop_functions = self.setup_loop_functions()
+                pause_log_dt = timezone.now() + datetime.timedelta(seconds=10)
 
-            # Setup main game loop variables.
-            loop_funcs = self.setup_loop_functions()
-
-            # Generating an initial datetime that will be checked when the bot has been paused.
-            # If this datetime is surpassed when the pause functionality is checked, a log will be sent.
-            # Otherwise, we continue the loop normally.
-            pause_log_dt = timezone.now() + datetime.timedelta(seconds=5)
-
-            # Main game loop.
-            while True:
-                for func in loop_funcs:
-                    # Any explicit functions can be executed after the main game loop has finished.
-                    # The Queue handles the validation to ensure only available functions can be created...
-                    for qfunc in Queue.objects.filter(instance=self.instance).order_by("-created"):
-                        if not bot_property.queueables(function=qfunc.function, forceables=True):
-                            self.logger.warning("queued function: {func} encountered but this function does not exist on the bot... ignoring function!".format(
-                                func=qfunc.function))
-
+                while True:
+                    for func in loop_functions:
+                        # Any explicit functions can be executed after the main game loop has finished.
+                        # The Queue handles the validation to ensure only available functions can be created...
+                        for qfunc in Queue.objects.filter(instance=self.instance).order_by("-created"):
                             qfunc.finish()
+                            if not bot_property.queueables(function=qfunc.function, forceables=True):
+                                self.logger.warning("queued function: {func} encountered but this function does not "
+                                                    "exist on the bot... ignoring function...".format(func=qfunc.function))
+
+                            # Valid queueable function has been queued up. Executing normally.
+                            else:
+                                self.logger.info("queued function: {func} will be executed!".format(func=qfunc.function))
+                                wait = wait_afterwards(
+                                    function=getattr(self, qfunc.function),
+                                    floor=self.configuration.post_action_min_wait_time,
+                                    ceiling=self.configuration.post_action_max_wait_time
+                                )
+
+                                if bot_property.forceables(function=qfunc.function):
+                                    wait(force=True)
+                                else:
+                                    wait()
+
+                        if self.TERMINATE:
+                            raise TerminationEncountered()
+                        if self.PAUSE:
+                            now = timezone.now()
+                            if now > pause_log_dt:
+                                pause_log_dt = now + datetime.timedelta(seconds=10)
+                                self.logger.info("waiting for resume...")
+
                             continue
 
-                        self.logger.info("queued function: {func} will be executed!".format(func=qfunc.function))
-                        # Executing the function directly on the Bot. We can force the function if it requires it to be ran manually.
-                        wait = wait_afterwards(
-                            function=getattr(self, qfunc.function),
+                        wait_afterwards(
+                            function=getattr(self, func),
                             floor=self.configuration.post_action_min_wait_time,
                             ceiling=self.configuration.post_action_max_wait_time
-                        )
+                        )()
 
-                        if bot_property.forceables(function=qfunc.function):
-                            wait(force=True)
-                        else:
-                            wait()
+            except TerminationEncountered:
+                self.logger.info("manual termination encountered... terminating!")
+            except FailSafeException:
+                self.logger.info("failsafe termination encountered: terminating!")
+            except Exception as exc:
+                self.logger.critical("critical error encountered: {exc}".format(exc=exc), exc_info=True)
+                self.logger.info("terminating!")
+                if self.configuration.soft_shutdown_on_critical_error:
+                    self.logger.info("soft shutdown is enabled on critical error... attempting to shutdown softly...")
+                    self.soft_shutdown()
 
-                        qfunc.finish()
+            # Cleaning up the BotInstance once a termination has been received.
+            finally:
+                # Stop the schedulers functionality once the session has been stopped.
+                if self.scheduler.state in [STATE_RUNNING, STATE_PAUSED]:
+                    self.scheduler.shutdown(wait=False)
 
-                    if self.TERMINATE:
-                        self.logger.info("terminate signal encountered, exiting...")
-                        raise TerminationEncountered()
-                    if self.PAUSE:
-                        now = timezone.now()
-                        if now > pause_log_dt:
-                            pause_log_dt = now + datetime.timedelta(seconds=10)
-                            self.logger.info("waiting for resume...")
+                self.stats.session.end = timezone.now()
+                self.stats.session.save()
+                self.instance.stop()
+                Queue.flush()
 
-                        # PAUSED. Continue loop forever unless resumed/stopped.
-                        continue
+                # Unhook our now terminated instance from our local shortcut module.
+                # Shortcuts are still active at this point, but no logs or queued events are created for this instance.
+                if self.enable_shortcuts:
+                    shortcuts.unhook(
+                        instance=self.instance,
+                        logger=self.logger
+                    )
 
-                    wait_afterwards(getattr(self, func), floor=self.configuration.post_action_min_wait_time, ceiling=self.configuration.post_action_max_wait_time)()
+                self.logger.info("==========================================================================================")
+                self.logger.info("{session}".format(session=self.stats.session))
+                self.logger.info("==========================================================================================")
+                self.logger.handlers = []
 
-        except TerminationEncountered:
-            self.logger.info("manual termination encountered... terminating!")
-        except FailSafeException:
-            self.logger.info("failsafe termination encountered: terminating!")
-        except Exception as exc:
-            self.logger.critical("critical error encountered: {exc}".format(exc=exc), exc_info=True)
-            self.logger.info("terminating!")
-            if self.configuration.soft_shutdown_on_critical_error:
-                self.logger.info("soft shutdown is enabled on critical error... attempting to shutdown softly...")
-                self.soft_shutdown()
-
-        # Cleaning up the BotInstance once a termination has been received.
-        finally:
-            # Stop the schedulers functionality once the session has been stopped.
-            if self.scheduler.state in [STATE_RUNNING, STATE_PAUSED]:
-                self.scheduler.shutdown(wait=False)
-
-            self.stats.session.end = timezone.now()
-            self.stats.session.save()
-            self.instance.stop()
-            Queue.flush()
-
-            # Unhook our now terminated instance from our local shortcut module.
-            # Shortcuts are still active at this point, but no logs or queued events are created for this instance.
-            if self.enable_shortcuts:
-                shortcuts.unhook(
-                    instance=self.instance,
-                    logger=self.logger
-                )
-
-            self.logger.info("==========================================================================================")
-            self.logger.info("{session}".format(session=self.stats.session))
-            self.logger.info("==========================================================================================")
-
-            # Remove logging handles.
-            self.logger.handlers = []
-
-            # Update the users authentication reference to no longer be online.
-            AuthWrapper().offline()
+                # Sending the offline signal to our authentication backend.
+                # Initialization handles the online state for us, we need to ensure that
+                # we go offline when a session is finished.
+                AuthWrapper().offline()

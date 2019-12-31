@@ -1,6 +1,7 @@
 from functools import wraps
 
 from .utilities import in_transition_func, sleep
+
 from random import randint
 
 
@@ -135,11 +136,14 @@ def not_in_transition(function, max_loops=30):
     parts of the bot.
     """
     @wraps(function)
-    def in_transition(*args, **kwargs):
-        """Looping until a transition state is no longer found. Or max loops has been reached."""
+    def wrapped(*args, **kwargs):
+        # Looping until max loops is reached or transition state
+        # can be resolved successfully.
         in_transition_func(*args, max_loops=max_loops)
+        # Run function normally afterwards.
         return function(*args, **kwargs)
-    return in_transition
+
+    return wrapped
 
 
 def wait_afterwards(function, floor, ceiling):
@@ -148,8 +152,11 @@ def wait_afterwards(function, floor, ceiling):
     """
     @wraps(function)
     def wrapped(*args, **kwargs):
+        # Run function normally.
         function(*args, **kwargs)
+        # Wait for a random amount of time after function finishes execution.
         sleep(randint(floor, ceiling))
+
     return wrapped
 
 
@@ -160,7 +167,11 @@ def wrap_current_function(function):
     This allows the current function display to change based on the function being executed.
     """
     @wraps(function)
-    def current_function(*args, **kwargs):
-        args[0].props.current_function = function.__name__
-        return function(*args, **kwargs)
-    return current_function
+    def wrapped(instance, *args, **kwargs):
+        # Ensure instance has its "Props" object updated to ensure
+        # that the bot instance is saved and web sockets are sent.
+        instance.props.current_function = function.__name__
+        # Run function normally after updating props instance.
+        return function(instance, *args, **kwargs)
+
+    return wrapped

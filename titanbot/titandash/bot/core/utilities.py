@@ -71,7 +71,6 @@ class GlobalsChecker:
     def _events_enabled(self):
         """
         Determine if our cached globals currently have event functionality enabled.
-        :return:
         """
         return self._get_cache().events_enabled
 
@@ -272,7 +271,7 @@ def drag_mouse(start, end, window, button="left", pause=0.5):
     )
 
 
-def in_transition_func(*args, max_loops):
+def in_transition_func(*args, max_loops, **kwargs):
     """
     Directly call this function to perform the transition state check.
     """
@@ -357,7 +356,7 @@ def generate_log_file_name(instance):
     return "{log_dir}/{name}.log".format(log_dir=LOG_DIR, name=init_date_fmt)
 
 
-def make_logger(instance, log_level="INFO", log_format=LOGGER_FORMAT, log_name=LOGGER_NAME, log_file=LOGGER_FILE_NAME):
+def make_logger(instance, log_level="INFO", log_format=LOGGER_FORMAT, log_name=LOGGER_NAME, log_file=LOGGER_FILE_NAME, enabled=True):
     """
     Grab the logging instance that will be used throughout bot runtime.
     """
@@ -380,6 +379,10 @@ def make_logger(instance, log_level="INFO", log_format=LOGGER_FORMAT, log_name=L
         _logger.addHandler(socket_handler)
 
     _logger.setLevel(log_level)
+
+    if not enabled:
+        _logger.disabled = True
+
     return _logger
 
 
