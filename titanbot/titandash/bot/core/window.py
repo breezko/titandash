@@ -257,17 +257,22 @@ class WindowHandler(object):
         except ValueError:
             raise InvalidHwndValue()
 
-    def filter(self, ignore_hidden=True, ignore_smaller=(480, 800)):
+    def filter(self, filter_titles=True, ignore_hidden=True, ignore_smaller=(400, 720)):
         """
         Filter the currently available windows to ones that contain the specified text.
 
+        Titles: (ie: Windows that contain the hard coded title filters).
         Hidden (ie: 0x0 sized windows are ignored by default).
         Smaller: (ie: Windows smaller than the specified amount).
         """
-        dct = {hwnd: window for hwnd, window in self.windows.items() if window.find(self.filter_lst)}
+        if filter_titles:
+            dct = {hwnd: window for hwnd, window in self.windows.items() if window.find(self.filter_lst)}
+        else:
+            dct = self.windows
+
         if ignore_hidden:
             dct = {hwnd: window for hwnd, window in dct.items() if window.width != 0 and window.height != 0}
         if ignore_smaller:
-            dct = {hwnd: window for hwnd, window in dct.items() if window.width > 480 and window.height > 800}
+            dct = {hwnd: window for hwnd, window in dct.items() if window.width > ignore_smaller[0] and window.height > ignore_smaller[1]}
 
         return dct

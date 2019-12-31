@@ -35,7 +35,10 @@ def dashboard(request):
     """Main dashboard view."""
     ctx = {
         "configurations": [],
-        "windows": [],
+        "windows": {
+            "filtered": [],
+            "all": []
+        },
         "queueable": []
     }
 
@@ -45,10 +48,10 @@ def dashboard(request):
 
     wh = WindowHandler()
     wh.enum()
-    for hwnd, window in wh.filter().items():
-        ctx["windows"].append(window.json())
-
-    ctx["windows"].reverse()
+    for window in wh.filter().values():
+        ctx["windows"]["filtered"].append(window.json())
+    for window in wh.filter(filter_titles=False, ignore_smaller=False).values():
+        ctx["windows"]["all"].append(window.json())
 
     # Grab all queueable functions.
     for prop in BotProperty.all():
