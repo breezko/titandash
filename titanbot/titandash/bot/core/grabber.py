@@ -11,7 +11,8 @@ class Grabber:
         self.window = window
         self.logger = logger
 
-        # Screen is updated and set to the result of an image grab as needed through the snapshot method.
+        # Screen is updated and set to the result of an image
+        # grab as needed through the snapshot method.
         self.current = None
 
     def snapshot(self, region=None, downsize=None):
@@ -67,12 +68,16 @@ class Grabber:
             for _image in image:
                 position = imagesearcharea(window=self.window, image=_image, **search_kwargs)
                 if position[0] != -1:
+                    image = _image  # Set inline var to main for logging purposes.
                     break
         else:
             position = imagesearcharea(window=self.window, image=image, **search_kwargs)
 
         if position[0] != -1:
+            self.logger.debug("{image} was successfully found on the screen.".format(image=image))
             found = True
+        else:
+            self.logger.debug("{image} was not found on the screen.".format(image=image))
         if bool_only:
             return found
 

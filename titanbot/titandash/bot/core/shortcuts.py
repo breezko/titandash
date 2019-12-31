@@ -139,7 +139,7 @@ def _queue(function):
 def on_press(event):
     """
     When a keypress takes place, some checks take place to fixup the event passed and additional checks
-    are present to allow a user to use keyboard combinations to activate functionality within a Bot.
+    are present to allow a user to use keyboard combinations to activate functionality within a bot session.
     """
     global TIMESTAMP, INDEX, RESUME, INSTANCES, _FUNCTION_SHORTCUTS, _SHORTCUT_FUNCTIONS
 
@@ -168,7 +168,9 @@ def on_press(event):
 
 
 def on_release(event):
-    """When a keypress is released, removing that key from the current set of active keys."""
+    """
+    When a keypress is released, removing that key from the current set of active keys.
+    """
     global CURRENT, INDEX
 
     try:

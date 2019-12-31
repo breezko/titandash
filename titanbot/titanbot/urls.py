@@ -23,7 +23,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('auth/', include('titanauth.urls')),
     path('bootstrap/', include('titanbootstrap.urls')),
-
     path('', include('titandash.urls')),
 ]
 

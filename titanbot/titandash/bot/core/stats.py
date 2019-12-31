@@ -33,10 +33,6 @@ class Stats:
         self.logger = logger
         self.statistics = Statistics.objects.grab(instance=self.instance)
 
-        # Statistics stored for differential calculations.
-        self._old_game_stats = self.statistics.game_statistics
-        self._old_bot_stats = self.statistics.bot_statistics
-
         # Prestige Statistics retrieved through database model.
         self.prestige_statistics = PrestigeStatistics.objects.grab(instance=instance)
         self.artifact_statistics = ArtifactStatistics.objects.grab(instance=instance)
@@ -55,7 +51,15 @@ class Stats:
             self.log = None
 
         # Generating a new Session to represent this instance being initialized.
-        self.session = Session.objects.create(uuid=str(uuid.uuid4()), version=BOT_VERSION, start=timezone.now(), end=None, log=self.log, configuration=configuration, instance=self.instance)
+        self.session = Session.objects.create(
+            uuid=str(uuid.uuid4()),
+            version=BOT_VERSION,
+            start=timezone.now(),
+            end=None,
+            log=self.log,
+            configuration=configuration,
+            instance=self.instance
+        )
         self.statistics.sessions.add(self.session)
 
         # Grabber is used to perform OCR updates when grabbing game statistics.
