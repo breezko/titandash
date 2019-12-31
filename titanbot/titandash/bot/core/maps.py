@@ -230,7 +230,7 @@ ARTIFACTS_LOCS = {
     },
     "buy_multiplier": (410, 71),
     "buy_max": (50, 71),
-    "percent_toggle": (303, 506),
+    "percent_toggle": (303, 70),
 }
 
 SKILL_CAN_LEVEL_LOCS = {

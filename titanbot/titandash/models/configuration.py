@@ -207,7 +207,7 @@ HELP_TEXT = {
     "prestige_at_max_stage": "Should a prestige take place once your max stage has been reached? (Stats must be up to date).",
     "prestige_at_max_stage_percent": "Determine if you would like to perform an automatic prestige once a certain percent of your max stage has been reached. You may use values larger than 100 here to push your max stage. (ie: 99, 99.5, 101) (0 = off).",
     "enable_artifact_discover_enchant": "Enable the ability to discover or enchant artifacts if possible after a prestige.",
-    "enable_artifact_purchase": "Enable the ability to purchase artifacts in game after a prestige has taken place.",
+    "enable_artifact_purchase": "Enable the ability to purchase and upgrade discovered artifacts in game after a prestige has taken place.",
     "upgrade_owned_tier": "Upgrade a specific tier (or tiers) of artifacts only.",
     "shuffle_artifacts": "Should owned artifacts be shuffled once calculated.",
     "ignore_artifacts": "Should any specific artifacts be ignored regardless of them being owned or not.",
