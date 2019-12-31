@@ -1611,7 +1611,7 @@ class Bot(object):
             return False
 
         self.click(
-            point=self.locs.clan_crate,
+            point=self.locs.collect_clan_crate,
             pause=2
         )
         found, pos = self.grabber.search(image=self.images.okay)

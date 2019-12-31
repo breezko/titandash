@@ -65,7 +65,7 @@ GAME_LOCS = {
             # Click on spot where equipment appears.
             (355, 411),
         ),
-        "clan_crate": (70, 131),
+        "collect_clan_crate": (70, 131),
     },
     "MINIGAMES": {
         "coordinated_offensive": (
