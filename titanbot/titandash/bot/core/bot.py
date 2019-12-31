@@ -1399,14 +1399,16 @@ class Bot(object):
 
             # Make sure that the proper spend max multiplier is used to fully upgrade an artifact.
             # 1.) Ensure that the percentage (%) multiplier is selected.
-            while not self.grabber.search(self.images.percent_on, bool_only=True):
+            while not self.grabber.search(self.images.percent_on, bool_only=True, precision=0.9):
+                self.logger.info("turning percent toggle on for artifact purchase...")
                 self.click(
                     point=ARTIFACTS_LOCS["percent_toggle"],
                     pause=0.5
                 )
 
             # 2.) Ensure that the SPEND Max multiplier is selected.
-            while not self.grabber.search(self.images.spend_max, bool_only=True):
+            while not self.grabber.search(self.images.spend_max, bool_only=True, precision=0.9):
+                self.logger.info("turning spend max on in buy multiplier for artifacts...")
                 self.click(
                     point=ARTIFACTS_LOCS["buy_multiplier"],
                     pause=0.5
@@ -1418,6 +1420,7 @@ class Bot(object):
 
             # Looking for the artifact to upgrade here, dragging until it is finally found.
             while not self.grabber.search(ARTIFACT_MAP.get(artifact), precision=0.7, bool_only=True):
+                self.logger.info("searching for {artifact} on screen...".format(artifact=artifact))
                 self.drag(
                     start=self.locs.scroll_start,
                     end=self.locs.scroll_bottom_end,
