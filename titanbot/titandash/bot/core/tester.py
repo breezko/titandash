@@ -24,7 +24,7 @@ def make_bot():
     Usage:
 
     from titandash.bot.core.tester import *; bot = make_bot();
-    from titandash.bot.core.tester import *; bot = make_bot(); bot.owned_artifacts = bot.get_upgrade_artifacts(); bot.next_artifact_index = 0; bot.update_next_artifact_upgrade()
+    from titandash.bot.core.tester import *; bot = make_bot(); bot.get_upgrade_artifacts(); bot.next_artifact_index = 0; bot.update_next_artifact_upgrade()
     from titandash.bot.core.tester import *; bot = make_bot(); bot.owned_artifacts = bot.get_upgrade_artifacts(); bot.next_artifact_index = 0; bot.update_next_artifact_upgrade(); bot.setup_shortcuts();
     """
     wh = WindowHandler()
