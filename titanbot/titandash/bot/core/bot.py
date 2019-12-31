@@ -1711,7 +1711,11 @@ class Bot(object):
 
                 # Modify all next attributes to take place after their normal calculated
                 # time with a bit of padding after a break ends.
-                for prop in [prop for prop in self.props.fields if prop.split("_")[0] == "next" and prop not in ["next_break", "next_raid_attack_reset"]]:
+                for prop in [prop for prop in self.props.fields if prop.split("_")[0] == "next" and prop not in [
+                    "next_break",
+                    "next_raid_attack_reset",
+                    "next_artifact_upgrade"
+                ]]:
                     current = getattr(self.props, prop, None)
                     if current:
                         # Adding a bit of padding to next activation values.
@@ -1723,7 +1727,7 @@ class Bot(object):
                 while True:
                     now = timezone.now()
                     if now > self.props.resume_from_break:
-                        self.logger.info("break has ended... opening game now.")
+                        self.logger.info("break has ended... resuming bot now.")
                         self.calculate_next_break()
                         return True
 
