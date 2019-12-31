@@ -74,6 +74,12 @@ class GlobalsChecker:
         """
         return self._get_cache().events_enabled
 
+    def _pihole_ads_enabled(self):
+        """
+        Determine if our cached globals currently have pihole ad functionality enabled.
+        """
+        return self._get_cache().pihole_ads_enabled
+
     def failsafe(self):
         """
         Perform a failsafe check if it's currently enabled.
@@ -86,6 +92,12 @@ class GlobalsChecker:
         Return a boolean to represent if events are enabled.
         """
         return self._events_enabled()
+
+    def pihole_ads(self):
+        """
+        Return a boolean to represent if pihole ads are enabled.
+        """
+        return self._pihole_ads_enabled()
 
 
 globals = GlobalsChecker()
