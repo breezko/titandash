@@ -400,7 +400,6 @@ class Bot(object):
         """
         Calculate the datetimes that are attached to each skill in game and when they should be activated.
         """
-        now = timezone.now()
         calculating = SKILLS if not skill else [skill]
         interval_key = "interval_{skill}"
         next_key = "next_{skill}"
@@ -1313,9 +1312,9 @@ class Bot(object):
                     # If the current stage currently is greater than the current max stage, lets update our stats
                     # to reflect that a new max stage has been reached. This allows for
                     if self.props.current_stage and self.stats.highest_stage:
-                            if self.props.current_stage > self.stats.highest_stage:
-                                self.logger.info("current stage is greater than your previous max stage {max}, forcing a stats update to reflect new max stage.".format(max=self.stats.highest_stage))
-                                self.update_stats(force=True)
+                        if self.props.current_stage > self.stats.highest_stage:
+                            self.logger.info("current stage is greater than your previous max stage {max}, forcing a stats update to reflect new max stage.".format(max=self.stats.highest_stage))
+                            self.update_stats(force=True)
 
     @wrap_current_function
     @not_in_transition
