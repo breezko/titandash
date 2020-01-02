@@ -15,6 +15,7 @@ $(document).ready(function() {
             form: $("#globalsForm"),
             failsafeSettings: $("#failsafe_settings"),
             eventSettings: $("#event_settings"),
+            piholeAdSettings: $("#pihole_ad_settings"),
             saveButton: $("#saveGlobalsButton"),
             alertContainer: $("#alert-container")
         };
@@ -27,10 +28,6 @@ $(document).ready(function() {
         $("#exportGlobalsJson").off("click").click(function() {
             exportToJsonFile($("#jsonData").data("json"), "globals");
         });
-    };
-
-    let parseFormValues = function() {
-
     };
 
     /**

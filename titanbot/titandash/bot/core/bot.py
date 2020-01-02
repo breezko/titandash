@@ -19,7 +19,7 @@ from .decorators import BotProperty as bot_property
 from .decorators import not_in_transition, wait_afterwards, wrap_current_function
 from .utilities import (
     click_on_point, click_on_image, drag_mouse, make_logger, strfdelta,
-    strfnumber, sleep, send_raid_notification
+    strfnumber, sleep, send_raid_notification, globals
 )
 from .constants import FUNCTION_LOOP_TIMEOUT, BOSS_LOOP_TIMEOUT
 
@@ -1609,19 +1609,22 @@ class Bot(object):
         if not self.ensure_collapsed():
             return False
 
-        self.click(
-            point=self.locs.collect_clan_crate,
-            pause=2
-        )
-        found, pos = self.grabber.search(image=self.images.okay)
-        if found:
-            self.logger.info("clan crate is available, collecting!")
-            self.click_image(
-                image=self.images.okay,
-                pos=pos,
+        found = False
+        for i in range(5):
+            self.click(
+                point=self.locs.collect_clan_crate,
                 pause=1
             )
+            found, pos = self.grabber.search(image=self.images.okay)
+            if found:
+                self.logger.info("clan crate is available, collecting!")
+                self.click_image(
+                    image=self.images.okay,
+                    pos=pos,
+                    pause=1
+                )
 
+                return found
         return found
 
     @wrap_current_function
@@ -2052,7 +2055,7 @@ class Bot(object):
            - One instance is used by the transition functionality and decorator.
            - The other one allows the function to be called directly without decorators added.
         """
-        while self.grabber.search(self.images.collect_ad, bool_only=True) or self.grabber.search(self.images.watch_ad, bool_only=True):
+        while self.grabber.search(image=[self.images.collect_ad, self.images.watch_ad], bool_only=True):
             # VIP Unlocked...
             if self.grabber.search(self.images.collect_ad, bool_only=True):
                 self.logger.info("collecting vip ad now...")
@@ -2064,12 +2067,40 @@ class Bot(object):
                 )
             # No VIP...
             if self.grabber.search(self.images.watch_ad, bool_only=True):
-                self.logger.info("declining fairy ad now...")
-                self.click(
-                    point=self.locs.no_thanks,
-                    pause=1,
-                    offset=5
-                )
+                # Pihole is enabled, we can attempt to "watch" and collect the ad directly
+                # in the game, pihole should block the ad and allow us to collect.
+                if globals.pihole_ads():
+                    self.logger.info("attempting to collect ad with pi hole now...")
+                    # Waiting for the collection button to appear... Loading screen should remain
+                    # present until this eventually happens.
+                    while not self.grabber.search(image=self.images.collect_ad, bool_only=True):
+                        self.click(
+                            point=self.locs.collect_ad,
+                            pause=1,
+                            offset=5
+                        )
+                        self.logger.info("waiting for pi hole to finish ad...")
+                        sleep(2)
+
+                    # Ad is finished processing, collecting it by finding the "collect" button
+                    # now present on the screen and pressing.
+                    found, pos = self.grabber.search(image=self.images.collect_ad)
+                    self.logger.info("collecting fairy ad now...")
+                    self.click_image(
+                        image=self.images.collect_ad,
+                        pos=pos,
+                        pause=1
+                    )
+
+                # Pihole is disabled, we should just decline the fairy ad for now.
+                # This user does not have VIP, nor is pihole enabled...
+                else:
+                    self.logger.info("declining fairy ad now...")
+                    self.click(
+                        point=self.locs.no_thanks,
+                        pause=1,
+                        offset=5
+                    )
 
     @wrap_current_function
     @not_in_transition

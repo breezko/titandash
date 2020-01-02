@@ -315,8 +315,9 @@ def save_globals(request):
     # Boolean Type Options.
     failsafe_settings = request.POST.get("failsafe_settings")
     event_settings = request.POST.get("event_settings")
+    pihole_ads_settings = request.POST.get("pihole_ads_settings")
 
-    if not failsafe_settings or not event_settings:
+    if not failsafe_settings or not event_settings or not pihole_ads_settings:
         return JsonResponse(data={
             "status": "error",
             "message": "Missing required values."
@@ -324,10 +325,12 @@ def save_globals(request):
 
     failsafe_settings = failsafe_settings.lower()
     event_settings = event_settings.lower()
+    pihole_ads_settings = pihole_ads_settings.lower()
 
     GlobalSettings.objects.grab(qs=True).update(**{
         "failsafe_settings": failsafe_settings,
-        "event_settings": event_settings
+        "event_settings": event_settings,
+        "pihole_ads_settings": pihole_ads_settings
     })
 
     return JsonResponse(data={

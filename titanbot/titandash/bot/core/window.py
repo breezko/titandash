@@ -198,16 +198,26 @@ class Window(object):
         win32gui.ReleaseDC(self.hwnd, hwnd_dc)
         win32gui.DeleteObject(save_bitmap.GetHandle())
 
-        image = image.crop(box=(0, self.y_padding, self.EMULATOR_WIDTH, self.EMULATOR_HEIGHT + self.y_padding))
-        if not region:
-            _SCREENSHOT_LOCK.release()
-            return image
+        image = image.crop(
+            box=(
+                0,
+                self.y_padding,
+                self.EMULATOR_WIDTH,
+                self.EMULATOR_HEIGHT + self.y_padding
+            )
+        )
+
+        # If a region is present, we can ensure our image is cropped to the
+        # bounding box specified. The region should already take into account
+        # our expected y padding (ie: (110, 440) -> (110, 410). Give or take a couple of pixels.
+        if region:
+            image = image.crop(
+                box=region
+            )
 
         _SCREENSHOT_LOCK.release()
 
-        # If we have a region available, we can crop the screenshot
-        # to represent the specified region of the emulator.
-        return image.crop(box=region)
+        return image
 
     def json(self):
         """Convert window instance to a json compliant dictionary."""
