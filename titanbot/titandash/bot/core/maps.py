@@ -122,40 +122,17 @@ GAME_LOCS = {
         "purchase": (254, 554)
     },
     "PERKS": {
-        "power_of_swiping": (406, 229),
-        "adrenaline_rush": (406, 310),
-        "make_it_rain": (406, 387),
-        "mana_potion": (406, 470),
-        "doom": (406, 548),
-        "clan_crate": (406, 627),
+        "mega_boost": (356, 148),
+        "power_of_swiping": (356, 229),
+        "adrenaline_rush": (356, 310),
+        "make_it_rain": (356, 387),
+        "mana_potion": (356, 470),
+        "doom": (356, 548),
+        "clan_crate": (356, 627),
         "perks_okay": (326, 444),
         "perks_cancel": (150, 444),
     },
 }
-
-# When an ad is finished, the exit button is likely going to be in the
-# top left or top right corner of the screen... We can click through these
-# safely and it should close the ad for us.
-AD_EXIT_LOCS = [
-    (5, 36),
-    (23, 54),
-    (43, 74),
-    (45, 77),
-    (21, 77),
-    (7, 77),
-    (29, 49),
-    (41, 43),
-    (47, 40),
-    (469, 38),
-    (456, 48),
-    (434, 71),
-    (412, 85),
-    (397, 47),
-    (413, 44),
-    (427, 67),
-    (444, 79),
-    (463, 91),
-]
 
 # Points used when clicking on locations present on the master panel.
 MASTER_LOCS = {
@@ -373,6 +350,7 @@ IMAGES = {
     "PERKS": {
         "perks_diamond": IMAGE_DIR + "/perks/perks_diamond.png",
         "perks_header": IMAGE_DIR + "/perks/perks_header.png",
+        "perks_vip_watch": IMAGE_DIR + "/perks/perks_vip_watch.png",
     }
 }
 
@@ -398,7 +376,6 @@ STATS_COORDS = {
 STAGE_COORDS = {
     "region": (214, 37, 268, 50),
 }
-
 
 PRESTIGE_COORDS = {
     "base": {
