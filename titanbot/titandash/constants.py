@@ -27,6 +27,7 @@ SKILL_LEVEL_CHOICES = (
 )
 
 NO_PERK = "none"
+MEGA_BOOST = "mega_boost"
 POWER_OF_SWIPING = "power_of_swiping"
 ADRENALINE_RUSH = "adrenaline_rush"
 MAKE_IT_RAIN = "make_it_rain"
@@ -36,6 +37,7 @@ CLAN_CRATE = "clan_crate"
 
 PERK_CHOICES = (
     (NO_PERK, "None"),
+    (MEGA_BOOST, "Mega Boost"),
     (POWER_OF_SWIPING, "Power Of Swiping"),
     (ADRENALINE_RUSH, "Adrenaline Rush"),
     (MAKE_IT_RAIN, "Make It Rain"),
