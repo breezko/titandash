@@ -5,7 +5,7 @@ from django.db.models import Q
 
 from titandash.models.queue import Queue
 from titandash.models.clan import Clan, RaidResult
-from titandash.constants import SKILL_MAX_LEVEL, PERK_CHOICES, NO_PERK
+from titandash.constants import SKILL_MAX_LEVEL, PERK_CHOICES, NO_PERK, MEGA_BOOST
 
 from titandash.bot.core import shortcuts
 
@@ -383,7 +383,7 @@ class Bot(object):
 
         for perk in PERK_CHOICES:
             if perk[0] != NO_PERK:
-                if getattr(self.configuration, "enable_{key}".format(key=perk), False):
+                if getattr(self.configuration, "enable_{key}".format(key=perk[0]), False):
                     enabled_perks.append(perk[0])
 
         self.enabled_perks = enabled_perks
@@ -535,7 +535,7 @@ class Bot(object):
         """
         Calculate when the next timed perk check will take place.
         """
-        if self.enabled_perks:
+        if self.configuration.enable_perk_usage:
             if self.configuration.enable_perk_only_tournament:
                 return
 
@@ -1071,41 +1071,76 @@ class Bot(object):
         # perks may close the panel after activation.
         self.goto_master(collapsed=False, top=False)
 
-        # Attempting to open the purchase panel for this perk.
-        # If it is already active, no window will be opened, which we
-        # can use to determine whether or not to continue.
-        self.click(
-            point=getattr(self.locs, perk),
-            pause=1
-        )
+        perk_point = getattr(self.locs, perk)
 
-        if not self.grabber.search(image=self.images.perks_header, bool_only=True):
-            self.logger.info("unable to open {perk} purchase panel, it's probably already active...".format(perk=perk))
-            return True
-
-        # Check for the diamond icon in the opened window,
-        # based on it being present or not, we can choose to either
-        # purchase the perk or not.
-        if self.grabber.search(image=self.images.perks_diamond, region=PERK_COORDS["purchase"], bool_only=True):
-            if self.configuration.enable_perk_diamond_purchase:
-                self.logger.info("purchasing {perk} now.".format(perk=perk))
-                return self.click(
-                    point=self.locs.perks_okay,
+        # Our mega boost perk currently functions differently then the other
+        # perks present and available.
+        if perk == MEGA_BOOST:
+            # Do we have our vip option unlocked to activate this perk?
+            if self.grabber.search(image=self.images.perks_vip_watch, bool_only=True):
+                # Just activate the perk.
+                self.logger.info("using {perk} with vip now...".format(perk=perk))
+                self.click(
+                    point=perk_point,
                     pause=1
                 )
+            # Otherwise, we need to check to see if we can collect the perk with our
+            # pi hole ad settings, otherwise, this perk may not be activated.
             else:
-                self.logger.info("{perk} requires diamonds to use, this is disabled currently, skipping...".format(perk=perk))
-                return self.click(
-                    point=self.locs.perks_cancel,
-                    pause=1
-                )
+                if globals.pihole_ads():
+                    self.logger.info("attempting to use {perk} through pi hole now...".format(perk=perk))
+                    self.click(
+                        point=perk_point,
+                        pause=1
+                    )
+                    # If our perk header is now present, we can loop and wait until it's disappeared,
+                    # which would represent the ad being finished and the perk being activated.
+                    if self.grabber.search(image=self.images.perk_header, bool_only=True):
+                        while self.grabber.search(image=self.images.perk_header, bool_only=True):
+                            self.click(
+                                point=self.locs.perks_okay,
+                                pause=2
+                            )
+                            self.logger.info("waiting for pi hole to finish ad...")
+                        # Out of while loop, means the ad has been collected successfully.
+                        self.logger.info("{perk} has been successfully used.".format(perk=perk))
 
-        # Otherwise, go ahead with normal perk purchase.
-        self.logger.info("using {perk} now.".format(perk=perk))
-        return self.click(
-            point=self.locs.perks_okay,
-            pause=1
-        )
+        else:
+            # Attempting to open the purchase panel for this perk.
+            # If it is already active, no window will be opened, which we
+            # can use to determine whether or not to continue.
+            self.click(
+                point=perk_point,
+                pause=1
+            )
+
+            if not self.grabber.search(image=self.images.perks_header, bool_only=True):
+                self.logger.info("unable to open {perk} purchase panel, it's probably already active...".format(perk=perk))
+                return True
+
+            # Check for the diamond icon in the opened window,
+            # based on it being present or not, we can choose to either
+            # purchase the perk or not.
+            if self.grabber.search(image=self.images.perks_diamond, region=PERK_COORDS["purchase"], bool_only=True):
+                if self.configuration.enable_perk_diamond_purchase:
+                    self.logger.info("purchasing {perk} now.".format(perk=perk))
+                    return self.click(
+                        point=self.locs.perks_okay,
+                        pause=1
+                    )
+                else:
+                    self.logger.info("{perk} requires diamonds to use, this is disabled currently, skipping...".format(perk=perk))
+                    return self.click(
+                        point=self.locs.perks_cancel,
+                        pause=1
+                    )
+
+            # Otherwise, go ahead with normal perk purchase.
+            self.logger.info("using {perk} now.".format(perk=perk))
+            return self.click(
+                point=self.locs.perks_okay,
+                pause=1
+            )
 
     @wrap_current_function
     @not_in_transition
