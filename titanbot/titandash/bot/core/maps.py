@@ -350,6 +350,7 @@ IMAGES = {
     "PERKS": {
         "perks_diamond": IMAGE_DIR + "/perks/perks_diamond.png",
         "perks_header": IMAGE_DIR + "/perks/perks_header.png",
+        "perk_header": IMAGE_DIR + "/perks/perk_header.png",
         "perks_vip_watch": IMAGE_DIR + "/perks/perks_vip_watch.png",
     }
 }
