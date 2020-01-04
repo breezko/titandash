@@ -12,7 +12,7 @@ from titanauth.models.release_info import ReleaseInfo
 from titandash.utils import start, pause, stop, resume, title
 from titandash.constants import RUNNING, PAUSED, STOPPED, CACHE_TIMEOUT
 from titandash.models.bot import BotInstance
-from titandash.models.statistics import Session, Statistics, Log, ArtifactStatistics
+from titandash.models.statistics import Session, Statistics, Log, ArtifactStatistics, ArtifactOwned
 from titandash.models.clan import RaidResult
 from titandash.models.artifact import Artifact, Tier
 from titandash.models.configuration import Configuration, ThemeConfig
@@ -458,6 +458,29 @@ def artifacts(request):
         })
 
     return render(request, "artifacts/allArtifacts.html", context=ctx)
+
+
+def toggle_artifact(request):
+    """Toggle an artifact to it's opposite state."""
+    artifact = ArtifactOwned.objects.get(
+        artifact=Artifact.objects.get(key=request.GET.get("key")),
+        instance=BotInstance.objects.get(pk=request.GET.get("instance"))
+    )
+
+    # Update owned state to toggled version of current value.
+    # We also need to states value to be returned in our response.
+    if artifact.owned:
+        artifact.owned = False
+    else:
+        artifact.owned = True
+
+    artifact.save()
+
+    return JsonResponse(
+        data={
+            "state": artifact.owned
+        }
+    )
 
 
 def all_prestiges(request):
