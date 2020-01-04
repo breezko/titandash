@@ -69,7 +69,8 @@ class GlobalSettings(models.Model):
         return {
             "id": self.pk,
             "failsafe_settings": self.failsafe_settings,
-            "event_settings": self.event_settings
+            "event_settings": self.event_settings,
+            "pihole_settings": self.pihole_ads_settings
         }
 
     def form_dict(self):
