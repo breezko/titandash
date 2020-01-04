@@ -1,6 +1,7 @@
 from settings import STAGE_CAP, BOT_VERSION, GIT_COMMIT
 
 from django.utils import timezone
+from django.db.models import Q
 
 from titandash.models.queue import Queue
 from titandash.models.clan import Clan, RaidResult
@@ -221,11 +222,10 @@ class Bot(object):
         The testing boolean is used to ignore the owned filter so all artifacts will be grabbed
         and can be tested thoroughly.
         """
-        lst = []
-
         if not self.configuration.enable_artifact_purchase:
             self.logger.info("artifact purchase is disabled, artifact parsing is not required and will be skipped.")
-            return lst
+            self.owned_artifacts = []
+            return
 
         # Grabbing all configuration values used to determine which artifacts are upgraded when called.
         upgrade_tiers = self.configuration.upgrade_owned_tier.all()
@@ -244,44 +244,61 @@ class Bot(object):
         else:
             artifacts = self.stats.artifact_statistics.artifacts.filter(owned=True)
 
-        for artifact in artifacts.exclude(artifact__name__in=ARTIFACT_WITH_MAX_LEVEL):
-            if artifact.artifact.name in ignore_artifacts:
-                continue
-            if artifact.artifact.tier.tier in upgrade_tiers or artifact.artifact.name in upgrade_artifacts:
-                lst.append(artifact.artifact.name)
-                self.logger.debug("{artifact} will be upgraded".format(artifact=artifact))
-                continue
-
-        if len(lst) == 0:
+        if len(artifacts) == 0:
             self.logger.error("no owned artifacts were found... parsed artifacts must be present before starting a session.")
             self.logger.info("attempting to force artifacts parse now...")
+
+            # Perform an automatic artifact parsing process.
+            # Afterwards, we can safely run our function again
+            # to set the owned artifacts properly.
             self.parse_artifacts()
-            lst = self.get_upgrade_artifacts()
+            self.get_upgrade_artifacts()
 
-            if len(lst) == 0:
-                self.logger.error("no artifacts were parsed... disabling artifact purchase for this session.")
+            if not self.owned_artifacts:
+                self.logger.error("no artifacts were parsed or none are selected that are currently owned. artifact purchasing will be disabled for this session.")
                 self.configuration.enable_artifact_purchase = False
+                self.owned_artifacts = []
+                return
 
-        if self.configuration.shuffle_artifacts:
-            random.shuffle(lst)
+        lst = list(artifacts.exclude(
+            # Combining the max level artifacts and ignore artifacts specified.
+            # We must coerce to list to extend.
+            artifact__name__in=list(ARTIFACT_WITH_MAX_LEVEL) + list(ignore_artifacts)
+        ).filter(
+            Q(artifact__tier__tier__in=upgrade_tiers) |
+            Q(artifact__name__in=upgrade_artifacts)
+        ).values_list("artifact__name", flat=True))
+
+        # Perform truthy check on the "lst" of artifacts validated
+        # and enabled for purchase.
         if lst:
+            # Shuffle list to add some randomness to artifacts
+            # purchased throughout each prestige.
+            if self.configuration.shuffle_artifacts:
+                random.shuffle(lst)
+
+            # Set bot level owned artifacts variable
+            # (only if lst contains elements).
             self.owned_artifacts = lst
+        else:
+            self.owned_artifacts = []
 
     @wrap_current_function
     def update_next_artifact_upgrade(self):
         """
         Update the next artifact to be upgraded to the next one in the list.
         """
-        if self.next_artifact_index == len(self.owned_artifacts):
-            self.next_artifact_index = 0
+        if self.owned_artifacts:
+            if self.next_artifact_index == len(self.owned_artifacts):
+                self.next_artifact_index = 0
 
-        self.next_artifact_upgrade = self.owned_artifacts[self.next_artifact_index]
-        self.next_artifact_index += 1
+            self.next_artifact_upgrade = self.owned_artifacts[self.next_artifact_index]
+            self.next_artifact_index += 1
 
-        self.instance.next_artifact_upgrade = self.next_artifact_upgrade
-        self.instance.save()
+            self.instance.next_artifact_upgrade = self.next_artifact_upgrade
+            self.instance.save()
 
-        self.logger.info("next artifact upgrade: {artifact}".format(artifact=self.next_artifact_upgrade))
+            self.logger.info("next artifact upgrade: {artifact}".format(artifact=self.next_artifact_upgrade))
 
     @wrap_current_function
     def parse_advanced_start(self, stage_text):
