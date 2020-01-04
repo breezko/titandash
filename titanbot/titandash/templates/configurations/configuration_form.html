@@ -719,6 +719,13 @@
                 </div>
 
                 <div class="form-check">
+                    {# Enable Mega Boost #}
+                    <input {% if config.enable_mega_boost %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_mega_boost" name="enable_mega_boost">
+                    <label class="form-check-label" for="enable_mega_boost">Enable Mega Boost</label>
+                    <p class="text-muted">{{ help.enable_mega_boost }}</p>
+                </div>
+
+                <div class="form-check">
                     {# Enable Power Of Sniping #}
                     <input {% if config.enable_power_of_swiping %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_power_of_swiping" name="enable_power_of_swiping">
                     <label class="form-check-label" for="enable_power_of_swiping">Enable Power Of Swiping</label>

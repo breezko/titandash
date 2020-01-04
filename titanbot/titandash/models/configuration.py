@@ -120,6 +120,7 @@ COMPRESSION_KEYS = {
     "enable_doom": 107,
     "enable_clan_crate": 108,
     "use_perks_on_start": 109,
+    "enable_mega_boost": 110,
 }
 
 HELP_TEXT = {
@@ -191,6 +192,7 @@ HELP_TEXT = {
     "use_perks_every_x_hours": "Specify the amount of hours to wait in between each perk usage process.",
     "use_perk_on_prestige": "Choose a specific perk that you would like to use or purchase (if enabled) when a prestige occurs.",
     "use_perks_on_start": "Should perks be used or purchased when a session is started.",
+    "enable_mega_boost": "Enable the mega boost perk. This perk can only be collected if vip or pihole ads are enabled.",
     "enable_power_of_swiping": "Enable the power of swiping perk.",
     "enable_adrenaline_rush": "Enable the adrenaline rush perk.",
     "enable_make_it_rain": "Enable the make it rain perk.",
@@ -327,6 +329,7 @@ class Configuration(ParanoidModel, ExportModelMixin):
     use_perks_every_x_hours = models.PositiveIntegerField(verbose_name="Use Perks Every X Hours", default=12, help_text=HELP_TEXT["use_perks_every_x_hours"])
     use_perks_on_start = models.BooleanField(verbose_name="Use Perks On Session Start", default=False, help_text=HELP_TEXT["use_perks_on_start"])
     use_perk_on_prestige = models.CharField(verbose_name="Use Perk On Prestige", choices=PERK_CHOICES, default=NO_PERK, max_length=255, help_text=HELP_TEXT["use_perk_on_prestige"])
+    enable_mega_boost = models.BooleanField(verbose_name="Enable Mega Boost", default=False, help_text=HELP_TEXT["enable_mega_boost"])
     enable_power_of_swiping = models.BooleanField(verbose_name="Enable Power Of Swiping", default=False, help_text=HELP_TEXT["enable_power_of_swiping"])
     enable_adrenaline_rush = models.BooleanField(verbose_name="Enable Adrenaline Rush", default=False, help_text=HELP_TEXT["enable_adrenaline_rush"])
     enable_make_it_rain = models.BooleanField(verbose_name="Enable Make It Rain", default=False, help_text=HELP_TEXT["enable_make_it_rain"])
@@ -460,7 +463,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
         """
         from titandash.utils import title
         dct = {
-            # RUNTIME.
             "Runtime": {
                 "name": self.name,
                 "soft_shutdown_on_critical_error": self.soft_shutdown_on_critical_error,
@@ -547,6 +549,7 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 "use_perks_on_start": self.use_perk_on_prestige,
                 "use_perks_every_x_hours": self.use_perks_every_x_hours,
                 "use_perk_on_prestige": self.use_perk_on_prestige,
+                "enable_mega_boost": self.enable_mega_boost,
                 "enable_power_of_swiping": self.enable_power_of_swiping,
                 "enable_adrenaline_rush": self.enable_adrenaline_rush,
                 "enable_make_it_rain": self.enable_make_it_rain,
