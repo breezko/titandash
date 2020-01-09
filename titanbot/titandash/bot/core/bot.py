@@ -184,6 +184,43 @@ class Bot(object):
             pause=pause
         )
 
+    def find_and_click(self, image, region=None, precision=0.8, button="left", pause=0.0, padding=None, log=None):
+        """
+        Local image find and click method for use with the bot. Allowing us to "fire and forget" to look for the image and click it.
+        """
+        found, position = self.grabber.search(
+            image=image,
+            region=region,
+            precision=precision
+        )
+
+        # Is the image specified (or one of them), currently on the screen?
+        if found:
+            if log:
+                self.logger.info(
+                    msg=log
+                )
+            if not padding:
+                self.click_image(
+                    image=image,
+                    pos=position,
+                    button=button,
+                    pause=pause
+                )
+            else:
+                self.click(
+                    point=(
+                        position[0] + padding[0],
+                        position[1] + padding[1]
+                    ),
+                    pause=pause
+                )
+            return True
+
+        # The image wasn't found, return false for use with
+        # any conditional checks within the bot.
+        return False
+
     def drag(self, start, end, button="left", pause=0.5):
         """
         Local drag method for use with the bot, ensuring we pass the window being used into the drag function.
@@ -1479,13 +1516,10 @@ class Bot(object):
                 )
 
             # Making it here means the artifact in question has been found.
-            found, position = self.grabber.search(ARTIFACT_MAP.get(artifact))
-            new_x = position[0] + ARTIFACTS_LOCS["artifact_push"]["x"]
-            new_y = position[1] + ARTIFACTS_LOCS["artifact_push"]["y"]
-
-            self.click(
-                point=(new_x, new_y),
-                pause=1
+            self.find_and_click(
+                image=ARTIFACT_MAP.get(artifact),
+                pause=1,
+                padding=(ARTIFACTS_LOCS["artifact_push"]["x"], ARTIFACTS_LOCS["artifact_push"]["y"]),
             )
 
     @not_in_transition
@@ -1516,8 +1550,7 @@ class Bot(object):
                     point=self.locs.tournament,
                     pause=2
                 )
-                found, position = self.grabber.search(self.images.join)
-                if found:
+                if self.grabber.search(self.images.join, bool_only=True):
                     # A tournament is ready to be joined. First, we must travel the the base
                     # prestige screen, perform a prestige update, before joining the tournament.
                     self.logger.info("tournament is available to join. generating prestige instance before joining.")
@@ -1532,11 +1565,13 @@ class Bot(object):
                         point=MASTER_LOCS["prestige"],
                         pause=3
                     )
-                    prestige_found = self.grabber.search(self.images.confirm_prestige, bool_only=True)
-                    if prestige_found:
+                    if self.grabber.search(self.images.confirm_prestige, bool_only=True):
                         # Parsing the advanced start value that is present before a prestige takes place...
                         # This is used to improve stage parsing to not allow values < the advanced start value.
-                        prestige, advanced_start = self.stats.update_prestige(current_stage=self.props.current_stage, artifact=self.next_artifact_upgrade)
+                        prestige, advanced_start = self.stats.update_prestige(
+                            current_stage=self.props.current_stage,
+                            artifact=self.next_artifact_upgrade
+                        )
                         self.click(
                             point=MASTER_LOCS["screen_top"],
                             pause=1
@@ -1556,10 +1591,8 @@ class Bot(object):
                         )
 
                         # Looking for the final prestige join confirmation. Replicating base prestige functionality.
-                        prestige_final_found, prestige_final_position = self.grabber.search(image=self.images.confirm_prestige_final)
-                        self.click_image(
-                            image=self.images.confirm_prestige_final,
-                            pos=prestige_final_position
+                        self.find_and_click(
+                            image=self.images.confirm_prestige_final
                         )
 
                         # Return generated prestige and advanced start right away,
@@ -1569,13 +1602,11 @@ class Bot(object):
 
                 # Otherwise, maybe the tournament is over? Or still running.
                 else:
-                    collect_found, collect_position = self.grabber.search(image=self.images.collect_prize)
-                    if collect_found:
-                        self.logger.info("tournament is over, attempting to collect reward now.")
-                        self.click(
-                            point=self.locs.collect_prize,
-                            pause=2
-                        )
+                    found = self.find_and_click(
+                        image=self.images.collect_prize,
+                        pause=2
+                    )
+                    if found:
                         self.click(
                             point=self.locs.game_middle,
                             clicks=10,
@@ -1667,17 +1698,11 @@ class Bot(object):
                 point=self.locs.collect_clan_crate,
                 pause=1
             )
-            found, pos = self.grabber.search(image=self.images.okay)
-            if found:
-                self.logger.info("clan crate is available, collecting!")
-                self.click_image(
-                    image=self.images.okay,
-                    pos=pos,
-                    pause=1
-                )
+            if self.find_and_click(image=self.images.okay, pause=1):
+                return True
 
-                return found
-        return found
+        # No clan crate was found or collected, return false.
+        return False
 
     @wrap_current_function
     @not_in_transition
@@ -1693,32 +1718,23 @@ class Bot(object):
             point=self.locs.inbox,
             pause=0.5
         )
-        inbox_found = self.grabber.search(self.images.inbox_header, bool_only=True)
-        if inbox_found:
-            self.click(
-                point=self.locs.inbox_clan,
-                pause=0.2
-            )
-            self.click(
-                point=self.locs.inbox_news,
-                pause=0.2
-            )
-            self.click(
-                point=self.locs.inbox_clan,
-                pause=0.2
-            )
-            self.click(
-                point=self.locs.inbox_news,
-                pause=0.2
-            )
+
+        if self.grabber.search(self.images.inbox_header, bool_only=True):
+            for i in range(2):
+                for location in [self.locs.inbox_clan, self.locs.inbox_news]:
+                    self.click(
+                        point=location,
+                        pause=0.2
+                    )
 
             # Close the inbox screen now.
             self.click(
                 point=MASTER_LOCS["screen_top"],
                 pause=0.5
             )
+            return True
 
-        return inbox_found
+        return False
 
     @wrap_current_function
     @not_in_transition
@@ -1820,14 +1836,10 @@ class Bot(object):
                 # Note: The single "ad watch" daily is not completed here
                 # unless a user explicitly goes in and watches the ad.
                 while self.grabber.search(self.images.daily_collect, bool_only=True):
-                    found, pos = self.grabber.search(self.images.daily_collect)
-                    if found:
-                        # Collect the achievement reward here.
-                        self.logger.info("completed daily achievement found, collecting now.")
-                        self.click_image(
-                            image=self.images.daily_collect,
-                            pos=pos
-                        )
+                    self.find_and_click(
+                        image=self.images.daily_collect,
+                        log="completed daily achievement found, collecting now."
+                    )
 
                 # Exiting achievements screen now.
                 self.calculate_next_daily_achievement_check()
@@ -1987,6 +1999,7 @@ class Bot(object):
                 # exiting early and not attempting to parse.
                 if not self.grabber.search(self.images.clan_info, bool_only=True):
                     self.logger.warning("no clan is available to parse, giving up...")
+                    return False
 
                 # A clan is available, begin by opening the information panel
                 # to retrieve some generic information about the clan.
@@ -2066,35 +2079,29 @@ class Bot(object):
         """
         Check to see if the welcome panel is currently on the screen, and close it.
         """
-        if self.grabber.search(self.images.welcome_header, bool_only=True):
-            found, pos = self.grabber.search(self.images.welcome_collect_no_vip)
-            if found:
-                self.click_image(
-                    image=self.images.welcome_collect_no_vip,
-                    pos=pos,
+        if self.grabber.search(image=self.images.welcome_header, bool_only=True):
+            # A welcome header is present, try to collect through
+            # non vip means first.
+            found = self.find_and_click(
+                image=self.images.welcome_collect_no_vip,
+                pause=1
+            )
+            # Try using vip means if the first method does not work.
+            if not found:
+                self.find_and_click(
+                    image=self.images.welcome_collect_vip,
                     pause=1
                 )
-            else:
-                found, pos = self.grabber.search(self.images.welcome_collect_vip)
-                if found:
-                    self.click_image(
-                        image=self.images.welcome_collect_vip,
-                        pos=pos,
-                        pause=1
-                    )
 
     def rate_screen_check(self):
         """
         Check to see if the game rate panel is currently on the screen, and close it.
         """
-        if self.grabber.search(self.images.rate_icon, bool_only=True):
-            found, pos = self.grabber.search(self.images.large_exit_panel)
-            if found:
-                self.click_image(
-                    image=self.images.large_exit_panel,
-                    pos=pos,
-                    pause=1
-                )
+        if self.grabber.search(image=self.images.rate_icon, bool_only=True):
+            self.find_and_click(
+                image=self.images.rate_icon,
+                pause=1
+            )
 
     def ad(self):
         """
@@ -2107,52 +2114,53 @@ class Bot(object):
            - One instance is used by the transition functionality and decorator.
            - The other one allows the function to be called directly without decorators added.
         """
+        collected = False
         while self.grabber.search(image=[self.images.collect_ad, self.images.watch_ad], bool_only=True):
             # VIP Unlocked...
-            if self.grabber.search(self.images.collect_ad, bool_only=True):
-                self.logger.info("collecting vip ad now...")
-                self.stats.increment_ads()
-                self.click(
-                    point=self.locs.collect_ad,
-                    pause=1,
-                    offset=5
-                )
+            found = self.find_and_click(
+                image=self.images.collect_ad,
+                pause=1
+            )
+            if found:
+                collected = True
             # No VIP...
-            if self.grabber.search(self.images.watch_ad, bool_only=True):
-                # Pihole is enabled, we can attempt to "watch" and collect the ad directly
-                # in the game, pihole should block the ad and allow us to collect.
+            if not found:
                 if globals.pihole_ads():
                     self.logger.info("attempting to collect ad with pi hole now...")
-                    # Waiting for the collection button to appear... Loading screen should remain
-                    # present until this eventually happens.
-                    while not self.grabber.search(image=self.images.collect_ad, bool_only=True):
-                        self.click(
-                            point=self.locs.collect_ad,
-                            pause=1,
-                            offset=5
-                        )
-                        self.logger.info("waiting for pi hole to finish ad...")
-                        sleep(2)
 
-                    # Ad is finished processing, collecting it by finding the "collect" button
-                    # now present on the screen and pressing.
-                    found, pos = self.grabber.search(image=self.images.collect_ad)
-                    self.logger.info("collecting fairy ad now...")
-                    self.click_image(
+                    # When pi hole is enabled, we can wait until a collect button has
+                    # shown up on the screen, since the ad will eventually finish on its own.
+                    while not self.grabber.search(image=self.images.collect_ad, bool_only=True):
+                        # Make sure we don't accidentally mis-click or click on collect while
+                        # the game is lagging or some other oddity that would cause this to loop forever.
+                        self.find_and_click(
+                            image=self.images.collect_ad,
+                            pause=2,
+                            log="waiting for pi hole to finish ad..."
+                        )
+
+                    # Ad has finished processing at this point, as the collect ad button should
+                    # now be present somewhere on the screen.
+                    found = self.find_and_click(
                         image=self.images.collect_ad,
-                        pos=pos,
                         pause=1
                     )
+                    if found:
+                        collected = True
 
-                # Pihole is disabled, we should just decline the fairy ad for now.
-                # This user does not have VIP, nor is pihole enabled...
+                # Pi hole functionality is disabled, we should just decline
+                # the fairy ad here, user has no way of collecting.
                 else:
-                    self.logger.info("declining fairy ad now...")
-                    self.click(
-                        point=self.locs.no_thanks,
+                    self.find_and_click(
+                        image=self.images.no_thanks,
                         pause=1,
-                        offset=5
+                        log="declining fairy ad now..."
                     )
+
+        # Actual collection of an is handled outside of our while loop. Pi hole or vip enabled ads
+        # are tracked through the statistics. Doing this here to avoid our loop updating the stats constantly.
+        if collected:
+            self.stats.increment_ads()
 
     @wrap_current_function
     @not_in_transition
@@ -2171,13 +2179,12 @@ class Bot(object):
         """
         loops = 0
         while loops != BOSS_LOOP_TIMEOUT:
-            if self.grabber.search(self.images.fight_boss, bool_only=True):
-                self.logger.info("attempting to initiate boss fight in game. ({tries}/{max})".format(tries=loops, max=BOSS_LOOP_TIMEOUT))
-                self.click(
-                    point=self.locs.fight_boss,
-                    pause=0.8
-                )
-            else:
+            found = self.find_and_click(
+                image=self.images.fight_boss,
+                pause=0.8,
+                log="initiating boss fight in game now..."
+            )
+            if found:
                 return True
 
             # Looping indefinitely until our loops has reached the configured
@@ -2195,16 +2202,13 @@ class Bot(object):
         """
         loops = 0
         while loops != BOSS_LOOP_TIMEOUT:
-            if not self.grabber.search(self.images.fight_boss, bool_only=True):
-                self.logger.info("attempting to leave active boss fight in game. ({tries}/{max})".format(tries=loops, max=BOSS_LOOP_TIMEOUT))
-                self.click(
-                    point=self.locs.fight_boss,
-                    pause=0.8
-                )
-            else:
-                # Sleeping slightly when successful in leaving, since a transition state may occur
-                # right after, we should wait to be safe.
-                sleep(2)
+            found = self.find_and_click(
+                image=self.images.fight_boss,
+                pause=0.8
+            )
+            # Flipping our logic slightly here, since leaving the fight would occur when
+            # attempting to click on the "fight_boss" image and it not being present.
+            if not found:
                 return True
 
             # Looping indefinitely until our loops has reached the configured
@@ -2297,29 +2301,20 @@ class Bot(object):
         # If we reach this point, it means our settings are not yet available, let's minimize
         # the panel that's currently expanded.
         while self.grabber.search(image=self.images.collapse_panel, bool_only=True):
-            found, pos = self.grabber.search(image=self.images.collapse_panel)
-
-            # The collapse button is found, let's click it and wait shortly before continuing.
-            if found:
-                self.click_image(
-                    image=self.images.collapse_panel,
-                    pos=pos,
-                    pause=1
-                )
-                return True
+            self.find_and_click(
+                image=self.images.collapse_panel,
+                pause=1
+            )
 
         # Additionally, maybe the shop panel was opened for some reason. We should also
         # handle this edge case by closing it if the collapse panel is not visible.
         while self.grabber.search(image=self.images.exit_panel, bool_only=True):
-            found, pos = self.grabber.search(image=self.images.exit_panel)
+            self.find_and_click(
+                image=self.images.exit_panel,
+                pause=1
+            )
 
-            if found:
-                self.click_image(
-                    image=self.images.exit_panel,
-                    pos=pos,
-                    pause=1
-                )
-                return True
+        return True
 
     @not_in_transition
     def goto_panel(self, panel, icon, top_find, bottom_find, collapsed=True, top=True):
@@ -2506,21 +2501,16 @@ class Bot(object):
         Instruct the bot to make sure no panels are currently open.
         """
         loops = 0
-        while self.grabber.search(self.images.exit_panel, bool_only=True):
-            if loops == FUNCTION_LOOP_TIMEOUT:
-                self.logger.warning("error occurred while attempting to close all panels, exiting early.")
-                return False
-
-            loops += 1
-            found, pos = self.grabber.search(image=self.images.exit_panel)
+        while loops != FUNCTION_LOOP_TIMEOUT:
+            found = self.find_and_click(
+                image=self.images.exit_panel,
+                pause=0.5
+            )
             if found:
-                self.click_image(
-                    image=self.images.exit_panel,
-                    pos=pos,
-                    pause=0.5
-                )
+                return True
 
-        return True
+        self.logger.warning("unable to close all panels on the screen, skipping...")
+        return False
 
     @wrap_current_function
     def soft_shutdown(self):
