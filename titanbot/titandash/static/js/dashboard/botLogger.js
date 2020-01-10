@@ -5,6 +5,8 @@
  * on the dashboard. They may also toggle the ability to have the logging panel auto scroll.
  */
 let BotLoggerConsumer = function() {
+    let ajaxUrls = {updateLevel: "/globals/save/log/"};
+    let ajaxDataType = "json";
     let autoScroll = true;
 
     /* Active Instance. */
@@ -17,11 +19,13 @@ let BotLoggerConsumer = function() {
         return {
             logAccordion: $("#dashboardLogAccordion"),
             logHeader: $("#dashboardLogHeader"),
+            logLevel: $("#dashboardLogLevelSelect"),
             logBody: $("#dashboardLogBody"),
             logContent: $("#dashboardLogContent"),
             logInitial: $("#dashboardLogInitial"),
             logScroller: $("#dashboardLogScroller"),
-            logTrash: $("#dashboardLogTrash")
+            logTrash: $("#dashboardLogTrash"),
+            alertContainer: $("#alert-container")
         }
     };
 
@@ -98,6 +102,20 @@ let BotLoggerConsumer = function() {
                 autoScroll = false;
                 elements.logScroller.addClass("text-dark").removeClass("text-success");
             }
+        });
+
+        // Setup the ajax post to ensure our log level is updated when
+        // the user changes the global log level being used.
+        elements.logLevel.change(function() {
+            $.ajax({
+                url: ajaxUrls.updateLevel,
+                method: "get",
+                dataType: ajaxDataType,
+                data: {
+                    logging_level: $(this).val(),
+                    log_only: true
+                }
+            });
         });
     };
 
