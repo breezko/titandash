@@ -1838,8 +1838,17 @@ class Bot(object):
                 while self.grabber.search(self.images.daily_collect, bool_only=True):
                     self.find_and_click(
                         image=self.images.daily_collect,
-                        log="completed daily achievement found, collecting now."
+                        log="completed daily achievement found, collecting now.",
+                        pause=0.5
                     )
+
+                # Additionally, check for the vip collection option
+                # for daily achievements.
+                self.find_and_click(
+                    image=self.images.vip_daily_collect,
+                    log="vip daily achievement found, collecting now.",
+                    pause=0.5
+                )
 
                 # Exiting achievements screen now.
                 self.calculate_next_daily_achievement_check()
