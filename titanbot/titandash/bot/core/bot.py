@@ -2188,6 +2188,7 @@ class Bot(object):
         if collected:
             self.logger.info("ad was successfully collected...")
             self.stats.increment_ads()
+            sleep(1)
 
     @wrap_current_function
     @not_in_transition
