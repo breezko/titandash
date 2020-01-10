@@ -1,5 +1,6 @@
 from django.core.cache import cache
 
+from titandash.models.queue import Queue
 from titandash.bot.core.utilities import make_logger
 from titandash.bot.core.utilities import globals
 
@@ -9,8 +10,7 @@ import inspect
 import logging
 
 
-__configuration_base__ = ("_configuration", "_logger", "_fields", "_cache_key")
-___logger_base__ = ()
+__configuration_base__ = ("_instance", "_configuration", "_fields", "_reloaded")
 
 
 class LiveConfiguration:
@@ -19,9 +19,22 @@ class LiveConfiguration:
     while a bot session is running, this allows users to change settings and have them apply
     instantaneously to any running instances that are using the configuration.
     """
-    def __init__(self, configuration):
+    def __init__(self, instance, configuration):
+        self._instance = instance
         self._configuration = configuration
         self._fields = [f.name for f in configuration._meta.get_fields() if not f.name.startswith("_")]
+
+        # Creating an initial reloaded variable that we can use to ensure that our first configuration
+        # reload, which would have to access the cache and call a "reload", should not happen initially.
+        # Once we've cached at least once, we don't have to worry about it.
+        self._reloaded = False
+
+        # Additionally, let's check to see if our configuration is already cached
+        # (from a previous session maybe).
+        if cache.get(key=self._configuration.cache_key):
+            # _reloaded = True: Next time we refresh configuration, reload will be
+            # explicitly called instead of waiting.
+            self._reloaded = True
 
     def _get_cache_state(self):
         """
@@ -42,6 +55,18 @@ class LiveConfiguration:
         Reload the current configuration object, re-retrieving it from the database.
         """
         self._configuration.refresh_from_db()
+
+        # Reloading our instances bot if we've reloaded at least once.
+        # Makes sure we don't initialize and re-run reload every time.
+        if self._reloaded:
+            Queue.objects.create(
+                function="reload",
+                instance=self._instance
+            )
+        else:
+            # set _reloaded now that we're in our cache setter,
+            # next time around, function will be queued.
+            self._reloaded = True
 
         # Return configuration object once we've refreshed it
         # directly from the database.
