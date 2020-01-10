@@ -233,6 +233,7 @@ IMAGES = {
     "ACHIEVEMENTS": {
         "achievements_title": IMAGE_DIR + "/achievements/achievements.png",
         "daily_collect": IMAGE_DIR + "/achievements/daily_collect.png",
+        "vip_daily_collect": IMAGE_DIR + "/achievements/vip_collect.png",
         "daily_watch": IMAGE_DIR + "/achievements/daily_watch.png",
     },
     "ADS": {
