@@ -86,6 +86,7 @@ class Bot(object):
         self.instance.shortcuts = enable_shortcuts
 
         self.configuration = LiveConfiguration(
+            instance=self.instance,
             configuration=configuration,
         )
         self.logger = LiveLogger(
@@ -232,6 +233,20 @@ class Bot(object):
             pause=pause
         )
 
+    @wrap_current_function
+    @bot_property(queueable=True, tooltip="Reload and run functions that set local variables that are usually set once, this should be ran whenever a configuration is changed.")
+    def reload(self):
+        """
+        Reload any variables that are "usually" generated initially when a bot is started.
+
+        Looping through all of our properties that have been designated as "reload" functions,
+        and executing them normally, this function should be called when information from the database has changed,
+        ie: A configuration update.
+        """
+        self.logger.info("reloading bot variables now...")
+        for prop in bot_property.reloads():
+            getattr(self, prop["name"])()
+
     def setup_scheduler(self):
         """
         Setup the background scheduler object present on a bot instance, ensuring that jobs with defined
@@ -250,6 +265,7 @@ class Bot(object):
             )
 
     @wrap_current_function
+    @bot_property(queueable=True, reload=True, tooltip="Parse selected artifacts to upgrade, generating a list of artifacts that will be upgraded on prestige.")
     def get_upgrade_artifacts(self, testing=False):
         """
         Retrieve a list of all discovered/owned artifacts in game that will be iterated over
@@ -393,6 +409,7 @@ class Bot(object):
             pass
 
     @wrap_current_function
+    @bot_property(queueable=True, reload=True, tooltip="Calculate the enabled minigames as well as the order they are executed.")
     def calculate_minigames_order(self):
         """
         Determine the order of minigame execution.
@@ -411,6 +428,7 @@ class Bot(object):
         self.minigame_order = minigames
 
     @wrap_current_function
+    @bot_property(queueable=True, reload=True, tooltip="Calculate the enabled perks that are used when using perks.")
     def calculate_enabled_perks(self):
         """
         Retrieve a list of all enabled perks based on the configuration specified.
