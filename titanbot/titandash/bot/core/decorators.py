@@ -46,7 +46,7 @@ class BotProperty(object):
 
         @wraps(function)
         def wrapper(*args, **kwargs):
-            # Run our function normally once we"ve added it to our
+            # Run our function normally once we've added it to our
             # globally available queueable dictionary.
             return function(*args, **kwargs)
 
@@ -55,7 +55,7 @@ class BotProperty(object):
 
     def _add_property(self, function):
         """
-        Add the current function to the properties global variable with it"s settings included.
+        Add the current function to the properties global variable with it's settings included.
         """
         if function.__name__ not in _PROPERTIES:
             _PROPERTIES[function.__name__] = {
