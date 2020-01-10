@@ -16,6 +16,7 @@ urlpatterns = [
     # GLOBAL SETTINGS.
     path('globals', views.globals, name='globals'),
     path('globals/save/', views.save_globals, name='save_globals'),
+    path('globals/save/log/', views.save_log_level, name='save_log_level'),
     # SECONDARY URLS.
     path('project_settings', views.project_settings, name='settings'),
     path('all_prestiges', views.all_prestiges, name='all_prestiges'),
