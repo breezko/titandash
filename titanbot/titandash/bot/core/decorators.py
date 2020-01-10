@@ -14,7 +14,7 @@ class BotProperty(object):
     """
     Queueable Function Decorator.
     """
-    def __init__(self, queueable=False, forceable=False, shortcut=None, tooltip=None, interval=None):
+    def __init__(self, queueable=False, forceable=False, reload=False, shortcut=None, tooltip=None, interval=None):
         """
         Initialize the queueable decorator on a function, we should be able to choose
         a couple of options when making a function queueable, including whether ot not it
@@ -22,12 +22,14 @@ class BotProperty(object):
 
         :param queueable: Should this function be a queueable that can be queued by the bot.
         :param forceable: Should this function be forceable when called by the bot.
+        :param reload: Should this function be specified as a function that is called when a "reload" occurs.
         :param shortcut: Specify a keyboard shortcut that can be used to queue the function.
         :param tooltip:  Specify a tooltip that will be displayed when the function is hovered over.
         :param interval: Specify an interval that will be used to derive scheduled function periods.
         """
         self.queueable = queueable
         self.forceable = forceable
+        self.reload = reload
         self.shortcut = shortcut
         self.tooltip = tooltip
         self.interval = interval
@@ -57,17 +59,18 @@ class BotProperty(object):
         """
         if function.__name__ not in _PROPERTIES:
             _PROPERTIES[function.__name__] = {
-                'name': function.__name__,
-                'function': function,
-                'queueable': self.queueable,
-                'forceable': self.forceable,
-                'shortcut': self.shortcut,
-                'tooltip': self.tooltip,
-                'interval': self.interval
+                "name": function.__name__,
+                "function": function,
+                "queueable": self.queueable,
+                "forceable": self.forceable,
+                "reload": self.reload,
+                "shortcut": self.shortcut,
+                "tooltip": self.tooltip,
+                "interval": self.interval
             }
 
     @classmethod
-    def _all(cls, function=None, queueables=False, forceables=False, shortcuts=False, intervals=False):
+    def _all(cls, function=None, queueables=False, forceables=False, reload=False, shortcuts=False, intervals=False):
         """
         Utility function that attempts to grab all of the properties based on the options
         specified, we can return the information for a specific function, or return all properties
@@ -96,6 +99,9 @@ class BotProperty(object):
             if forceables and prop["forceable"]:
                 results.append(prop)
                 continue
+            if reload and prop["reload"]:
+                results.append(prop)
+                continue
             if intervals and prop["interval"]:
                 results.append(prop)
                 continue
@@ -104,7 +110,7 @@ class BotProperty(object):
 
     @classmethod
     def all(cls, function=None):
-        return cls._all(function=function, queueables=True, forceables=True, shortcuts=True)
+        return cls._all(function=function, queueables=True, forceables=True, reload=True, shortcuts=True)
 
     @classmethod
     def queueables(cls, function=None, forceables=False):
@@ -121,6 +127,10 @@ class BotProperty(object):
     @classmethod
     def intervals(cls, function=None):
         return cls._all(function=function, intervals=True)
+
+    @classmethod
+    def reloads(cls, function=None):
+        return cls._all(function=function, reload=True)
 
 
 def not_in_transition(function, max_loops=30):
@@ -154,8 +164,9 @@ def wait_afterwards(function, floor, ceiling):
     def wrapped(*args, **kwargs):
         # Run function normally.
         function(*args, **kwargs)
-        # Wait for a random amount of time after function finishes execution.
-        sleep(randint(floor, ceiling))
+        if ceiling:
+            # Wait for a random amount of time after function finishes execution.
+            sleep(randint(floor, ceiling))
 
     return wrapped
 

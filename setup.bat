@@ -1,7 +1,8 @@
 :: Create Virtualenv.
 :: Expecting virtualenvwrapper-win
 call cd "%~dp0%"
-call mkvirtualenv titandash -r "%~dp0%requirements.txt"
+call mkvirtualenv titandash
+call "%WORKON_HOME%/titandash/Scripts/python.exe" -m pip install -U --force-reinstall pip
 call "%WORKON_HOME%/titandash/Scripts/pip" install -r "%~dp0%requirements.txt"
 
 :: Using new virtual environment, make and migrate.

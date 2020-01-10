@@ -1,4 +1,6 @@
 from django.db import models
+from django.core.cache import cache
+from django.utils.text import slugify
 from django_paranoid.models import ParanoidModel
 
 from titandash.models.mixins import ExportModelMixin
@@ -6,8 +8,7 @@ from titandash.models.artifact import Artifact
 from titandash.models.artifact import Tier
 from titandash.utils import import_model_kwargs
 from titandash.constants import (
-    INFO, LOGGING_LEVEL_CHOICES, SKILL_LEVEL_CHOICES,
-    SKILL_MAX_CHOICE, GENERIC_BLACKLIST, DATETIME_FMT,
+    SKILL_LEVEL_CHOICES, SKILL_MAX_CHOICE, GENERIC_BLACKLIST, DATETIME_FMT,
     NO_PERK, PERK_CHOICES
 )
 
@@ -78,8 +79,6 @@ COMPRESSION_KEYS = {
     "enable_clan_results_parse": 63,
     "parse_clan_results_on_start": 64,
     "parse_clan_results_every_x_minutes": 65,
-    "enable_logging": 68,
-    "logging_level": 69,
     "master_level_only_once": 70,
     "enable_prestige_threshold_randomization": 71,
     "prestige_random_min_time": 72,
@@ -219,9 +218,7 @@ HELP_TEXT = {
     "update_stats_every_x_minutes": "Determine how many minutes between each stats update in game.",
     "enable_clan_results_parse": "Enable the ability to have the bot attempt to parse out clan raid results.",
     "parse_clan_results_on_start": "Should clan results be parsed when a session is started.",
-    "parse_clan_results_every_x_minutes": "Determine how many minutes between each clan results parse attempt.",
-    "enable_logging": "Enable logging of information during sessions.",
-    "logging_level": "Determine the logging level used during sessions."
+    "parse_clan_results_every_x_minutes": "Determine how many minutes between each clan results parse attempt."
 }
 
 
@@ -365,12 +362,15 @@ class Configuration(ParanoidModel, ExportModelMixin):
     parse_clan_results_on_start = models.BooleanField(verbose_name="Parse Clan Results On Session Start", default=False, help_text=HELP_TEXT["parse_clan_results_on_start"])
     parse_clan_results_every_x_minutes = models.PositiveIntegerField(verbose_name="Attempt To Parse Clan Results Every X Minutes", default=300, help_text=HELP_TEXT["parse_clan_results_every_x_minutes"])
 
-    # LOGGING Settings.
-    enable_logging = models.BooleanField(verbose_name="Enable Logging", default=True, help_text=HELP_TEXT["enable_logging"])
-    logging_level = models.CharField(verbose_name="Logging Level", choices=LOGGING_LEVEL_CHOICES, default=INFO, max_length=255, help_text=HELP_TEXT["logging_level"])
-
     def __str__(self):
         return "{name}".format(name=self.name)
+
+    @property
+    def cache_key(self):
+        return slugify("{model_name}{pk}".format(
+            model_name=self._meta.model_name,
+            pk=self.pk
+        ))
 
     def export_key(self):
         return self.name
@@ -448,7 +448,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
             "help": HELP_TEXT,
             "choices": {
                 "skill_levels": SKILL_LEVEL_CHOICES,
-                "logging_level": LOGGING_LEVEL_CHOICES,
                 "artifacts": Artifact.objects.all(),
                 "tiers": Tier.objects.all(),
                 "perks": PERK_CHOICES,
@@ -584,10 +583,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 "enable_clan_results_parse": self.enable_clan_results_parse,
                 "parse_clan_results_on_start": self.parse_clan_results_on_start,
                 "parse_clan_results_every_x_minutes": self.parse_clan_results_every_x_minutes
-            },
-            "Logging": {
-                "enable_logging": self.enable_logging,
-                "logging_level": self.logging_level
             }
         }
 
@@ -607,6 +602,20 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 dct["Raid Notifications"]["raid_notifications_twilio_to_number"] = "************"
 
         return dct
+
+    def save(self, *args, **kwargs):
+        """
+        Overriding the save method to ensure we reset the cache of our configuration objects
+        if we are updating an existing configuration.
+
+        This ensures that we can reload configurations in real time through our live configuration utility.
+        """
+        super(Configuration, self).save(*args, **kwargs)
+
+        # If a primary key is available, we're updating at this point. Ensure cache
+        # key is deleted if one is present.
+        if self.pk:
+            cache.delete(key=self.cache_key)
 
 
 THEME_CONFIG_HELP_TEXT = {

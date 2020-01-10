@@ -984,37 +984,4 @@
         </div>
     </div>
 </div>
-
-{# Logging Settings #}
-<div id="accordionLoggingSettings">
-    <div class="card">
-        <div class="card-header" id="configurationLoggingSettingsHeader">
-            <h5 class="modal-title" id="configurationLoggingSettingsTitle">
-                <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseLoggingSettings">Logging Settings</button>
-            </h5>
-        </div>
-
-        <div id="collapseLoggingSettings" class="collapse show" data-parent="#accordionLoggingSettings">
-            <div id="configurationLoggingSettingsBody" class="card-body">
-                <div class="form-check">
-                    {# Enable Logging #}
-                    <input {% if config.enable_logging %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_logging" name="enable_logging">
-                    <label class="form-check-label" for="enable_logging">Enable Logging</label>
-                    <p class="text-muted">{{ help.enable_logging }}</p>
-                </div>
-
-                <div class="form-group">
-                    {# Emulator #}
-                    <label for="logging_level">Logging Level:</label>
-                    <select id="logging_level" class="form-control">
-                        {% for level in choices.logging_level %}
-                            <option {% if config.logging_level == level.0 %}selected{% endif %} data-value="{{ level.0 }}">{{ level.1 }}</option>
-                        {% endfor %}
-                    </select>
-                    <p style="padding: 3px;" class="text-muted">{{ help.logging_level }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 </form>

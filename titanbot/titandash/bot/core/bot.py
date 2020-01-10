@@ -19,10 +19,11 @@ from .wrap import DynamicAttrs
 from .decorators import BotProperty as bot_property
 from .decorators import not_in_transition, wait_afterwards, wrap_current_function
 from .utilities import (
-    click_on_point, click_on_image, drag_mouse, make_logger, strfdelta,
+    click_on_point, click_on_image, drag_mouse, strfdelta,
     strfnumber, sleep, send_raid_notification, globals
 )
 from .constants import FUNCTION_LOOP_TIMEOUT, BOSS_LOOP_TIMEOUT
+from .live import LiveConfiguration, LiveLogger
 
 from pyautogui import FailSafeException
 
@@ -77,7 +78,6 @@ class Bot(object):
             skill: 0 for skill in SKILLS
         }
 
-        self.configuration = configuration
         self.window = window
         self.enable_shortcuts = enable_shortcuts
         self.instance = instance
@@ -85,11 +85,13 @@ class Bot(object):
         self.instance.window = window.json()
         self.instance.shortcuts = enable_shortcuts
 
-        self.logger = logger if logger else make_logger(
-            instance=instance,
-            log_level=self.configuration.logging_level,
-            log_file=None,
-            enabled=self.configuration.enable_logging
+        self.configuration = LiveConfiguration(
+            instance=self.instance,
+            configuration=configuration,
+        )
+        self.logger = LiveLogger(
+            instance=self.instance,
+            configuration=self.configuration
         )
         self.props = Props(
             instance=self.instance
@@ -102,8 +104,8 @@ class Bot(object):
             instance=self.instance,
             window=self.window,
             grabber=self.grabber,
-            configuration=self.configuration,
-            logger=self.logger
+            configuration=configuration,
+            logger=self.logger.logger
         )
 
         # Data Containers.
@@ -130,7 +132,7 @@ class Bot(object):
         ))
         self.logger.info("s: {session}".format(session=self.stats.session))
         self.logger.info("w: {window}".format(window=self.window))
-        self.logger.info("c: {configuration}".format(configuration=self.configuration))
+        self.logger.info("c: LIVE: {configuration}".format(configuration=configuration))
         self.logger.info("==========================================================================================")
 
         if not debug:
@@ -197,9 +199,7 @@ class Bot(object):
         # Is the image specified (or one of them), currently on the screen?
         if found:
             if log:
-                self.logger.info(
-                    msg=log
-                )
+                self.logger.info(log)
             if not padding:
                 self.click_image(
                     image=image,
@@ -233,6 +233,20 @@ class Bot(object):
             pause=pause
         )
 
+    @wrap_current_function
+    @bot_property(queueable=True, tooltip="Reload and run functions that set local variables that are usually set once, this should be ran whenever a configuration is changed.")
+    def reload(self):
+        """
+        Reload any variables that are "usually" generated initially when a bot is started.
+
+        Looping through all of our properties that have been designated as "reload" functions,
+        and executing them normally, this function should be called when information from the database has changed,
+        ie: A configuration update.
+        """
+        self.logger.info("reloading bot variables now...")
+        for prop in bot_property.reloads():
+            getattr(self, prop["name"])()
+
     def setup_scheduler(self):
         """
         Setup the background scheduler object present on a bot instance, ensuring that jobs with defined
@@ -251,6 +265,7 @@ class Bot(object):
             )
 
     @wrap_current_function
+    @bot_property(queueable=True, reload=True, tooltip="Parse selected artifacts to upgrade, generating a list of artifacts that will be upgraded on prestige.")
     def get_upgrade_artifacts(self, testing=False):
         """
         Retrieve a list of all discovered/owned artifacts in game that will be iterated over
@@ -394,6 +409,7 @@ class Bot(object):
             pass
 
     @wrap_current_function
+    @bot_property(queueable=True, reload=True, tooltip="Calculate the enabled minigames as well as the order they are executed.")
     def calculate_minigames_order(self):
         """
         Determine the order of minigame execution.
@@ -412,6 +428,7 @@ class Bot(object):
         self.minigame_order = minigames
 
     @wrap_current_function
+    @bot_property(queueable=True, reload=True, tooltip="Calculate the enabled perks that are used when using perks.")
     def calculate_enabled_perks(self):
         """
         Retrieve a list of all enabled perks based on the configuration specified.
@@ -447,7 +464,7 @@ class Bot(object):
         setattr(self.props, attr, dt)
 
         if log:
-            self.logger.info(msg="{attr} should be executed in {time}".format(attr=attr, time=strfdelta(timedelta=(dt - now))))
+            self.logger.info("{attr} should be executed in {time}".format(attr=attr, time=strfdelta(timedelta=(dt - now))))
 
     @wrap_current_function
     def calculate_next_skill_execution(self, skill=None):
@@ -2169,7 +2186,9 @@ class Bot(object):
         # Actual collection of an is handled outside of our while loop. Pi hole or vip enabled ads
         # are tracked through the statistics. Doing this here to avoid our loop updating the stats constantly.
         if collected:
+            self.logger.info("ad was successfully collected...")
             self.stats.increment_ads()
+            sleep(1)
 
     @wrap_current_function
     @not_in_transition
@@ -2186,21 +2205,23 @@ class Bot(object):
         """
         Ensure that the boss is being fought if it isn't already.
         """
-        loops = 0
-        while loops != BOSS_LOOP_TIMEOUT:
-            found = self.find_and_click(
-                image=self.images.fight_boss,
-                pause=0.8,
-                log="initiating boss fight in game now..."
-            )
-            if found:
-                return True
+        if self.grabber.search(image=self.images.fight_boss, bool_only=True):
+            loops = 0
+            while loops != BOSS_LOOP_TIMEOUT:
+                found = self.find_and_click(
+                    image=self.images.fight_boss,
+                    pause=0.8,
+                    log="initiating boss fight in game now..."
+                )
+                if found:
+                    return True
 
-            # Looping indefinitely until our loops has reached the configured
-            # maximum boss loop timeout.
-            loops += 1
+                # Looping indefinitely until our loops has reached the configured
+                # maximum boss loop timeout.
+                sleep(0.5)
+                loops += 1
 
-        self.logger.warning("unable to enter boss fight, skipping...")
+            self.logger.warning("unable to enter boss fight, skipping...")
         return True
 
     @not_in_transition
@@ -2209,22 +2230,25 @@ class Bot(object):
         """
         Ensure that there is no boss being fought (avoids transition).
         """
-        loops = 0
-        while loops != BOSS_LOOP_TIMEOUT:
-            found = self.find_and_click(
-                image=self.images.fight_boss,
-                pause=0.8
-            )
-            # Flipping our logic slightly here, since leaving the fight would occur when
-            # attempting to click on the "fight_boss" image and it not being present.
-            if not found:
-                return True
+        if self.grabber.search(image=self.images.leave_boss, bool_only=True):
+            loops = 0
+            while loops != BOSS_LOOP_TIMEOUT:
+                found = self.find_and_click(
+                    image=self.images.leave_boss,
+                    pause=0.8,
+                    log="leaving boss fight in game now..."
+                )
+                # Flipping our logic slightly here, since leaving the fight would occur when
+                # attempting to click on the "fight_boss" image and it not being present.
+                if not found:
+                    return True
 
-            # Looping indefinitely until our loops has reached the configured
-            # maximum boss loop timeout.
-            loops += 1
+                # Looping indefinitely until our loops has reached the configured
+                # maximum boss loop timeout.
+                sleep(0.5)
+                loops += 1
 
-        self.logger.warning("unable to leave boss fight, skipping...")
+            self.logger.warning("unable to leave boss fight, skipping...")
         return True
 
     @wrap_current_function
@@ -2308,22 +2332,21 @@ class Bot(object):
             return True
 
         # If we reach this point, it means our settings are not yet available, let's minimize
-        # the panel that's currently expanded.
-        while self.grabber.search(image=self.images.collapse_panel, bool_only=True):
-            self.find_and_click(
+        # the panel that's currently expanded (if one is present)
+        loops = 0
+        while loops != FUNCTION_LOOP_TIMEOUT:
+            found = self.find_and_click(
                 image=self.images.collapse_panel,
                 pause=1
             )
+            if found:
+                return True
+            sleep(1)
+            loops += 1
 
         # Additionally, maybe the shop panel was opened for some reason. We should also
         # handle this edge case by closing it if the collapse panel is not visible.
-        while self.grabber.search(image=self.images.exit_panel, bool_only=True):
-            self.find_and_click(
-                image=self.images.exit_panel,
-                pause=1
-            )
-
-        return True
+        return self.no_panel()
 
     @not_in_transition
     def goto_panel(self, panel, icon, top_find, bottom_find, collapsed=True, top=True):
@@ -2496,10 +2519,10 @@ class Bot(object):
                 self.logger.info("unable to open clan panel, giving up.")
                 return False
 
-            loops += 1
             self.click(
                 point=self.locs.clan
             )
+            loops += 1
             sleep(3)
 
         return True
@@ -2509,17 +2532,20 @@ class Bot(object):
         """
         Instruct the bot to make sure no panels are currently open.
         """
-        loops = 0
-        while loops != FUNCTION_LOOP_TIMEOUT:
-            found = self.find_and_click(
-                image=self.images.exit_panel,
-                pause=0.5
-            )
-            if found:
-                return True
-
-        self.logger.warning("unable to close all panels on the screen, skipping...")
-        return False
+        while self.grabber.search(image=self.images.exit_panel, bool_only=True):
+            loops = 0
+            while loops != FUNCTION_LOOP_TIMEOUT:
+                found = self.find_and_click(
+                    image=self.images.exit_panel,
+                    pause=0.5
+                )
+                if found:
+                    return True
+                loops += 1
+                sleep(0.5)
+            self.logger.warning("unable to close all panels on the screen, skipping...")
+            return False
+        return True
 
     @wrap_current_function
     def soft_shutdown(self):
@@ -2725,7 +2751,7 @@ class Bot(object):
             except FailSafeException:
                 self.logger.info("failsafe termination encountered: terminating!")
             except Exception as exc:
-                self.logger.critical("critical error encountered: {exc}".format(exc=exc), exc_info=True)
+                self.logger.exception("critical error encountered: {exc}".format(exc=exc))
                 self.logger.info("terminating!")
                 if self.configuration.soft_shutdown_on_critical_error:
                     self.logger.info("soft shutdown is enabled on critical error... attempting to shutdown softly...")

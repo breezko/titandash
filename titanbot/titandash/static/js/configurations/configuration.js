@@ -41,7 +41,6 @@ let ConfigurationController = function() {
             ignore_artifacts: $("#ignore_artifacts"),
             /* Select Elements */
             emulator: $("#emulator"),
-            logging_level: $("#logging_level"),
             use_perk_on_prestige: $("#use_perk_on_prestige"),
             /* Action Level Caps */
             level_heavenly_strike_cap: $("#level_heavenly_strike_cap"),
@@ -176,7 +175,6 @@ let ConfigurationController = function() {
 
         // Grabbing the select box values.
         serialized.push({name: "emulator", value: elements.emulator.find(":selected").data("value")});
-        serialized.push({name: "logging_level", value: elements.logging_level.find(":selected").data("value")});
         serialized.push({name: "use_perk_on_prestige", value: elements.use_perk_on_prestige.find(":selected").data("value")});
         // Action level caps.
         serialized.push({name: "level_heavenly_strike_cap", value: elements.level_heavenly_strike_cap.find(":selected").data("value")});

@@ -53,6 +53,17 @@
                         </select>
                         <p style="padding: 3px;" class="text-muted">{{ help.pihole_ads_settings }}</p>
                     </div>
+
+                    <div class="form-group">
+                        {# Logging Level #}
+                        <label for="logging_level">Logging Level:</label>
+                        <select id="logging_level" class="form-control" name="logging_level">
+                            {% for choice in choices.logging_level %}
+                                <option {% if global_settings.logging_level == choice.0 %}selected{% endif %} data-value="{{ choice.0 }}">{{ choice.1 }}</option>
+                            {% endfor %}
+                        </select>
+                        <p style="padding: 3px;" class="text-muted">{{ help.logging_level }}</p>
+                    </div>
                 </div>
             </div>
         </div>
