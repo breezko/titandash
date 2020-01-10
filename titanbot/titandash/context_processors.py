@@ -2,6 +2,8 @@ from django.utils.functional import SimpleLazyObject
 
 from titandash.models.bot import BotInstance
 from titandash.models.configuration import ThemeConfig
+from titandash.models.globals import GlobalSettings
+from titandash.constants import LOGGING_LEVEL_CHOICES
 
 import settings
 import json
@@ -17,7 +19,9 @@ def bot(request):
     context = {
         "BOT": {
             "STAGE_CAP": settings.STAGE_CAP,
-            "TITANBOT_VERSION": settings.BOT_VERSION
+            "TITANBOT_VERSION": settings.BOT_VERSION,
+            "LOG_LEVELS": [level[0] for level in LOGGING_LEVEL_CHOICES],
+            "GLOBALS": GlobalSettings.objects.grab().json()
         },
     }
 
