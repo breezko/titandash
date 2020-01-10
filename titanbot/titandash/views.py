@@ -308,6 +308,26 @@ def globals(request):
     return render(request, "globals.html", context=ctx)
 
 
+def save_log_level(request):
+    """
+    Attempt to save the logging level only on the global settings instance.
+    """
+    logging_level = request.GET.get("logging_level")
+
+    if not logging_level:
+        return JsonResponse(data={
+            "status": "error",
+            "message": "Missing required value: 'logging_level'"
+        })
+
+    GlobalSettings.objects.grab(qs=True).update(
+        logging_level=logging_level.upper()
+    )
+    return JsonResponse(data={
+        "status": "success",
+    })
+
+
 def save_globals(request):
     """
     Attempt to save the global settings instance with the specified values taken from the request.
@@ -316,6 +336,7 @@ def save_globals(request):
     failsafe_settings = request.POST.get("failsafe_settings")
     event_settings = request.POST.get("event_settings")
     pihole_ads_settings = request.POST.get("pihole_ads_settings")
+    logging_level = request.POST.get("logging_level")
 
     if not failsafe_settings or not event_settings or not pihole_ads_settings:
         return JsonResponse(data={
@@ -326,13 +347,14 @@ def save_globals(request):
     failsafe_settings = failsafe_settings.lower()
     event_settings = event_settings.lower()
     pihole_ads_settings = pihole_ads_settings.lower()
+    logging_level = logging_level.upper()
 
     GlobalSettings.objects.grab(qs=True).update(**{
         "failsafe_settings": failsafe_settings,
         "event_settings": event_settings,
-        "pihole_ads_settings": pihole_ads_settings
+        "pihole_ads_settings": pihole_ads_settings,
+        "logging_level": logging_level
     })
-
     return JsonResponse(data={
         "status": "success",
     })
