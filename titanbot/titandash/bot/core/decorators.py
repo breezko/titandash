@@ -154,8 +154,9 @@ def wait_afterwards(function, floor, ceiling):
     def wrapped(*args, **kwargs):
         # Run function normally.
         function(*args, **kwargs)
-        # Wait for a random amount of time after function finishes execution.
-        sleep(randint(floor, ceiling))
+        if ceiling:
+            # Wait for a random amount of time after function finishes execution.
+            sleep(randint(floor, ceiling))
 
     return wrapped
 
