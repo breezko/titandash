@@ -2168,6 +2168,7 @@ class Bot(object):
         # Actual collection of an is handled outside of our while loop. Pi hole or vip enabled ads
         # are tracked through the statistics. Doing this here to avoid our loop updating the stats constantly.
         if collected:
+            self.logger.info("ad was successfully collected...")
             self.stats.increment_ads()
 
     @wrap_current_function
@@ -2185,22 +2186,23 @@ class Bot(object):
         """
         Ensure that the boss is being fought if it isn't already.
         """
-        loops = 0
-        while loops != BOSS_LOOP_TIMEOUT:
-            found = self.find_and_click(
-                image=self.images.fight_boss,
-                pause=0.8,
-                log="initiating boss fight in game now..."
-            )
-            if found:
-                return True
+        if self.grabber.search(image=self.images.fight_boss, bool_only=True):
+            loops = 0
+            while loops != BOSS_LOOP_TIMEOUT:
+                found = self.find_and_click(
+                    image=self.images.fight_boss,
+                    pause=0.8,
+                    log="initiating boss fight in game now..."
+                )
+                if found:
+                    return True
 
-            # Looping indefinitely until our loops has reached the configured
-            # maximum boss loop timeout.
-            sleep(0.5)
-            loops += 1
+                # Looping indefinitely until our loops has reached the configured
+                # maximum boss loop timeout.
+                sleep(0.5)
+                loops += 1
 
-        self.logger.warning("unable to enter boss fight, skipping...")
+            self.logger.warning("unable to enter boss fight, skipping...")
         return True
 
     @not_in_transition
@@ -2209,23 +2211,25 @@ class Bot(object):
         """
         Ensure that there is no boss being fought (avoids transition).
         """
-        loops = 0
-        while loops != BOSS_LOOP_TIMEOUT:
-            found = self.find_and_click(
-                image=self.images.fight_boss,
-                pause=0.8
-            )
-            # Flipping our logic slightly here, since leaving the fight would occur when
-            # attempting to click on the "fight_boss" image and it not being present.
-            if not found:
-                return True
+        if self.grabber.search(image=self.images.leave_boss, bool_only=True):
+            loops = 0
+            while loops != BOSS_LOOP_TIMEOUT:
+                found = self.find_and_click(
+                    image=self.images.leave_boss,
+                    pause=0.8,
+                    log="leaving boss fight in game now..."
+                )
+                # Flipping our logic slightly here, since leaving the fight would occur when
+                # attempting to click on the "fight_boss" image and it not being present.
+                if not found:
+                    return True
 
-            # Looping indefinitely until our loops has reached the configured
-            # maximum boss loop timeout.
-            sleep(0.5)
-            loops += 1
+                # Looping indefinitely until our loops has reached the configured
+                # maximum boss loop timeout.
+                sleep(0.5)
+                loops += 1
 
-        self.logger.warning("unable to leave boss fight, skipping...")
+            self.logger.warning("unable to leave boss fight, skipping...")
         return True
 
     @wrap_current_function
