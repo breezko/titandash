@@ -1,8 +1,3 @@
-"""
-utilities.py
-
-Any utility or backing functions can be placed here and imported when needed.
-"""
 from django.core.cache import cache
 
 from settings import LOG_DIR
@@ -52,7 +47,7 @@ class GlobalsChecker:
         return cache.get_or_set(
             key=self.cache_key,
             default=self.__instance,
-            timeout=5
+            timeout=3
         )
 
     @staticmethod
@@ -80,6 +75,9 @@ class GlobalsChecker:
         """
         return self._get_cache().pihole_ads_enabled
 
+    def _logging_level(self):
+        return self._get_cache().logging_level
+
     def failsafe(self):
         """
         Perform a failsafe check if it's currently enabled.
@@ -98,6 +96,9 @@ class GlobalsChecker:
         Return a boolean to represent if pihole ads are enabled.
         """
         return self._pihole_ads_enabled()
+
+    def logging_level(self):
+        return self._logging_level()
 
 
 globals = GlobalsChecker()
@@ -381,7 +382,7 @@ def generate_log_file_name(instance):
     return "{log_dir}/{name}.log".format(log_dir=LOG_DIR, name=init_date_fmt)
 
 
-def make_logger(instance, log_level="INFO", log_format=LOGGER_FORMAT, log_name=LOGGER_NAME, log_file=LOGGER_FILE_NAME, enabled=True):
+def make_logger(instance, log_level="INFO", log_format=LOGGER_FORMAT, log_name=LOGGER_NAME, log_file=LOGGER_FILE_NAME):
     """
     Grab the logging instance that will be used throughout bot runtime.
     """
@@ -405,9 +406,7 @@ def make_logger(instance, log_level="INFO", log_format=LOGGER_FORMAT, log_name=L
 
     _logger.setLevel(log_level)
 
-    if not enabled:
-        _logger.disabled = True
-
+    # Return custom formatted and setup logger.
     return _logger
 
 
