@@ -1524,20 +1524,31 @@ class Bot(object):
                 )
 
             # Looking for the artifact to upgrade here, dragging until it is finally found.
-            while not self.grabber.search(ARTIFACT_MAP.get(artifact), precision=0.7, bool_only=True):
-                self.logger.info("searching for {artifact} on screen...".format(artifact=artifact))
+            # Looping until our limit is reached, using a "global" found boolean to ensure we
+            # log when an artifact could not be found.
+            loops = 0
+            found = False
+            while loops != FUNCTION_LOOP_TIMEOUT:
+                found = self.find_and_click(
+                    image=ARTIFACT_MAP.get(artifact),
+                    precision=0.7,
+                    padding=(ARTIFACTS_LOCS["artifact_push"]["x"], ARTIFACTS_LOCS["artifact_push"]["y"]),
+                    log="artifact: {artifact} has been found, purchasing now...".format(artifact=artifact)
+                )
+                # Break early if we've already found and purchased the artifact.
+                if found:
+                    break
+                # Drag and try again.
                 self.drag(
                     start=self.locs.scroll_start,
                     end=self.locs.scroll_bottom_end,
                     pause=1.5
                 )
 
-            # Making it here means the artifact in question has been found.
-            self.find_and_click(
-                image=ARTIFACT_MAP.get(artifact),
-                pause=1,
-                padding=(ARTIFACTS_LOCS["artifact_push"]["x"], ARTIFACTS_LOCS["artifact_push"]["y"]),
-            )
+            # No artifact could be found and our loops have been reached, we can skip
+            # and log a warning for users.
+            if not found:
+                self.logger.warning("unable to find artifact: {artifact}, skipping purchase...".format(artifact=artifact))
 
     @not_in_transition
     def check_tournament(self):
