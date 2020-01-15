@@ -400,12 +400,17 @@ def make_logger(instance, log_level="INFO", log_format=LOGGER_FORMAT, log_name=L
         socket_handler = TitanBotLoggingHandler(instance=instance)
         socket_handler.setFormatter(log_formatter)
 
-        _logger.addHandler(file_handler)
-        _logger.addHandler(console_handler)
-        _logger.addHandler(socket_handler)
+        # We only want ONE of each handler type within the logger for our
+        # instance being setup. Do not add duplicates, being explicit here.
+        _types = [type(handle) for handle in _logger.handlers]
+        if logging.FileHandler not in _types:
+            _logger.addHandler(file_handler)
+        if logging.StreamHandler not in _types:
+            _logger.addHandler(console_handler)
+        if TitanBotLoggingHandler not in _types:
+            _logger.addHandler(socket_handler)
 
     _logger.setLevel(log_level)
-
     # Return custom formatted and setup logger.
     return _logger
 
