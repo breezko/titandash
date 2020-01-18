@@ -55,6 +55,7 @@ let BotInstanceConsumer = function() {
         this.setupInstanceConfigVar(active, data);
         this.setupInstanceWindowVar(active, data);
         this.setupInstanceShortcutsVar(active, data);
+        this.setupNewestHeroVar(active, data);
         this.setupInstanceNextArtifactVar(active, data);
         this.setupInstanceCurrentStageVar(active, data);
         this.setupInstanceCountdownVars(active, data);
@@ -105,6 +106,7 @@ let BotInstanceConsumer = function() {
             instanceVariablesShortcuts: $("#dashboardBotShortcutsValue"),
             instanceVariablesLogFile: $("#dashboardBotLogFileValue"),
             instanceVariablesCurrentStage: $("#dashboardBotCurrentStageValue"),
+            instanceVariablesNewestHero: $("#dashboardBotNewestHeroValue"),
             instanceVariablesRaidAttackReset: $("#dashboardBotRaidAttackResetValue"),
             instanceVariablesNextBreak: $("#dashboardBotNextBreakValue"),
             instanceVariablesBreakResume: $("#dashboardBotBreakResumeValue"),
@@ -114,6 +116,7 @@ let BotInstanceConsumer = function() {
             instanceVariablesNextSkillsLevel: $("#dashboardBotNextSkillsLevelValue"),
             instanceVariablesNextSkillsActivation: $("#dashboardBotNextSkillsActivationValue"),
             instanceVariablesNextMiscellaneousActions: $("#dashboardBotNextMiscellaneousActionsValue"),
+            instanceVariablesNextHeadgearSwap: $("#dashboardBotNextHeadgearSwapValue"),
             instanceVariablesNextPerkCheck: $("#dashboardBotNextPerkCheckValue"),
             instanceVariablesNextPrestige: $("#dashboardBotNextPrestigeValue"),
             instanceVariablesNextRandomizedPrestige: $("#dashboardBotNextRandomizedPrestigeValue"),
@@ -174,6 +177,7 @@ let BotInstanceConsumer = function() {
             nextSkillsLevelCountdown: [null, elements.instanceVariablesNextSkillsLevel, "next_skills_level"],
             nextSkillsActivationCountdown: [null, elements.instanceVariablesNextSkillsActivation, "next_skills_activation"],
             nextMiscellaneousActionsCountdown: [null, elements.instanceVariablesNextMiscellaneousActions, "next_miscellaneous_actions"],
+            nextHeadgearSwapCountdown: [null, elements.instanceVariablesNextHeadgearSwap, "next_headgear_swap"],
             nextPerkCheckCountdown: [null, elements.instanceVariablesNextPerkCheck, "next_perk_check"],
             nextPrestigeCountdown: [null, elements.instanceVariablesNextPrestige, "next_prestige"],
             nextRandomizedPrestigeCountdown: [null, elements.instanceVariablesNextRandomizedPrestige, "next_randomized_prestige"],
@@ -554,6 +558,22 @@ let BotInstanceConsumer = function() {
             else {
                 if (elements.instanceVariablesShortcuts.text() !== "DISABLED")
                     elements.instanceVariablesShortcuts.removeClass("text-success").addClass("text-warning").text("DISABLED");
+            }
+        }
+    };
+    /**
+     * Setup the newest hero variable displayed data.
+     */
+    this.setupNewestHeroVar = function(active, data) {
+        if (active) {
+            debugger;
+            if (data["newest_hero"]["title"] !== null) {
+                if (elements.instanceVariablesNewestHero.text() !== data["newest_hero"]["title"]) {
+                    elements.instanceVariablesNewestHero.text(data["newest_hero"]["title"])
+                        .closest("tr").animate({opacity: 1}, 200);
+                }
+            } else {
+                elements.instanceVariablesNewestHero.text("------").closest("tr").animate({opacity: 0.4}, 200);
             }
         }
     };

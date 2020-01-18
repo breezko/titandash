@@ -87,12 +87,14 @@ class BotInstance(models.Model):
     shortcuts = models.BooleanField(verbose_name="Enable Shortcuts", blank=True, null=True)
     log = models.ForeignKey(verbose_name="Current Log", to=Log, on_delete=models.CASCADE, blank=True, null=True)
     current_stage = models.PositiveIntegerField(verbose_name="Current Stage", blank=True, null=True)
+    newest_hero = models.CharField(verbose_name="Newest Hero", max_length=255, blank=True, null=True)
     next_action_run = models.DateTimeField(verbose_name="Next Action Run", blank=True, null=True)
     next_master_level = models.DateTimeField(verbose_name="Next Master Level", blank=True, null=True)
     next_heroes_level = models.DateTimeField(verbose_name="Next Heroes Level", blank=True, null=True)
     next_skills_level = models.DateTimeField(verbose_name="Next Skills Level", blank=True, null=True)
     next_skills_activation = models.DateTimeField(verbose_name="Next Skills Activation", blank=True, null=True)
     next_miscellaneous_actions = models.DateTimeField(verbose_name="Next Miscellaneous Actions", blank=True, null=True)
+    next_headgear_swap = models.DateTimeField(verbose_name="Next Headgear Swap", blank=True, null=True)
     next_perk_check = models.DateTimeField(verbose_name="Next Perk Check", blank=True, null=True)
     next_prestige = models.DateTimeField(verbose_name="Next Timed Prestige", blank=True, null=True)
     next_randomized_prestige = models.DateTimeField(verbose_name="Next Randomized Prestige", blank=True, null=True)
@@ -188,6 +190,9 @@ class BotInstance(models.Model):
                 "diff_from_max": self.get_diff_from_max_stage(),
                 "percent_from_max": self.get_diff_from_max_stage(percent=True)
             },
+            "newest_hero": {
+                "title": title(self.newest_hero) if self.newest_hero else None,
+            },
             "next_artifact_upgrade": {
                 "title": title(self.next_artifact_upgrade) if self.next_artifact_upgrade else None,
                 "image": "{dir}{path}".format(dir=settings.STATIC_URL, path=Artifact.objects.get(name=self.next_artifact_upgrade).image) if self.next_artifact_upgrade else None
@@ -211,6 +216,10 @@ class BotInstance(models.Model):
             "next_miscellaneous_actions": {
                 "datetime": str(self.next_miscellaneous_actions) if self.next_miscellaneous_actions else None,
                 "formatted": self.next_miscellaneous_actions.astimezone().strftime(DATETIME_FMT) if self.next_miscellaneous_actions else None
+            },
+            "next_headgear_swap": {
+                "datetime": str(self.next_headgear_swap) if self.next_headgear_swap else None,
+                "formatted": self.next_headgear_swap.astimezone().strftime(DATETIME_FMT) if self.next_headgear_swap else None
             },
             "next_perk_check": {
                 "datetime": str(self.next_perk_check) if self.next_perk_check else None,
@@ -310,11 +319,13 @@ class BotInstance(models.Model):
         self.shortcuts = None
         self.log_file = None
         self.current_stage = None
+        self.newest_hero = None
         self.next_master_level = None
         self.next_heroes_level = None
         self.next_skills_level = None
         self.next_skills_activation = None
         self.next_miscellaneous_actions = None
+        self.next_headgear_swap = None
         self.next_perk_check = None
         self.next_prestige = None
         self.next_randomized_prestige = None

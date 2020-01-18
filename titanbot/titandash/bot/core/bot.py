@@ -93,21 +93,6 @@ class Bot(object):
             instance=self.instance,
             configuration=self.configuration
         )
-        self.props = Props(
-            instance=self.instance
-        )
-        self.grabber = Grabber(
-            window=self.window,
-            logger=self.logger
-        )
-        self.stats = Stats(
-            instance=self.instance,
-            window=self.window,
-            grabber=self.grabber,
-            configuration=configuration,
-            logger=self.logger.logger
-        )
-
         # Data Containers.
         self.images = DynamicAttrs(
             attrs=IMAGES,
@@ -120,6 +105,21 @@ class Bot(object):
         self.colors = DynamicAttrs(
             attrs=GAME_COLORS,
             logger=self.logger
+        )
+        self.props = Props(
+            instance=self.instance
+        )
+        self.grabber = Grabber(
+            window=self.window,
+            logger=self.logger
+        )
+        self.stats = Stats(
+            instance=self.instance,
+            images=self.images,
+            window=self.window,
+            grabber=self.grabber,
+            configuration=configuration,
+            logger=self.logger.logger
         )
 
         self.instance.log = self.stats.session.log
@@ -142,6 +142,7 @@ class Bot(object):
         self.calculate_enabled_perks()
 
         self.calculate_next_prestige()
+        self.calculate_next_headgear_swap()
         self.calculate_next_perk_check()
         self.calculate_next_stats_update()
         self.calculate_next_master_level()
@@ -585,6 +586,16 @@ class Bot(object):
         )
 
     @wrap_current_function
+    def calculate_next_headgear_swap(self):
+        """
+        Calculate when the next timed headgear swap will take place.
+        """
+        self._calculate(
+            attr="next_headgear_swap",
+            interval=self.configuration.headgear_swap_every_x_seconds
+        )
+
+    @wrap_current_function
     def calculate_next_perk_check(self):
         """
         Calculate when the next timed perk check will take place.
@@ -773,6 +784,7 @@ class Bot(object):
 
                     # Early exit as well.
                     self.calculate_next_heroes_level()
+                    self.parse_newest_hero()
                     return True
 
                 self.logger.info("levelling the first set of heroes available...")
@@ -832,6 +844,7 @@ class Bot(object):
 
                 # Recalculate the next heroes level process.
                 self.calculate_next_heroes_level()
+                self.parse_newest_hero()
                 return True
 
     @wrap_current_function
@@ -876,6 +889,31 @@ class Bot(object):
                 # Recalculate the next sword master level process.
                 self.calculate_next_master_level()
                 return True
+
+    @wrap_current_function
+    @not_in_transition
+    @bot_property(queueable=True, tooltip="Parse out the newest hero in game, that contains a non zero dps value.")
+    def parse_newest_hero(self):
+        """
+        Attempting to parse information from the screen about the newest hero and whether or not
+        the damage type has changed. This can be used to properly enable and disable the switching
+        of head gear to support a users strongest hero during a run.
+        """
+        if self.configuration.enable_headgear_swap:
+            if not self.goto_heroes(collapsed=False):
+                return False
+
+            old = None
+            # Grab the newest hero information
+            if self.props.newest_hero:
+                old = self.props.newest_hero
+
+            # Let's attempt to grab the first hero with a dps value from the list of heroes.
+            # We can determine what "type" this hero is, and store the value.
+            self.props.newest_hero = self.stats.get_first_hero_information()
+
+            if old and self.props.newest_hero and old != self.props.newest_hero:
+                self.logger.info("new highest level hero has been found: {hero}".format(hero=self.props.newest_hero))
 
     @wrap_current_function
     @not_in_transition
@@ -1299,6 +1337,9 @@ class Bot(object):
                 if self.scheduler.state == STATE_RUNNING:
                     self.scheduler.pause()
 
+                # Reset any bot properties that are prestige specific.
+                self.props.newest_hero = None
+
                 # Reset the current prestige skill level values, since they all go back to
                 # zero on a prestige, We can reset and be sure they're all zero.
                 self.current_prestige_skill_levels = {skill: 0 for skill in SKILLS}
@@ -1421,6 +1462,64 @@ class Bot(object):
                         if self.props.current_stage > self.stats.highest_stage:
                             self.logger.info("current stage is greater than your previous max stage {max}, forcing a stats update to reflect new max stage.".format(max=self.stats.highest_stage))
                             self.update_stats(force=True)
+
+    @wrap_current_function
+    @not_in_transition
+    @bot_property(forceable=True, tooltip="Force a headgear swap in game, based on the newest hero that has been parsed.")
+    def swap_headgear(self, force=False):
+        """
+        Attempt to swap the users headgear to match the newest hero's damage type.
+
+        For example, if our newest hero is a "melee" type hero, we can open up our equipment panel, and attempt
+        to equip the users "locked" melee type weapon.
+
+        For this to work, users must ensure that only three headgear equipments are locked within their game.
+        """
+        if self.configuration.enable_headgear_swap:
+            if force or timezone.now() > self.props.next_headgear_swap:
+                self.logger.info("{force_or_initiate} headgear swap process in game now.".format(force_or_initiate="forcing" if force else "beginning"))
+
+                self.parse_newest_hero()
+                self.props.current_function = self.swap_headgear.__name__
+
+                # If no actual new hero is available, attempt to parse out the newest hero once
+                # before giving up.
+                if not self.props.newest_hero:
+                    self.logger.info("no newest hero is currently present, skipping headgear swap...")
+                    self.calculate_next_headgear_swap()
+                    return True
+
+                # We must travel to the equipment panel at this point.
+                # Then we can also open up the headgear panel.
+                if not self.goto_equipment(collapsed=False, top=True, tab="headgear"):
+                    return False
+
+                # Search for any of our locked equipment that matches the newest
+                # parsed hero. Swapping headgear if available.
+                newest_hero = self.props.newest_hero
+                found, point = self.stats.get_first_gear_of(typ=newest_hero)
+
+                # No headgear could be found for the newest hero's type?
+                # Quit early.
+                if not found:
+                    self.logger.warning("no locked headgear of type: {typ} could be found, skipping headgear swap...".format(typ=newest_hero))
+                    self.calculate_next_headgear_swap()
+                    return False
+
+                # Gear index has been found, based on this, we can equip the gear now
+                # by using the index to determine the "equip" buttons location.
+                if isinstance(point, tuple):
+                    self.logger.info("headgear of type: {typ} was found, equipping now!".format(typ=newest_hero))
+                    self.click(
+                        point=point,
+                        pause=1
+                    )
+                else:
+                    if point == "EQUIPPED":
+                        self.logger.info("headgear of type: {typ} is already equipped, skipping headgear swap...".format(typ=newest_hero))
+
+                self.calculate_next_headgear_swap()
+                return True
 
     @wrap_current_function
     @not_in_transition
@@ -2360,7 +2459,7 @@ class Bot(object):
         return self.no_panel()
 
     @not_in_transition
-    def goto_panel(self, panel, icon, top_find, bottom_find, collapsed=True, top=True):
+    def goto_panel(self, panel, icon, top_find, bottom_find, collapsed=True, top=True, equipment_tab=None):
         """
         Goto a specific panel, panel represents the key of this panel, also used when determining what panel
         to click on initially.
@@ -2370,6 +2469,9 @@ class Bot(object):
 
         NOTE: This function will return a boolean to determine if the panel was reached successfully. This can be
               used to exit out of actions or other pieces of bot functionality early if something has gone wrong.
+
+        The equipment tab should only be used when we are travelling to the equipment panel directly, ensuring
+        that the specified tab is opened before finishing.
         """
         self.logger.debug("attempting to travel to the {collapse_expand} {top_bot} of {panel} panel".format(
             collapse_expand="collapsed" if collapsed else "expanded", top_bot="top" if top else "bottom", panel=panel))
@@ -2415,29 +2517,58 @@ class Bot(object):
                         offset=1
                     )
 
-        # At this point, the panel should at least be opened.
-        find = top_find if top or bottom_find is None else bottom_find
+        # The equipment panel acts slightly different then our other panels, we don't really have a top
+        # or bottom find image available, but we can choose between the five different equipment types.
+        if panel == "equipment":
+            if not equipment_tab:
+                return True
 
-        # Trying to travel to the top or bottom of the specified panel, trying a set number of times
-        # before giving up and breaking out of loop.
-        loops = 0
-        end_drag = self.locs.scroll_top_end if top else self.locs.scroll_bottom_end
-
-        while not self.grabber.search(find, bool_only=True):
-            if loops == FUNCTION_LOOP_TIMEOUT:
-                self.logger.warning("error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
-                return False
-
-            loops += 1
-            self.drag(
-                start=self.locs.scroll_start,
-                end=end_drag,
-                pause=0.5
+            # Let's ensure that the specified tab is opened (ie: sword, headgear, cloak, aura, slash).
+            self.click(
+                point=EQUIPMENT_LOCS["tabs"][equipment_tab],
+                clicks=3,
+                interval=0.3,
             )
+            # Let's also perform a bit of a drag to try and reach the top or bottom of the tab.
+            # Ensuring that our tab is at the top.
+            if top:
+                self.drag(
+                    start=EQUIPMENT_LOCS["drag_equipment"]["start"],
+                    end=EQUIPMENT_LOCS["drag_equipment"]["end"],
+                    pause=0.3
+                )
+            else:
+                self.drag(
+                    start=EQUIPMENT_LOCS["drag_equipment"]["end"],
+                    end=EQUIPMENT_LOCS["drag_equipment"]["start"],
+                    pause=0.3
+                )
+            return True
+        # Any other panel travelling happens here.
+        else:
+            # At this point, the panel should at least be opened.
+            find = top_find if top or bottom_find is None else bottom_find
 
-        # Reaching this point represents that the specified panel
-        # was successfully reached in the game.
-        return True
+            # Trying to travel to the top or bottom of the specified panel, trying a set number of times
+            # before giving up and breaking out of loop.
+            loops = 0
+            end_drag = self.locs.scroll_top_end if top else self.locs.scroll_bottom_end
+
+            while not self.grabber.search(find, bool_only=True):
+                if loops == FUNCTION_LOOP_TIMEOUT:
+                    self.logger.warning("error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
+                    return False
+
+                loops += 1
+                self.drag(
+                    start=self.locs.scroll_start,
+                    end=end_drag,
+                    pause=0.5
+                )
+
+            # Reaching this point represents that the specified panel
+            # was successfully reached in the game.
+            return True
 
     def goto_master(self, collapsed=True, top=True):
         """
@@ -2465,17 +2596,18 @@ class Bot(object):
             top=top
         )
 
-    def goto_equipment(self, collapsed=True, top=True):
+    def goto_equipment(self, collapsed=True, top=True, tab=None):
         """
         Instruct the bot to travel to the heroes panel.
         """
         return self.goto_panel(
             "equipment",
             self.images.equipment_active,
-            self.images.crafting,
+            None,
             None,
             collapsed=collapsed,
-            top=top
+            top=top,
+            equipment_tab=tab
         )
 
     def goto_pets(self, collapsed=True, top=True):
@@ -2639,6 +2771,7 @@ class Bot(object):
                 self.level_heroes.__name__: self.configuration.enable_heroes,
                 self.level_skills.__name__: self.configuration.enable_level_skills,
                 self.activate_skills.__name__: self.configuration.enable_activate_skills,
+                self.swap_headgear.__name__: self.configuration.enable_headgear_swap,
                 self.perks.__name__: self.configuration.enable_perk_usage,
                 self.prestige.__name__: self.configuration.enable_auto_prestige,
                 self.daily_achievements.__name__: self.configuration.enable_daily_achievements,
@@ -2691,6 +2824,8 @@ class Bot(object):
             self.clan_results_parse(force=True)
         if self.configuration.raid_notifications_check_on_start:
             self.raid_notifications(force=True)
+        if self.configuration.headgear_swap_on_start:
+            self.swap_headgear(force=True)
         if self.configuration.use_perks_on_start:
             self.perks(force=True)
 

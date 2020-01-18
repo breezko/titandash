@@ -198,6 +198,21 @@ HEROES_LOCS = {
     "stats_expanded": (135, 71),
 }
 
+EQUIPMENT_LOCS = {
+    "equip": (409, 167),
+    "tabs": {
+        "sword": (41, 86),
+        "headgear": (106, 86),
+        "cloak": (174, 86),
+        "aura": (240, 86),
+        "slash": (307, 86),
+    },
+    "drag_equipment": {
+        "start": (328, 165),
+        "end": (328, 610),
+    }
+}
+
 ARTIFACTS_LOCS = {
     # The amount of pixels to push the mouse over when purchasing any artifact. Since the imagesearch
     # will return the top left of the image, we can add these vales to that to click on the purchase button.
@@ -259,6 +274,8 @@ IMAGES = {
     },
     "EQUIPMENT": {
         "crafting": IMAGE_DIR + "/equipment/crafting.png",
+        "locked": IMAGE_DIR + "/equipment/locked.png",
+        "equip": IMAGE_DIR + "/equipment/equip.png",
     },
     "GENERIC": {
         "artifacts_active": IMAGE_DIR + "/generic/artifacts_active.png",
@@ -283,6 +300,13 @@ IMAGES = {
         "stats": IMAGE_DIR + "/heroes/stats.png",
         "story": IMAGE_DIR + "/heroes/story.png",
         "masteries": IMAGE_DIR + "/heroes/masteries.png",
+        "zero_dps": IMAGE_DIR + "/heroes/zero_dps.png",
+        "melee_type": IMAGE_DIR + "/heroes/melee_type.png",
+        "spell_type": IMAGE_DIR + "/heroes/spell_type.png",
+        "ranged_type": IMAGE_DIR + "/heroes/ranged_type.png",
+        "bonus_melee": IMAGE_DIR + "/heroes/bonus_melee.png",
+        "bonus_spell": IMAGE_DIR + "/heroes/bonus_spell.png",
+        "bonus_ranged": IMAGE_DIR + "/heroes/bonus_ranged.png",
     },
     "MASTER": {
         "raid_cards": IMAGE_DIR + "/master/raid_cards.png",
@@ -432,6 +456,87 @@ ARTIFACT_COORDS = {
 
 PERK_COORDS = {
     "purchase": (72, 290, 407, 405),
+}
+
+# Hero coordinates used to find the first levelled hero on screen.
+HERO_COORDS = {
+    "heroes": [
+        {
+            "dps": (261, 120, 310, 141),
+            "type": (300, 119, 322, 140),
+        },
+        {
+            "dps": (260, 194, 308, 217),
+            "type": (300, 194, 322, 217),
+        },
+        {
+            "dps": (262, 271, 310, 291),
+            "type": (298, 271, 324, 292),
+        }
+    ]
+}
+
+# Equipment coordinates used to find equipment in game and determine if it's
+# meant to be equipped or not.
+EQUIPMENT_COORDS = {
+    "gear": [
+        # SLOT 1.
+        {
+            "base": (0, 134, 472, 200),
+            "locked": (40, 173, 73, 198),
+            "bonus": (70, 180, 278, 198),
+            "equip": (407, 166),
+        },
+        # SLOT 2.
+        {
+            "base": (0, 208, 476, 276),
+            "locked": (40, 250, 73, 277),
+            "bonus": (70, 256, 294, 276),
+            "equip": (407, 244),
+        },
+        # SLOT 3.
+        {
+            "base": (0, 287, 476, 355),
+            "locked": (40, 328, 73, 356),
+            "bonus": (70, 335, 294, 353),
+            "equip": (407, 322),
+        },
+        # SLOT 4.
+        {
+            "base": (0, 365, 476, 431),
+            "locked": (40, 405, 73, 432),
+            "bonus": (70, 411, 294, 431),
+            "equip": (407, 400),
+        },
+        # SLOT 5.
+        {
+            "base": (0, 442, 476, 510),
+            "locked": (40, 484, 73, 509),
+            "bonus": (70, 488, 294, 508),
+            "equip": (407, 476)
+        },
+        # SLOT 6.
+        {
+            "base": (0, 520, 476, 588),
+            "locked": (40, 562, 73, 588),
+            "bonus": (70, 567, 294, 587),
+            "equip": (407, 554),
+        },
+        # SLOT 7.
+        {
+            "base": (0, 597, 476, 665),
+            "locked": (40, 640, 73, 665),
+            "bonus": (70, 644, 294, 664),
+            "equip": (407, 632),
+        },
+        # SLOT 8.
+        {
+            "base": (0, 676, 476, 742),
+            "locked": (40, 717, 73, 743),
+            "bonus": (70, 723, 294, 743),
+            "equip": (407, 710),
+        },
+    ],
 }
 
 # Set of skills in game.

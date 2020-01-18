@@ -9,9 +9,10 @@ from titandash.models.prestige import Prestige
 
 from .maps import (
     STATS_COORDS, STAGE_COORDS, GAME_LOCS, PRESTIGE_COORDS,
-    ARTIFACT_MAP, CLAN_COORDS, CLAN_RAID_COORDS
+    ARTIFACT_MAP, CLAN_COORDS, CLAN_RAID_COORDS, HERO_COORDS, EQUIPMENT_COORDS,
 )
 from .utilities import convert, delta_from_values, globals
+from .constants import MELEE, SPELL, RANGED
 
 from PIL import Image
 
@@ -27,8 +28,9 @@ import logging
 
 class Stats:
     """Stats class contains all possible stat values and can be updated dynamically."""
-    def __init__(self, instance, window, grabber, configuration, logger):
+    def __init__(self, instance, images, window, grabber, configuration, logger):
         self.instance = instance
+        self.images = images
         self.window = window
         self.logger = logger
         self.statistics = Statistics.objects.grab(instance=self.instance)
@@ -491,3 +493,74 @@ class Stats:
             return timezone.now() + delta
         else:
             return None
+
+    def get_first_hero_information(self):
+        """
+        Given a tuple of coordinates that represents an individual "hero" present in the un-collapsed top
+        of our heroes panel, we can loop until we find a hero that has been levelled at least one.
+        """
+        for hero_locations in HERO_COORDS["heroes"]:
+            hero = None
+            dps = False
+            # Checking the first three heroes on our panel for the one with damage information.
+            # This represents our first "valid" hero, gathering the damage type only.
+            for loc, region in hero_locations.items():
+                if loc == "type":
+                    if self.grabber.search(image=self.images.melee_type, region=region, bool_only=True):
+                        hero = MELEE
+                    elif self.grabber.search(image=self.images.spell_type, region=region, bool_only=True):
+                        hero = SPELL
+                    elif self.grabber.search(image=self.images.ranged_type, region=region, bool_only=True):
+                        hero = RANGED
+
+                # Check for zero dps.
+                # If the zero dps image is not present, this hero has levels.
+                elif loc == "dps":
+                    dps = not self.grabber.search(image=self.images.zero_dps, region=region, bool_only=True)
+
+            # Returning the first non zero dps hero once one is found.
+            # That damage type can be used if a locked piece of equipment is available.
+            if dps and hero:
+                return hero
+        return None
+
+    def get_first_gear_of(self, typ):
+        """
+        Attempt to find the first "locked" piece of gear of the specified type on the screen.
+
+        We are expecting that the equipment tab is open at this point and at the top of the screen.
+        """
+        for gear_locations in EQUIPMENT_COORDS["gear"]:
+            gear = {
+                typ: False,
+                "equip": None,
+                "locked": False,
+                "equipped": False,
+            }
+            for loc, region in gear_locations.items():
+                if loc == "base":
+                    gear["equipped"] = not self.grabber.search(image=self.images.equip, region=region, bool_only=True)
+                elif loc == "locked":
+                    gear["locked"] = self.grabber.search(image=self.images.locked, region=region, bool_only=True)
+                elif loc == "bonus":
+                    # Looking for the bonus "type" within the region for the "bonus" image.
+                    # The specified type would be present (bonus=True) if this gear is of the right type.
+                    gear[typ] = self.grabber.search(image=getattr(self.images, 'bonus_{typ}'.format(typ=typ)), region=region, bool_only=True)
+                # Store location of equip button for each gear parsed.
+                elif loc == "equip":
+                    gear["equip"] = region  # Really a point here.
+
+            # Gear is not locked, skip this piece...
+            if not gear["locked"]:
+                continue
+            # Gear is not proper type.
+            if not gear[typ]:
+                continue
+            if gear["equipped"]:
+                return True, "EQUIPPED"
+            else:
+                return True, gear["equip"]
+
+        # No specified gear of the type was found, return
+        # invalid tuple of vales.
+        return False, None

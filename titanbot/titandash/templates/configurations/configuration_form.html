@@ -661,6 +661,42 @@
     </div>
 </div>
 
+{# Headgear Swap Settings #}
+<div id="accordionHeadgearSwapSettings">
+    <div class="card">
+        <div class="card-header" id="configurationHeadgearSwapSettingsHeader">
+            <h5 class="modal-title" id="configurationHeadgearSwapSettingsTitle">
+                <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseHeadgearSwapSettings">Headgear Swap Settings</button>
+            </h5>
+        </div>
+
+        <div id="collapseHeadgearSwapSettings" class="collapse show" data-parent="#accordionHeadgearSwapSettings">
+            <div id="configurationHeadgearSwapSettingsBody" class="card-body">
+                <div class="form-check">
+                    {# Enable Headgear Swap #}
+                    <input {% if config.enable_headgear_swap %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_headgear_swap" name="enable_headgear_swap">
+                    <label class="form-check-label" for="enable_headgear_swap">Enable Headgear Swap</label>
+                    <p class="text-muted">{{ help.enable_headgear_swap }}</p>
+                </div>
+
+                <div class="form-group">
+                    {# Headgear Swap Every X Seconds #}
+                    <label for="headgear_swap_every_x_seconds">Swap Headgear Every X Seconds:</label>
+                    <input value="{{ config.headgear_swap_every_x_seconds|default_if_none:0 }}" type="number" class="form-control" id="headgear_swap_every_x_seconds" name="headgear_swap_every_x_seconds">
+                    <p style="padding: 3px;" class="text-muted">{{ help.headgear_swap_every_x_seconds }}</p>
+                </div>
+
+                <div class="form-check">
+                    {# Headgear Swap On Start #}
+                    <input {% if config.headgear_swap_on_start %}checked{% endif %} type="checkbox" class="form-check-input" id="headgear_swap_on_start" name="headgear_swap_on_start">
+                    <label class="form-check-label" for="headgear_swap_on_start">Swap Headgear On Session Start</label>
+                    <p class="text-muted">{{ help.headgear_swap_on_start }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {# Perk Settings #}
 <div id="accordionPerkSettings">
     <div class="card">
