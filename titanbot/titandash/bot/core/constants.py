@@ -6,6 +6,10 @@ import datetime
 # Raid notifications string used to template out the message sent to a user.
 RAID_NOTIFICATION_MESSAGE = "Raid attacks are available! You may now attack the active titan!"
 
+MELEE = "melee"
+SPELL = "spell"
+RANGED = "ranged"
+
 # The lookup multiplier is used to convert in game values that are formatted with specific multipliers
 # (K, M, T) into their respective float values, or the closest we can get to the actual value. These
 # values can then be parsed and diffed.
