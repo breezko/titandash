@@ -120,6 +120,9 @@ COMPRESSION_KEYS = {
     "enable_clan_crate": 108,
     "use_perks_on_start": 109,
     "enable_mega_boost": 110,
+    "enable_headgear_swap": 111,
+    "headgear_swap_every_x_seconds": 112,
+    "headgear_swap_on_start": 113,
 }
 
 HELP_TEXT = {
@@ -185,6 +188,9 @@ HELP_TEXT = {
     "interval_fire_sword": "How many seconds between each activation of the fire sword skill.",
     "interval_war_cry": "How many seconds between each activation of the war cry skill.",
     "interval_shadow_clone": "How many seconds between each activation of the shadow clone skill.",
+    "enable_headgear_swap": "Enable the ability to swap headgear in game based on the most recently parsed hero. This setting requires that you have locked the headgear you wish to use. The first one found of the newest heroes type will be equipped.",
+    "headgear_swap_every_x_seconds": "Specify the amount of seconds to wait in between each headgear swap process.",
+    "headgear_swap_on_start": "Should a headgear swap be initiated when a session is started.",
     "enable_perk_usage": "Enable the ability to use and purchase perks in game.",
     "enable_perk_diamond_purchase": "Enable the ability to purchase a perk with diamonds if you don't currently have one.",
     "enable_perk_only_tournament": "Enable the ability to only check and use perks when a tournament is joined initially.",
@@ -318,6 +324,11 @@ class Configuration(ParanoidModel, ExportModelMixin):
     interval_fire_sword = models.PositiveIntegerField(verbose_name="Fire Sword Interval", default=40, help_text=HELP_TEXT["interval_fire_sword"])
     interval_war_cry = models.PositiveIntegerField(verbose_name="War Cry Interval", default=50, help_text=HELP_TEXT["interval_war_cry"])
     interval_shadow_clone = models.PositiveIntegerField(verbose_name="Shadow Clone Interval", default=60, help_text=HELP_TEXT["interval_shadow_clone"])
+
+    # HEADGEAR SWAP Settings.
+    enable_headgear_swap = models.BooleanField(verbose_name="Enable Headgear Swap", default=False, help_text=HELP_TEXT["enable_headgear_swap"])
+    headgear_swap_every_x_seconds = models.PositiveIntegerField(verbose_name="Swap Headgear Every X Seconds", default=300, help_text=HELP_TEXT["headgear_swap_every_x_seconds"])
+    headgear_swap_on_start = models.BooleanField(verbose_name="Headgear Swap On Session Start", default=False, help_text=HELP_TEXT["headgear_swap_on_start"])
 
     # PERK Settings.
     enable_perk_usage = models.BooleanField(verbose_name="Enable Perks", default=False, help_text=HELP_TEXT["enable_perk_usage"])
