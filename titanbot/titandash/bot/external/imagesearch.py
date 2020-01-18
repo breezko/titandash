@@ -42,7 +42,7 @@ def imagesearcharea(window, image, x1, y1, x2, y2, precision=0.8, im=None, logge
     # I cant determine exactly how or why, but it's infrequent, safe to pass.
     except cv2.error as error:
         if logger:
-            logger.warning("error occurred while trying to search for image: {image}".format(image=image), exc_info=True)
+            logger.exception("error occurred while trying to search for image: {image}".format(image=image))
 
         # Returning the default "not found" list value when our image search does fail.
         # Our log is present and if many errors are occurring, it can be debugged by users.
