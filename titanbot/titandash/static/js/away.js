@@ -24,7 +24,7 @@ $(document).ready(function() {
             if (!overlayShown) {
                 displayOverlay();
             }
-    }, 1000);
+    }, 60000 * 10);
 
     // Display our overlay.
     function displayOverlay() {

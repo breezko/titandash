@@ -1,4 +1,6 @@
 from django.db import models
+from django.core.cache import cache
+from django.utils.text import slugify
 from django_paranoid.models import ParanoidModel
 
 from titandash.models.mixins import ExportModelMixin
@@ -6,8 +8,7 @@ from titandash.models.artifact import Artifact
 from titandash.models.artifact import Tier
 from titandash.utils import import_model_kwargs
 from titandash.constants import (
-    INFO, LOGGING_LEVEL_CHOICES, SKILL_LEVEL_CHOICES,
-    SKILL_MAX_CHOICE, GENERIC_BLACKLIST, DATETIME_FMT,
+    SKILL_LEVEL_CHOICES, SKILL_MAX_CHOICE, GENERIC_BLACKLIST, DATETIME_FMT,
     NO_PERK, PERK_CHOICES
 )
 
@@ -78,8 +79,6 @@ COMPRESSION_KEYS = {
     "enable_clan_results_parse": 63,
     "parse_clan_results_on_start": 64,
     "parse_clan_results_every_x_minutes": 65,
-    "enable_logging": 68,
-    "logging_level": 69,
     "master_level_only_once": 70,
     "enable_prestige_threshold_randomization": 71,
     "prestige_random_min_time": 72,
@@ -120,6 +119,10 @@ COMPRESSION_KEYS = {
     "enable_doom": 107,
     "enable_clan_crate": 108,
     "use_perks_on_start": 109,
+    "enable_mega_boost": 110,
+    "enable_headgear_swap": 111,
+    "headgear_swap_every_x_seconds": 112,
+    "headgear_swap_on_start": 113,
 }
 
 HELP_TEXT = {
@@ -185,12 +188,16 @@ HELP_TEXT = {
     "interval_fire_sword": "How many seconds between each activation of the fire sword skill.",
     "interval_war_cry": "How many seconds between each activation of the war cry skill.",
     "interval_shadow_clone": "How many seconds between each activation of the shadow clone skill.",
+    "enable_headgear_swap": "Enable the ability to swap headgear in game based on the most recently parsed hero. This setting requires that you have locked the headgear you wish to use. The first one found of the newest heroes type will be equipped.",
+    "headgear_swap_every_x_seconds": "Specify the amount of seconds to wait in between each headgear swap process.",
+    "headgear_swap_on_start": "Should a headgear swap be initiated when a session is started.",
     "enable_perk_usage": "Enable the ability to use and purchase perks in game.",
     "enable_perk_diamond_purchase": "Enable the ability to purchase a perk with diamonds if you don't currently have one.",
     "enable_perk_only_tournament": "Enable the ability to only check and use perks when a tournament is joined initially.",
     "use_perks_every_x_hours": "Specify the amount of hours to wait in between each perk usage process.",
     "use_perk_on_prestige": "Choose a specific perk that you would like to use or purchase (if enabled) when a prestige occurs.",
     "use_perks_on_start": "Should perks be used or purchased when a session is started.",
+    "enable_mega_boost": "Enable the mega boost perk. This perk can only be collected if vip or pihole ads are enabled.",
     "enable_power_of_swiping": "Enable the power of swiping perk.",
     "enable_adrenaline_rush": "Enable the adrenaline rush perk.",
     "enable_make_it_rain": "Enable the make it rain perk.",
@@ -207,7 +214,7 @@ HELP_TEXT = {
     "prestige_at_max_stage": "Should a prestige take place once your max stage has been reached? (Stats must be up to date).",
     "prestige_at_max_stage_percent": "Determine if you would like to perform an automatic prestige once a certain percent of your max stage has been reached. You may use values larger than 100 here to push your max stage. (ie: 99, 99.5, 101) (0 = off).",
     "enable_artifact_discover_enchant": "Enable the ability to discover or enchant artifacts if possible after a prestige.",
-    "enable_artifact_purchase": "Enable the ability to purchase artifacts in game after a prestige has taken place.",
+    "enable_artifact_purchase": "Enable the ability to purchase and upgrade discovered artifacts in game after a prestige has taken place.",
     "upgrade_owned_tier": "Upgrade a specific tier (or tiers) of artifacts only.",
     "shuffle_artifacts": "Should owned artifacts be shuffled once calculated.",
     "ignore_artifacts": "Should any specific artifacts be ignored regardless of them being owned or not.",
@@ -217,9 +224,7 @@ HELP_TEXT = {
     "update_stats_every_x_minutes": "Determine how many minutes between each stats update in game.",
     "enable_clan_results_parse": "Enable the ability to have the bot attempt to parse out clan raid results.",
     "parse_clan_results_on_start": "Should clan results be parsed when a session is started.",
-    "parse_clan_results_every_x_minutes": "Determine how many minutes between each clan results parse attempt.",
-    "enable_logging": "Enable logging of information during sessions.",
-    "logging_level": "Determine the logging level used during sessions."
+    "parse_clan_results_every_x_minutes": "Determine how many minutes between each clan results parse attempt."
 }
 
 
@@ -320,6 +325,11 @@ class Configuration(ParanoidModel, ExportModelMixin):
     interval_war_cry = models.PositiveIntegerField(verbose_name="War Cry Interval", default=50, help_text=HELP_TEXT["interval_war_cry"])
     interval_shadow_clone = models.PositiveIntegerField(verbose_name="Shadow Clone Interval", default=60, help_text=HELP_TEXT["interval_shadow_clone"])
 
+    # HEADGEAR SWAP Settings.
+    enable_headgear_swap = models.BooleanField(verbose_name="Enable Headgear Swap", default=False, help_text=HELP_TEXT["enable_headgear_swap"])
+    headgear_swap_every_x_seconds = models.PositiveIntegerField(verbose_name="Swap Headgear Every X Seconds", default=300, help_text=HELP_TEXT["headgear_swap_every_x_seconds"])
+    headgear_swap_on_start = models.BooleanField(verbose_name="Headgear Swap On Session Start", default=False, help_text=HELP_TEXT["headgear_swap_on_start"])
+
     # PERK Settings.
     enable_perk_usage = models.BooleanField(verbose_name="Enable Perks", default=False, help_text=HELP_TEXT["enable_perk_usage"])
     enable_perk_diamond_purchase = models.BooleanField(verbose_name="Enable Perk Diamond Purchase", default=False, help_text=HELP_TEXT["enable_perk_diamond_purchase"])
@@ -327,6 +337,7 @@ class Configuration(ParanoidModel, ExportModelMixin):
     use_perks_every_x_hours = models.PositiveIntegerField(verbose_name="Use Perks Every X Hours", default=12, help_text=HELP_TEXT["use_perks_every_x_hours"])
     use_perks_on_start = models.BooleanField(verbose_name="Use Perks On Session Start", default=False, help_text=HELP_TEXT["use_perks_on_start"])
     use_perk_on_prestige = models.CharField(verbose_name="Use Perk On Prestige", choices=PERK_CHOICES, default=NO_PERK, max_length=255, help_text=HELP_TEXT["use_perk_on_prestige"])
+    enable_mega_boost = models.BooleanField(verbose_name="Enable Mega Boost", default=False, help_text=HELP_TEXT["enable_mega_boost"])
     enable_power_of_swiping = models.BooleanField(verbose_name="Enable Power Of Swiping", default=False, help_text=HELP_TEXT["enable_power_of_swiping"])
     enable_adrenaline_rush = models.BooleanField(verbose_name="Enable Adrenaline Rush", default=False, help_text=HELP_TEXT["enable_adrenaline_rush"])
     enable_make_it_rain = models.BooleanField(verbose_name="Enable Make It Rain", default=False, help_text=HELP_TEXT["enable_make_it_rain"])
@@ -362,12 +373,15 @@ class Configuration(ParanoidModel, ExportModelMixin):
     parse_clan_results_on_start = models.BooleanField(verbose_name="Parse Clan Results On Session Start", default=False, help_text=HELP_TEXT["parse_clan_results_on_start"])
     parse_clan_results_every_x_minutes = models.PositiveIntegerField(verbose_name="Attempt To Parse Clan Results Every X Minutes", default=300, help_text=HELP_TEXT["parse_clan_results_every_x_minutes"])
 
-    # LOGGING Settings.
-    enable_logging = models.BooleanField(verbose_name="Enable Logging", default=True, help_text=HELP_TEXT["enable_logging"])
-    logging_level = models.CharField(verbose_name="Logging Level", choices=LOGGING_LEVEL_CHOICES, default=INFO, max_length=255, help_text=HELP_TEXT["logging_level"])
-
     def __str__(self):
         return "{name}".format(name=self.name)
+
+    @property
+    def cache_key(self):
+        return slugify("{model_name}{pk}".format(
+            model_name=self._meta.model_name,
+            pk=self.pk
+        ))
 
     def export_key(self):
         return self.name
@@ -445,7 +459,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
             "help": HELP_TEXT,
             "choices": {
                 "skill_levels": SKILL_LEVEL_CHOICES,
-                "logging_level": LOGGING_LEVEL_CHOICES,
                 "artifacts": Artifact.objects.all(),
                 "tiers": Tier.objects.all(),
                 "perks": PERK_CHOICES,
@@ -460,7 +473,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
         """
         from titandash.utils import title
         dct = {
-            # RUNTIME.
             "Runtime": {
                 "name": self.name,
                 "soft_shutdown_on_critical_error": self.soft_shutdown_on_critical_error,
@@ -547,6 +559,7 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 "use_perks_on_start": self.use_perk_on_prestige,
                 "use_perks_every_x_hours": self.use_perks_every_x_hours,
                 "use_perk_on_prestige": self.use_perk_on_prestige,
+                "enable_mega_boost": self.enable_mega_boost,
                 "enable_power_of_swiping": self.enable_power_of_swiping,
                 "enable_adrenaline_rush": self.enable_adrenaline_rush,
                 "enable_make_it_rain": self.enable_make_it_rain,
@@ -581,10 +594,6 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 "enable_clan_results_parse": self.enable_clan_results_parse,
                 "parse_clan_results_on_start": self.parse_clan_results_on_start,
                 "parse_clan_results_every_x_minutes": self.parse_clan_results_every_x_minutes
-            },
-            "Logging": {
-                "enable_logging": self.enable_logging,
-                "logging_level": self.logging_level
             }
         }
 
@@ -604,6 +613,20 @@ class Configuration(ParanoidModel, ExportModelMixin):
                 dct["Raid Notifications"]["raid_notifications_twilio_to_number"] = "************"
 
         return dct
+
+    def save(self, *args, **kwargs):
+        """
+        Overriding the save method to ensure we reset the cache of our configuration objects
+        if we are updating an existing configuration.
+
+        This ensures that we can reload configurations in real time through our live configuration utility.
+        """
+        super(Configuration, self).save(*args, **kwargs)
+
+        # If a primary key is available, we're updating at this point. Ensure cache
+        # key is deleted if one is present.
+        if self.pk:
+            cache.delete(key=self.cache_key)
 
 
 THEME_CONFIG_HELP_TEXT = {

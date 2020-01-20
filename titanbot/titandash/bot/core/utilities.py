@@ -1,8 +1,3 @@
-"""
-utilities.py
-
-Any utility or backing functions can be placed here and imported when needed.
-"""
 from django.core.cache import cache
 
 from settings import LOG_DIR
@@ -52,7 +47,7 @@ class GlobalsChecker:
         return cache.get_or_set(
             key=self.cache_key,
             default=self.__instance,
-            timeout=5
+            timeout=3
         )
 
     @staticmethod
@@ -71,9 +66,17 @@ class GlobalsChecker:
     def _events_enabled(self):
         """
         Determine if our cached globals currently have event functionality enabled.
-        :return:
         """
         return self._get_cache().events_enabled
+
+    def _pihole_ads_enabled(self):
+        """
+        Determine if our cached globals currently have pihole ad functionality enabled.
+        """
+        return self._get_cache().pihole_ads_enabled
+
+    def _logging_level(self):
+        return self._get_cache().logging_level
 
     def failsafe(self):
         """
@@ -87,6 +90,15 @@ class GlobalsChecker:
         Return a boolean to represent if events are enabled.
         """
         return self._events_enabled()
+
+    def pihole_ads(self):
+        """
+        Return a boolean to represent if pihole ads are enabled.
+        """
+        return self._pihole_ads_enabled()
+
+    def logging_level(self):
+        return self._logging_level()
 
 
 globals = GlobalsChecker()
@@ -272,7 +284,11 @@ def drag_mouse(start, end, window, button="left", pause=0.5):
     )
 
 
-def in_transition_func(*args, max_loops):
+class UnrecoverableTransitionState(Exception):
+    pass
+
+
+def in_transition_func(*args, max_loops, **kwargs):
     """
     Directly call this function to perform the transition state check.
     """
@@ -286,23 +302,33 @@ def in_transition_func(*args, max_loops):
 
         # Is a panel open that should be closed? This large exit panel will close any in game
         # panels that may of been opened on accident.
-        found, pos = _self.grabber.search(_self.images.large_exit_panel)
-        if found:
-            click_on_image(window=_self.window, image=_self.images.large_exit_panel, pos=pos, pause=0.5)
+        _self.find_and_click(
+            image=_self.images.large_exit_panel,
+            pause=0.5
+        )
 
         # Is an ad panel open that should be accepted/declined?
         _self.collect_ad_no_transition()
 
         # Check the screen for any images that would represent a non active transition state.
         # If any of these are found, it's safe to say that we are NOT in a transition.
-        if _self.grabber.search(image=[_self.images.exit_panel, _self.images.clan_raid_ready, _self.images.clan_no_raid, _self.images.daily_reward,
-                                       _self.images.fight_boss, _self.images.hatch_egg, _self.images.leave_boss, _self.images.settings, _self.images.tournament,
-                                       _self.images.pet_damage, _self.images.master_damage], bool_only=True):
+        if _self.grabber.search(
+                image=[
+                    _self.images.exit_panel, _self.images.clan_raid_ready, _self.images.clan_no_raid, _self.images.daily_reward,
+                    _self.images.fight_boss, _self.images.hatch_egg, _self.images.leave_boss, _self.images.settings, _self.images.tournament,
+                    _self.images.pet_damage, _self.images.master_damage
+                ],
+                bool_only=True
+        ):
             break
 
         # Clicking the top of the screen in case of a transition taking place due to something being
         # present on the screen that requires clicking.
-        _self.click(point=MASTER_LOCS["screen_top"], clicks=3, pause=0.5)
+        _self.click(
+            point=MASTER_LOCS["screen_top"],
+            clicks=3,
+            pause=0.5
+        )
         _self.logger.info("in a transition? waiting one second before continuing")
         sleep(1)
 
@@ -314,8 +340,7 @@ def in_transition_func(*args, max_loops):
 
             # Raising our termination error manually. Since our main loop that is accessing this function
             # could contain a while loop, we want to ensure we terminate here.
-            from .bot import TerminationEncountered
-            raise TerminationEncountered()
+            raise UnrecoverableTransitionState()
 
 
 class TitanBotLoggingHandler(logging.StreamHandler):
@@ -375,11 +400,18 @@ def make_logger(instance, log_level="INFO", log_format=LOGGER_FORMAT, log_name=L
         socket_handler = TitanBotLoggingHandler(instance=instance)
         socket_handler.setFormatter(log_formatter)
 
-        _logger.addHandler(file_handler)
-        _logger.addHandler(console_handler)
-        _logger.addHandler(socket_handler)
+        # We only want ONE of each handler type within the logger for our
+        # instance being setup. Do not add duplicates, being explicit here.
+        _types = [type(handle) for handle in _logger.handlers]
+        if logging.FileHandler not in _types:
+            _logger.addHandler(file_handler)
+        if logging.StreamHandler not in _types:
+            _logger.addHandler(console_handler)
+        if TitanBotLoggingHandler not in _types:
+            _logger.addHandler(socket_handler)
 
     _logger.setLevel(log_level)
+    # Return custom formatted and setup logger.
     return _logger
 
 

@@ -12,7 +12,7 @@ from titanauth.models.release_info import ReleaseInfo
 from titandash.utils import start, pause, stop, resume, title
 from titandash.constants import RUNNING, PAUSED, STOPPED, CACHE_TIMEOUT
 from titandash.models.bot import BotInstance
-from titandash.models.statistics import Session, Statistics, Log, ArtifactStatistics
+from titandash.models.statistics import Session, Statistics, Log, ArtifactStatistics, ArtifactOwned
 from titandash.models.clan import RaidResult
 from titandash.models.artifact import Artifact, Tier
 from titandash.models.configuration import Configuration, ThemeConfig
@@ -35,7 +35,10 @@ def dashboard(request):
     """Main dashboard view."""
     ctx = {
         "configurations": [],
-        "windows": [],
+        "windows": {
+            "filtered": [],
+            "all": []
+        },
         "queueable": []
     }
 
@@ -45,10 +48,10 @@ def dashboard(request):
 
     wh = WindowHandler()
     wh.enum()
-    for hwnd, window in wh.filter().items():
-        ctx["windows"].append(window.json())
-
-    ctx["windows"].reverse()
+    for window in wh.filter().values():
+        ctx["windows"]["filtered"].append(window.json())
+    for window in wh.filter(filter_titles=False, ignore_smaller=False).values():
+        ctx["windows"]["all"].append(window.json())
 
     # Grab all queueable functions.
     for prop in BotProperty.all():
@@ -305,6 +308,26 @@ def globals(request):
     return render(request, "globals.html", context=ctx)
 
 
+def save_log_level(request):
+    """
+    Attempt to save the logging level only on the global settings instance.
+    """
+    logging_level = request.GET.get("logging_level")
+
+    if not logging_level:
+        return JsonResponse(data={
+            "status": "error",
+            "message": "Missing required value: 'logging_level'"
+        })
+
+    GlobalSettings.objects.grab(qs=True).update(
+        logging_level=logging_level.upper()
+    )
+    return JsonResponse(data={
+        "status": "success",
+    })
+
+
 def save_globals(request):
     """
     Attempt to save the global settings instance with the specified values taken from the request.
@@ -312,8 +335,10 @@ def save_globals(request):
     # Boolean Type Options.
     failsafe_settings = request.POST.get("failsafe_settings")
     event_settings = request.POST.get("event_settings")
+    pihole_ads_settings = request.POST.get("pihole_ads_settings")
+    logging_level = request.POST.get("logging_level")
 
-    if not failsafe_settings or not event_settings:
+    if not failsafe_settings or not event_settings or not pihole_ads_settings:
         return JsonResponse(data={
             "status": "error",
             "message": "Missing required values."
@@ -321,12 +346,15 @@ def save_globals(request):
 
     failsafe_settings = failsafe_settings.lower()
     event_settings = event_settings.lower()
+    pihole_ads_settings = pihole_ads_settings.lower()
+    logging_level = logging_level.upper()
 
     GlobalSettings.objects.grab(qs=True).update(**{
         "failsafe_settings": failsafe_settings,
-        "event_settings": event_settings
+        "event_settings": event_settings,
+        "pihole_ads_settings": pihole_ads_settings,
+        "logging_level": logging_level
     })
-
     return JsonResponse(data={
         "status": "success",
     })
@@ -452,6 +480,29 @@ def artifacts(request):
         })
 
     return render(request, "artifacts/allArtifacts.html", context=ctx)
+
+
+def toggle_artifact(request):
+    """Toggle an artifact to it's opposite state."""
+    artifact = ArtifactOwned.objects.get(
+        artifact=Artifact.objects.get(key=request.GET.get("key")),
+        instance=BotInstance.objects.get(pk=request.GET.get("instance"))
+    )
+
+    # Update owned state to toggled version of current value.
+    # We also need to states value to be returned in our response.
+    if artifact.owned:
+        artifact.owned = False
+    else:
+        artifact.owned = True
+
+    artifact.save()
+
+    return JsonResponse(
+        data={
+            "state": artifact.owned
+        }
+    )
 
 
 def all_prestiges(request):

@@ -16,6 +16,7 @@ urlpatterns = [
     # GLOBAL SETTINGS.
     path('globals', views.globals, name='globals'),
     path('globals/save/', views.save_globals, name='save_globals'),
+    path('globals/save/log/', views.save_log_level, name='save_log_level'),
     # SECONDARY URLS.
     path('project_settings', views.project_settings, name='settings'),
     path('all_prestiges', views.all_prestiges, name='all_prestiges'),
@@ -42,4 +43,5 @@ urlpatterns = [
     path('ajax/instances/create', views.create_instance, name='create_instance'),
     path('ajax/instances/remove', views.remove_instance, name='remove_instance'),
     path('ajax/open_log', views.open_log, name='open_log'),
+    path('ajax/artifacts/toggle', views.toggle_artifact, name='toggle_artifact')
 ]

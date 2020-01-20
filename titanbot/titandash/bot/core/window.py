@@ -57,8 +57,7 @@ class Window(object):
 
     @property
     def rect(self):
-        return win32gui.GetClientRect(self.hwnd) if not self.debug \
-            else [0, 0, self.EMULATOR_WIDTH, self.EMULATOR_HEIGHT]
+        return win32gui.GetClientRect(self.hwnd) if not self.debug else [0, 0, self.EMULATOR_WIDTH, self.EMULATOR_HEIGHT]
 
     @property
     def x_padding(self):
@@ -199,15 +198,26 @@ class Window(object):
         win32gui.ReleaseDC(self.hwnd, hwnd_dc)
         win32gui.DeleteObject(save_bitmap.GetHandle())
 
-        image = image.crop(box=(0, self.y_padding, self.EMULATOR_WIDTH, self.EMULATOR_HEIGHT + self.y_padding))
-        if not region:
-            _SCREENSHOT_LOCK.release()
-            return image
+        image = image.crop(
+            box=(
+                0,
+                self.y_padding,
+                self.EMULATOR_WIDTH,
+                self.EMULATOR_HEIGHT + self.y_padding
+            )
+        )
 
-        # If we have a region available, we can crop the screenshot
-        # to represent the specified region of the emulator.
+        # If a region is present, we can ensure our image is cropped to the
+        # bounding box specified. The region should already take into account
+        # our expected y padding (ie: (110, 440) -> (110, 410). Give or take a couple of pixels.
+        if region:
+            image = image.crop(
+                box=region
+            )
+
         _SCREENSHOT_LOCK.release()
-        return image.crop(box=region)
+
+        return image
 
     def json(self):
         """Convert window instance to a json compliant dictionary."""
@@ -257,17 +267,22 @@ class WindowHandler(object):
         except ValueError:
             raise InvalidHwndValue()
 
-    def filter(self, ignore_hidden=True, ignore_smaller=(480, 800)):
+    def filter(self, filter_titles=True, ignore_hidden=True, ignore_smaller=(400, 720)):
         """
         Filter the currently available windows to ones that contain the specified text.
 
+        Titles: (ie: Windows that contain the hard coded title filters).
         Hidden (ie: 0x0 sized windows are ignored by default).
         Smaller: (ie: Windows smaller than the specified amount).
         """
-        dct = {hwnd: window for hwnd, window in self.windows.items() if window.find(self.filter_lst)}
+        if filter_titles:
+            dct = {hwnd: window for hwnd, window in self.windows.items() if window.find(self.filter_lst)}
+        else:
+            dct = self.windows
+
         if ignore_hidden:
             dct = {hwnd: window for hwnd, window in dct.items() if window.width != 0 and window.height != 0}
         if ignore_smaller:
-            dct = {hwnd: window for hwnd, window in dct.items() if window.width > 480 and window.height > 800}
+            dct = {hwnd: window for hwnd, window in dct.items() if window.width > ignore_smaller[0] and window.height > ignore_smaller[1]}
 
         return dct

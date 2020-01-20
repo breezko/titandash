@@ -65,7 +65,7 @@ GAME_LOCS = {
             # Click on spot where equipment appears.
             (355, 411),
         ),
-        "clan_crate": (70, 131),
+        "collect_clan_crate": (70, 131),
     },
     "MINIGAMES": {
         "coordinated_offensive": (
@@ -122,40 +122,17 @@ GAME_LOCS = {
         "purchase": (254, 554)
     },
     "PERKS": {
-        "power_of_swiping": (406, 229),
-        "adrenaline_rush": (406, 310),
-        "make_it_rain": (406, 387),
-        "mana_potion": (406, 470),
-        "doom": (406, 548),
-        "clan_crate": (406, 627),
+        "mega_boost": (356, 148),
+        "power_of_swiping": (356, 229),
+        "adrenaline_rush": (356, 310),
+        "make_it_rain": (356, 387),
+        "mana_potion": (356, 470),
+        "doom": (356, 548),
+        "clan_crate": (356, 627),
         "perks_okay": (326, 444),
         "perks_cancel": (150, 444),
     },
 }
-
-# When an ad is finished, the exit button is likely going to be in the
-# top left or top right corner of the screen... We can click through these
-# safely and it should close the ad for us.
-AD_EXIT_LOCS = [
-    (5, 36),
-    (23, 54),
-    (43, 74),
-    (45, 77),
-    (21, 77),
-    (7, 77),
-    (29, 49),
-    (41, 43),
-    (47, 40),
-    (469, 38),
-    (456, 48),
-    (434, 71),
-    (412, 85),
-    (397, 47),
-    (413, 44),
-    (427, 67),
-    (444, 79),
-    (463, 91),
-]
 
 # Points used when clicking on locations present on the master panel.
 MASTER_LOCS = {
@@ -221,6 +198,21 @@ HEROES_LOCS = {
     "stats_expanded": (135, 71),
 }
 
+EQUIPMENT_LOCS = {
+    "equip": (409, 167),
+    "tabs": {
+        "sword": (41, 86),
+        "headgear": (106, 86),
+        "cloak": (174, 86),
+        "aura": (240, 86),
+        "slash": (307, 86),
+    },
+    "drag_equipment": {
+        "start": (328, 165),
+        "end": (328, 610),
+    }
+}
+
 ARTIFACTS_LOCS = {
     # The amount of pixels to push the mouse over when purchasing any artifact. Since the imagesearch
     # will return the top left of the image, we can add these vales to that to click on the purchase button.
@@ -230,7 +222,7 @@ ARTIFACTS_LOCS = {
     },
     "buy_multiplier": (410, 71),
     "buy_max": (50, 71),
-    "percent_toggle": (303, 506),
+    "percent_toggle": (303, 70),
 }
 
 SKILL_CAN_LEVEL_LOCS = {
@@ -256,6 +248,7 @@ IMAGES = {
     "ACHIEVEMENTS": {
         "achievements_title": IMAGE_DIR + "/achievements/achievements.png",
         "daily_collect": IMAGE_DIR + "/achievements/daily_collect.png",
+        "vip_daily_collect": IMAGE_DIR + "/achievements/vip_collect.png",
         "daily_watch": IMAGE_DIR + "/achievements/daily_watch.png",
     },
     "ADS": {
@@ -281,6 +274,8 @@ IMAGES = {
     },
     "EQUIPMENT": {
         "crafting": IMAGE_DIR + "/equipment/crafting.png",
+        "locked": IMAGE_DIR + "/equipment/locked.png",
+        "equip": IMAGE_DIR + "/equipment/equip.png",
     },
     "GENERIC": {
         "artifacts_active": IMAGE_DIR + "/generic/artifacts_active.png",
@@ -305,6 +300,13 @@ IMAGES = {
         "stats": IMAGE_DIR + "/heroes/stats.png",
         "story": IMAGE_DIR + "/heroes/story.png",
         "masteries": IMAGE_DIR + "/heroes/masteries.png",
+        "zero_dps": IMAGE_DIR + "/heroes/zero_dps.png",
+        "melee_type": IMAGE_DIR + "/heroes/melee_type.png",
+        "spell_type": IMAGE_DIR + "/heroes/spell_type.png",
+        "ranged_type": IMAGE_DIR + "/heroes/ranged_type.png",
+        "bonus_melee": IMAGE_DIR + "/heroes/bonus_melee.png",
+        "bonus_spell": IMAGE_DIR + "/heroes/bonus_spell.png",
+        "bonus_ranged": IMAGE_DIR + "/heroes/bonus_ranged.png",
     },
     "MASTER": {
         "raid_cards": IMAGE_DIR + "/master/raid_cards.png",
@@ -373,6 +375,8 @@ IMAGES = {
     "PERKS": {
         "perks_diamond": IMAGE_DIR + "/perks/perks_diamond.png",
         "perks_header": IMAGE_DIR + "/perks/perks_header.png",
+        "perk_header": IMAGE_DIR + "/perks/perk_header.png",
+        "perks_vip_watch": IMAGE_DIR + "/perks/perks_vip_watch.png",
     }
 }
 
@@ -398,7 +402,6 @@ STATS_COORDS = {
 STAGE_COORDS = {
     "region": (214, 37, 268, 50),
 }
-
 
 PRESTIGE_COORDS = {
     "base": {
@@ -453,6 +456,87 @@ ARTIFACT_COORDS = {
 
 PERK_COORDS = {
     "purchase": (72, 290, 407, 405),
+}
+
+# Hero coordinates used to find the first levelled hero on screen.
+HERO_COORDS = {
+    "heroes": [
+        {
+            "dps": (261, 120, 310, 141),
+            "type": (300, 119, 322, 140),
+        },
+        {
+            "dps": (260, 194, 308, 217),
+            "type": (300, 194, 322, 217),
+        },
+        {
+            "dps": (262, 271, 310, 291),
+            "type": (298, 271, 324, 292),
+        }
+    ]
+}
+
+# Equipment coordinates used to find equipment in game and determine if it's
+# meant to be equipped or not.
+EQUIPMENT_COORDS = {
+    "gear": [
+        # SLOT 1.
+        {
+            "base": (0, 134, 472, 200),
+            "locked": (40, 173, 73, 198),
+            "bonus": (70, 180, 278, 198),
+            "equip": (407, 166),
+        },
+        # SLOT 2.
+        {
+            "base": (0, 208, 476, 276),
+            "locked": (40, 250, 73, 277),
+            "bonus": (70, 256, 294, 276),
+            "equip": (407, 244),
+        },
+        # SLOT 3.
+        {
+            "base": (0, 287, 476, 355),
+            "locked": (40, 328, 73, 356),
+            "bonus": (70, 335, 294, 353),
+            "equip": (407, 322),
+        },
+        # SLOT 4.
+        {
+            "base": (0, 365, 476, 431),
+            "locked": (40, 405, 73, 432),
+            "bonus": (70, 411, 294, 431),
+            "equip": (407, 400),
+        },
+        # SLOT 5.
+        {
+            "base": (0, 442, 476, 510),
+            "locked": (40, 484, 73, 509),
+            "bonus": (70, 488, 294, 508),
+            "equip": (407, 476)
+        },
+        # SLOT 6.
+        {
+            "base": (0, 520, 476, 588),
+            "locked": (40, 562, 73, 588),
+            "bonus": (70, 567, 294, 587),
+            "equip": (407, 554),
+        },
+        # SLOT 7.
+        {
+            "base": (0, 597, 476, 665),
+            "locked": (40, 640, 73, 665),
+            "bonus": (70, 644, 294, 664),
+            "equip": (407, 632),
+        },
+        # SLOT 8.
+        {
+            "base": (0, 676, 476, 742),
+            "locked": (40, 717, 73, 743),
+            "bonus": (70, 723, 294, 743),
+            "equip": (407, 710),
+        },
+    ],
 }
 
 # Set of skills in game.

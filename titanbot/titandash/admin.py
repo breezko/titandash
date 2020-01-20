@@ -112,4 +112,4 @@ class RaidResultAdmin(admin.ModelAdmin):
 
 @register(GlobalSettings)
 class GlobalSettingsAdmin(admin.ModelAdmin):
-    list_display = ["pk", "failsafe_settings", "event_settings"]
+    list_display = ["pk", "failsafe_settings", "event_settings", "pihole_ads_settings"]

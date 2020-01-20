@@ -180,7 +180,7 @@ def perform_update(request):
             exception=exc,
             extra="<br/>This error could not be recovered from and your code base is now in an inconsistent state. "
                   "Don't worry though! You can go and download the newest release manually still. Check out "
-                  "<a href='https://titanda.sh'>this link to do that now.<br/>You're data has <strong>not</strong> been "
+                  "<a href='https://titanda.sh'>this</a> link to do that now.<br/>You're data has <strong>not</strong> been "
                   "lost due to this error."
         )
 
@@ -194,10 +194,9 @@ def perform_requirements(request):
     try:
         # As long as this command executes without raising an exception,
         # we can safely assume the requirements are now uo to date.
-        subprocess.check_output(["pip", "install", "-r", os.path.join(settings.ROOT_DIR, "requirements.txt")])
-
         return JsonResponse(data={
-            "status": "DONE"
+            "status": "DONE",
+            "output": str(subprocess.check_output(["pip", "install", "-r", os.path.join(settings.ROOT_DIR, "requirements.txt")]))
         })
 
     # Catching a broad exception clause to ensure that we can move forward
@@ -219,10 +218,9 @@ def perform_node_packages(request):
     try:
         # Again, as long as our subprocess command completes, we can assume the modules were all installed.
         # Also setting our working directory explicitly to ensure the install command uses proper package file.
-        subprocess.check_output("npm install", shell=True, cwd=settings.ROOT_DIR)
-
         return JsonResponse(data={
-            "status": "DONE"
+            "status": "DONE",
+            "output": str(subprocess.check_output("npm install", shell=True, cwd=settings.ROOT_DIR))
         })
 
     # Catching a broad exception again to ensure processes move forward on errors.
@@ -241,6 +239,8 @@ def perform_migration(request):
         call_command("makemigrations")
         call_command("migrate")
 
+        # After both commands have ran successfully, migrations
+        # are guaranteed to be up to date.
         return JsonResponse(data={
             "status": "DONE"
         })
@@ -261,6 +261,7 @@ def perform_cache(request):
     try:
         call_command("createcachetable")
 
+        # After command is complete, cache table is created successfully.
         return JsonResponse(data={
             "status": "DONE"
         })
@@ -277,6 +278,7 @@ def perform_static(request):
     try:
         call_command("collectstatic", interactive=False)
 
+        # After command is complete, static files have been created successfully.
         return JsonResponse(data={
             "status": "DONE"
         })
@@ -388,6 +390,7 @@ def _check_node():
     exception = NodeCheckError("It looks like node is not installed on your system. Node is used to download "
                                "numerous dependencies that are used by the web application. The dashboard may not "
                                "work correctly until you've installed node and ran the npm install command.")
+
     try:
         check = subprocess.run("npm --version", shell=True, universal_newlines=True)
 

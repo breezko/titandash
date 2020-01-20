@@ -5,8 +5,15 @@
  * associated information available.
  */
 $(document).ready(function() {
-    let ajaxArtifactsUrl = "/artifacts";
-    let instanceSelector = $("#artifactsInstanceSelect");
+    let ajaxUrls = {
+        artifacts: "/artifacts",
+        artifactsToggle: "/ajax/artifacts/toggle"
+    };
+    let elements = {
+        cardBody: $("#artifactsCardBody"),
+        instanceSelector: $("#artifactsInstanceSelect"),
+        toggleButton: $(".artifact-toggle")
+    };
 
     function reloadDataTable() {
         $("#artifactsTable").DataTable({
@@ -20,9 +27,9 @@ $(document).ready(function() {
         });
     }
 
-    instanceSelector.off("change").change(function() {
+    elements.instanceSelector.off("change").change(function() {
         $.ajax({
-            url: ajaxArtifactsUrl,
+            url: ajaxUrls.artifacts,
             dataType: "json",
             data: {
                 instance: $(this).val(),
@@ -41,6 +48,43 @@ $(document).ready(function() {
                 });
             }
         });
+    });
+
+    /**
+     * Send an ajax request to toggle the owned status of the specified artifact.
+     */
+    function toggleArtifactStatus(button, artifactKey) {
+        $.ajax({
+            url: ajaxUrls.artifactsToggle,
+            dataType: "json",
+            data: {
+                key: artifactKey,
+                instance: elements.instanceSelector.val()
+            },
+            beforeSend: function() {
+                button.prop("disabled", true);
+            },
+            success: function(data) {
+                let artifactSpan = $(`#artifact-${artifactKey}`);
+                if (data["state"] === true) {
+                    artifactSpan.removeClass("fa-times").removeClass("text-danger").addClass("text-success").addClass("fa-check");
+                    artifactSpan.parent().data("order", 1);
+                }
+                else if (data["state"] === false) {
+                    artifactSpan.removeClass("fa-check").removeClass("text-success").addClass("text-danger").addClass("fa-times");
+                    artifactSpan.parent().data("order", 0);
+                }
+            },
+            complete: function() {
+                button.prop("disabled", false);
+            }
+        });
+    }
+
+    // Using delegated event handler to ensure toggle buttons work when switching
+    // between instances available.
+    elements.cardBody.on("click", "button.artifact-toggle", function() {
+        toggleArtifactStatus($(this), $(this).data("key"));
     });
 
     /**

@@ -22,9 +22,9 @@ def make_bot():
           available on the Bot without looping through the main Bot loops.
 
     Usage:
-    from titandash.bot.core.tester import *; bot = make_bot();
-    from titandash.bot.core.tester import *; bot = make_bot(); bot.owned_artifacts = bot.get_upgrade_artifacts(); bot.next_artifact_index = 0; bot.update_next_artifact_upgrade()
 
+    from titandash.bot.core.tester import *; bot = make_bot();
+    from titandash.bot.core.tester import *; bot = make_bot(); bot.get_upgrade_artifacts(); bot.next_artifact_index = 0; bot.update_next_artifact_upgrade()
     from titandash.bot.core.tester import *; bot = make_bot(); bot.owned_artifacts = bot.get_upgrade_artifacts(); bot.next_artifact_index = 0; bot.update_next_artifact_upgrade(); bot.setup_shortcuts();
     """
     wh = WindowHandler()
@@ -93,7 +93,7 @@ def fix_clicks_bbox(bbox, points):
     The bounding box should be a tuple containing the following: (X1, Y1, X2, Y2), any points within this "box"
     will be removed and not pasted back to the user.
 
-    Misc BBOX: (0, 46, 57, 448)
+    Misc BBOX:  (0, 46, 57, 448)
     Inbox BBOX: (0, 288, 80, 431)
 
     Examples:
