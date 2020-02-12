@@ -1164,6 +1164,12 @@ class Bot(object):
         # We also travel to the bottom of the expanded master panel for each purchase, since some
         # perks may close the panel after activation.
         self.goto_master(collapsed=False, top=False)
+        # We need to scroll slightly higher to ensure that the proper content is
+        # being shown on the screen.
+        self.drag(
+            start=self.locs.scroll_start,
+            end=self.locs.scroll_top_end
+        )
 
         perk_point = getattr(self.locs, perk)
 
@@ -2580,7 +2586,7 @@ class Bot(object):
             "master",
             self.images.master_active,
             self.images.raid_cards,
-            self.images.prestige,
+            self.images.intimidating_presence,
             collapsed=collapsed,
             top=top
         )
