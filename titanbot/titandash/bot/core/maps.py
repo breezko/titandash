@@ -82,9 +82,9 @@ GAME_LOCS = {
             (439, 164), (396, 164), (449, 159), (413, 171), (403, 215), (458, 215), (455, 257), (395, 256), (405, 292),
             (454, 292), (451, 328), (396, 331), (374, 349), (453, 344), (452, 377), (393, 381), (399, 408), (445, 406),
             (450, 343), (408, 344), (387, 298), (440, 299), (472, 296), (463, 243), (412, 243), (381, 249), (381, 210),
-            (449, 208), (466, 201), (439, 164), (396, 164), (1, 106), (1, 120), (1, 134), (1, 148), (1, 162), (1, 176),
-            (1, 190), (1, 204), (1, 218), (1, 232), (1, 246), (1, 260), (1, 274), (1, 288), (1, 302), (1, 316), (1, 330),
-            (1, 344), (1, 358), (1, 372), (1, 386), (1, 400), (1, 414), (1, 428), (1, 442),
+            (449, 208), (466, 201), (439, 164), (396, 164), (1, 162), (1, 176), (1, 190), (1, 204), (1, 218), (1, 232),
+            (1, 246), (1, 260), (1, 274), (1, 288), (1, 302), (1, 316), (1, 330), (1, 344), (1, 358), (1, 372),
+            (1, 386), (1, 400), (1, 414), (1, 428), (1, 442),
         ),
         "heart_of_midas": (
             (299, 388), (291, 384), (293, 402), (299, 388), (291, 384), (293, 402),
@@ -94,7 +94,7 @@ GAME_LOCS = {
             (333, 293), (283, 371), (213, 367), (155, 291), (159, 179), (254, 145), (327, 206), (320, 286), (273, 342),
             (216, 313), (224, 219), (172, 344), (141, 288), (112, 214), (124, 158), (233, 141), (305, 144), (369, 162),
             (381, 230), (336, 351), (333, 293), (283, 371), (213, 367), (155, 291), (159, 179), (254, 145), (327, 206),
-            (320, 286), (273, 342), (216, 313), (224, 219),
+            (320, 286), (273, 342), (216, 313), (224, 219)
         ),
     },
     "PANELS": {
@@ -137,7 +137,7 @@ GAME_LOCS = {
 # Points used when clicking on locations present on the master panel.
 MASTER_LOCS = {
     "master_level": (415, 136),
-    "prestige": (405, 736),
+    "prestige": (405, 682),
     "prestige_confirm": (245, 675),
     "prestige_final": (330, 536),
     "screen_top": (240, 6),
@@ -148,20 +148,20 @@ MASTER_LOCS = {
         "milestones_collect_point": (382, 259),
     },
     "skills": {
-        "heavenly_strike": (415, 236),
-        "deadly_strike": (415, 316),
-        "hand_of_midas": (415, 396),
-        "fire_sword": (415, 474),
-        "war_cry": (415, 546),
-        "shadow_clone": (415, 616),
+        "heavenly_strike": (415, 348),
+        "deadly_strike": (415, 421),
+        "hand_of_midas": (415, 498),
+        "fire_sword": (415, 574),
+        "war_cry": (415, 648),
+        "shadow_clone": (415, 723),
     },
     "skill_level_max": {
-        "heavenly_strike": (268, 246),
-        "deadly_strike": (268, 323),
-        "hand_of_midas": (268, 399),
-        "fire_sword": (268, 474),
-        "war_cry": (268, 550),
-        "shadow_clone": (268, 625),
+        "heavenly_strike": (268, 352),
+        "deadly_strike": (268, 427),
+        "hand_of_midas": (268, 503),
+        "fire_sword": (268, 578),
+        "war_cry": (268, 653),
+        "shadow_clone": (268, 728),
     },
 }
 
@@ -226,12 +226,12 @@ ARTIFACTS_LOCS = {
 }
 
 SKILL_CAN_LEVEL_LOCS = {
-    "heavenly_strike": (460, 218),
-    "deadly_strike": (459, 293),
-    "hand_of_midas": (460, 369),
-    "fire_sword": (459, 444),
-    "war_cry": (461, 520),
-    "shadow_clone": (459, 594)
+    "heavenly_strike": (460, 319),
+    "deadly_strike": (460, 395),
+    "hand_of_midas": (460, 472),
+    "fire_sword": (460, 546),
+    "war_cry": (460, 623),
+    "shadow_clone": (460, 698)
 }
 
 # Store any colors used (RGB) by the bot to determine so things in game.
@@ -327,6 +327,7 @@ IMAGES = {
         "skill_tree": IMAGE_DIR + "/master/skill_tree.png",
         "unlock_at": IMAGE_DIR + "/master/unlock_at.png",
         "war_cry": IMAGE_DIR + "/master/war_cry.png",
+        "intimidating_presence": IMAGE_DIR + "/master/intimidating_presence.png",
     },
     "NO_PANELS": {
         "clan_raid_ready": IMAGE_DIR + "/no_panels/clan_raid_ready.png",
@@ -400,7 +401,7 @@ STATS_COORDS = {
 }
 
 STAGE_COORDS = {
-    "region": (214, 37, 268, 50),
+    "region": (215, 38, 268, 53),
 }
 
 PRESTIGE_COORDS = {
@@ -409,8 +410,8 @@ PRESTIGE_COORDS = {
         "advance_start": (136, 584, 212, 612),
     },
     "event": {
-        "time_since": (301, 117, 380, 136),
-        "advance_start": (136, 565, 212, 584),
+        "time_since": (301, 121, 380, 139),
+        "advance_start": (138, 567, 191, 588),
     }
 }
 
@@ -418,12 +419,12 @@ PRESTIGE_COORDS = {
 # is expanded and scrolled all the way to the top.
 MASTER_COORDS = {
     "skills": {
-        "heavenly_strike": (0, 199, 480, 269),
-        "deadly_strike": (0, 275, 480, 346),
-        "hand_of_midas": (0, 351, 480, 421),
-        "fire_sword": (0, 426, 480, 497),
-        "war_cry": (0, 502, 480, 573),
-        "shadow_clone": (0, 578, 480, 648),
+        "heavenly_strike": (0, 306, 480, 374),
+        "deadly_strike": (0, 382, 480, 451),
+        "hand_of_midas": (0, 457, 480, 526),
+        "fire_sword": (0, 532, 480, 601),
+        "war_cry": (0, 608, 480, 677),
+        "shadow_clone": (0, 684, 480, 752),
     },
 }
 
@@ -431,12 +432,12 @@ MASTER_COORDS = {
 # skills are not their specified level or maxed.. We use these regions to grab
 # the current level through an OCR check.
 SKILL_LEVEL_COORDS = {
-    "heavenly_strike": (70, 224, 115, 240),
-    "deadly_strike": (70, 299, 115, 318),
-    "hand_of_midas": (70, 374, 115, 395),
-    "fire_sword": (70, 450, 115, 470),
-    "war_cry": (70, 525, 115, 545),
-    "shadow_clone": (70, 601, 115, 621),
+    "heavenly_strike": (70, 327, 115, 342),
+    "deadly_strike": (70, 403, 115, 418),
+    "hand_of_midas": (70, 478, 115, 493),
+    "fire_sword": (70, 555, 115, 569),
+    "war_cry": (70, 629, 115, 645),
+    "shadow_clone": (70, 707, 115, 721),
 }
 
 CLAN_COORDS = {
