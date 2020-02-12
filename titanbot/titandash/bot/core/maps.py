@@ -400,7 +400,7 @@ STATS_COORDS = {
 }
 
 STAGE_COORDS = {
-    "region": (214, 37, 268, 50),
+    "region": (215, 38, 268, 53),
 }
 
 PRESTIGE_COORDS = {
