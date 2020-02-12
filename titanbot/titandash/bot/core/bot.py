@@ -375,6 +375,7 @@ class Bot(object):
 
         except ValueError:
             self.logger.warning("ocr check could not parse out a proper string from image, resetting advanced start value...")
+            self.logger.warning("text: {text}".format(text=stage_text))
             self.ADVANCED_START = None
         except TypeError:
             self.logger.warning("ocr check could not be coerced properly into an integer, resetting advanced start value...")
@@ -457,7 +458,7 @@ class Bot(object):
 
         # Interval based calculations require an interval to be specified
         # in seconds only.
-        if interval:
+        if interval is not None:
             dt = now + datetime.timedelta(
                 seconds=interval
             )
@@ -1163,6 +1164,12 @@ class Bot(object):
         # We also travel to the bottom of the expanded master panel for each purchase, since some
         # perks may close the panel after activation.
         self.goto_master(collapsed=False, top=False)
+        # We need to scroll slightly higher to ensure that the proper content is
+        # being shown on the screen.
+        self.drag(
+            start=self.locs.scroll_start,
+            end=self.locs.scroll_top_end
+        )
 
         perk_point = getattr(self.locs, perk)
 
@@ -1363,8 +1370,7 @@ class Bot(object):
                     # and our correct advanced start parsing.
                     self.props.last_prestige = tournament_prestige
                     self.parse_advanced_start(stage_text=advanced_start)
-
-                    self.props.current_stage = advanced_start
+                    self.props.current_stage = advanced_start or 0
                     # Sleeping explicitly if a tournament was joined, since we update the last
                     # prestige and advanced start right after it happens.
                     sleep(35)
@@ -1384,7 +1390,7 @@ class Bot(object):
                     return True
 
                 # Performing the base prestige functionality, no tournament is available to join.
-                if not self.goto_master(collapsed=False, top=False):
+                if not self.goto_master():
                     return False
 
                 # Click on the prestige button, and check for the prompt confirmation being present. Sleeping
@@ -1687,7 +1693,7 @@ class Bot(object):
                         point=MASTER_LOCS["screen_top"],
                         pause=1
                     )
-                    if not self.goto_master(collapsed=False, top=False):
+                    if not self.goto_master():
                         return False, None
 
                     self.click(
@@ -2528,8 +2534,8 @@ class Bot(object):
             # Let's ensure that the specified tab is opened (ie: sword, headgear, cloak, aura, slash).
             self.click(
                 point=EQUIPMENT_LOCS["tabs"][equipment_tab],
-                clicks=3,
-                interval=0.3,
+                clicks=5,
+                interval=0.5,
             )
             # Let's also perform a bit of a drag to try and reach the top or bottom of the tab.
             # Ensuring that our tab is at the top.
@@ -2580,7 +2586,7 @@ class Bot(object):
             "master",
             self.images.master_active,
             self.images.raid_cards,
-            self.images.prestige,
+            self.images.intimidating_presence,
             collapsed=collapsed,
             top=top
         )
