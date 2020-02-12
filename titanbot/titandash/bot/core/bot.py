@@ -2528,8 +2528,8 @@ class Bot(object):
             # Let's ensure that the specified tab is opened (ie: sword, headgear, cloak, aura, slash).
             self.click(
                 point=EQUIPMENT_LOCS["tabs"][equipment_tab],
-                clicks=3,
-                interval=0.3,
+                clicks=5,
+                interval=0.5,
             )
             # Let's also perform a bit of a drag to try and reach the top or bottom of the tab.
             # Ensuring that our tab is at the top.
