@@ -327,6 +327,7 @@ IMAGES = {
         "skill_tree": IMAGE_DIR + "/master/skill_tree.png",
         "unlock_at": IMAGE_DIR + "/master/unlock_at.png",
         "war_cry": IMAGE_DIR + "/master/war_cry.png",
+        "intimidating_presence": IMAGE_DIR + "/master/intimidating_presence.png",
     },
     "NO_PANELS": {
         "clan_raid_ready": IMAGE_DIR + "/no_panels/clan_raid_ready.png",
