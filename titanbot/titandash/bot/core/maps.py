@@ -226,12 +226,12 @@ ARTIFACTS_LOCS = {
 }
 
 SKILL_CAN_LEVEL_LOCS = {
-    "heavenly_strike": (460, 218),
-    "deadly_strike": (459, 293),
-    "hand_of_midas": (460, 369),
-    "fire_sword": (459, 444),
-    "war_cry": (461, 520),
-    "shadow_clone": (459, 594)
+    "heavenly_strike": (460, 319),
+    "deadly_strike": (460, 395),
+    "hand_of_midas": (460, 472),
+    "fire_sword": (460, 546),
+    "war_cry": (460, 623),
+    "shadow_clone": (460, 698)
 }
 
 # Store any colors used (RGB) by the bot to determine so things in game.
@@ -419,12 +419,12 @@ PRESTIGE_COORDS = {
 # is expanded and scrolled all the way to the top.
 MASTER_COORDS = {
     "skills": {
-        "heavenly_strike": (0, 199, 480, 269),
-        "deadly_strike": (0, 275, 480, 346),
-        "hand_of_midas": (0, 351, 480, 421),
-        "fire_sword": (0, 426, 480, 497),
-        "war_cry": (0, 502, 480, 573),
-        "shadow_clone": (0, 578, 480, 648),
+        "heavenly_strike": (0, 306, 480, 374),
+        "deadly_strike": (0, 382, 480, 451),
+        "hand_of_midas": (0, 457, 480, 526),
+        "fire_sword": (0, 532, 480, 601),
+        "war_cry": (0, 608, 480, 677),
+        "shadow_clone": (0, 684, 480, 752),
     },
 }
 
@@ -432,12 +432,12 @@ MASTER_COORDS = {
 # skills are not their specified level or maxed.. We use these regions to grab
 # the current level through an OCR check.
 SKILL_LEVEL_COORDS = {
-    "heavenly_strike": (70, 224, 115, 240),
-    "deadly_strike": (70, 299, 115, 318),
-    "hand_of_midas": (70, 374, 115, 395),
-    "fire_sword": (70, 450, 115, 470),
-    "war_cry": (70, 525, 115, 545),
-    "shadow_clone": (70, 601, 115, 621),
+    "heavenly_strike": (70, 327, 115, 342),
+    "deadly_strike": (70, 403, 115, 418),
+    "hand_of_midas": (70, 478, 115, 493),
+    "fire_sword": (70, 555, 115, 569),
+    "war_cry": (70, 629, 115, 645),
+    "shadow_clone": (70, 707, 115, 721),
 }
 
 CLAN_COORDS = {
