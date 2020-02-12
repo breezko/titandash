@@ -375,6 +375,7 @@ class Bot(object):
 
         except ValueError:
             self.logger.warning("ocr check could not parse out a proper string from image, resetting advanced start value...")
+            self.logger.warning("text: {text}".format(text=stage_text))
             self.ADVANCED_START = None
         except TypeError:
             self.logger.warning("ocr check could not be coerced properly into an integer, resetting advanced start value...")
@@ -1383,7 +1384,7 @@ class Bot(object):
                     return True
 
                 # Performing the base prestige functionality, no tournament is available to join.
-                if not self.goto_master(collapsed=False, top=False):
+                if not self.goto_master():
                     return False
 
                 # Click on the prestige button, and check for the prompt confirmation being present. Sleeping
@@ -1686,7 +1687,7 @@ class Bot(object):
                         point=MASTER_LOCS["screen_top"],
                         pause=1
                     )
-                    if not self.goto_master(collapsed=False, top=False):
+                    if not self.goto_master():
                         return False, None
 
                     self.click(
