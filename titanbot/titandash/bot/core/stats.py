@@ -377,7 +377,7 @@ class Stats:
             image = self._process_stage()
 
         text = pytesseract.image_to_string(image, config="--psm 7 nobatch digits")
-        self.logger.debug("parsed value: {text}".format(text=text))
+        self.logger.info("parsed value: {text}".format(text=text))
 
         # Doing some light parse work, similar to the stage ocr function to remove letters if present.
         return ''.join(filter(lambda x: x.isdigit(), text))
