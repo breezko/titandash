@@ -457,7 +457,7 @@ class Bot(object):
 
         # Interval based calculations require an interval to be specified
         # in seconds only.
-        if interval:
+        if interval is not None:
             dt = now + datetime.timedelta(
                 seconds=interval
             )
