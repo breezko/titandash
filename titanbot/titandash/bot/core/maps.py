@@ -137,7 +137,7 @@ GAME_LOCS = {
 # Points used when clicking on locations present on the master panel.
 MASTER_LOCS = {
     "master_level": (415, 136),
-    "prestige": (405, 736),
+    "prestige": (405, 682),
     "prestige_confirm": (245, 675),
     "prestige_final": (330, 536),
     "screen_top": (240, 6),
@@ -409,8 +409,8 @@ PRESTIGE_COORDS = {
         "advance_start": (136, 584, 212, 612),
     },
     "event": {
-        "time_since": (301, 117, 380, 136),
-        "advance_start": (136, 565, 212, 584),
+        "time_since": (301, 121, 380, 139),
+        "advance_start": (138, 567, 191, 588),
     }
 }
 
