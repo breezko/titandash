@@ -1363,8 +1363,7 @@ class Bot(object):
                     # and our correct advanced start parsing.
                     self.props.last_prestige = tournament_prestige
                     self.parse_advanced_start(stage_text=advanced_start)
-
-                    self.props.current_stage = advanced_start
+                    self.props.current_stage = advanced_start or 0
                     # Sleeping explicitly if a tournament was joined, since we update the last
                     # prestige and advanced start right after it happens.
                     sleep(35)
