@@ -1156,14 +1156,25 @@ class Bot(object):
         # We also travel to the bottom of the expanded master panel for each purchase, since some
         # perks may close the panel after activation.
         self.goto_master(collapsed=False, top=False)
-        # We need to scroll slightly higher to ensure that the proper content is
-        # being shown on the screen.
-        self.drag(
-            start=self.locs.scroll_start,
-            end=self.locs.scroll_top_end
-        )
 
-        perk_point = getattr(self.locs, perk)
+        perk_image = getattr(self.images, "perks_{perk}".format(perk=perk))
+        # Dragging until perk is on the screen.
+        while not self.grabber.search(image=perk_image, bool_only=True):
+            self.drag(
+                start=self.locs.scroll_start,
+                end=self.locs.scroll_top_end,
+            )
+
+        # Dynamically derive the point that will be used to click on the
+        # current perk.
+        found, position = self.grabber.search(image=perk_image)
+
+        # Add our proper padding amounts to the perk image found.
+        # ensuring that the point is on the "use" button for the perk.
+        click_point = (
+            position[0] + PERK_LOCS["perk_push"]["x"],
+            position[1] + PERK_LOCS["perk_push"]["y"]
+        )
 
         # Our mega boost perk currently functions differently then the other
         # perks present and available.
@@ -1173,7 +1184,7 @@ class Bot(object):
                 # Just activate the perk.
                 self.logger.info("using {perk} with vip now...".format(perk=perk))
                 self.click(
-                    point=perk_point,
+                    point=click_point,
                     pause=1
                 )
             # Otherwise, we need to check to see if we can collect the perk with our
@@ -1182,7 +1193,7 @@ class Bot(object):
                 if globals.pihole_ads():
                     self.logger.info("attempting to use {perk} through pi hole now...".format(perk=perk))
                     self.click(
-                        point=perk_point,
+                        point=click_point,
                         pause=1
                     )
                     # If our perk header is now present, we can loop and wait until it's disappeared,
@@ -1202,7 +1213,7 @@ class Bot(object):
             # If it is already active, no window will be opened, which we
             # can use to determine whether or not to continue.
             self.click(
-                point=perk_point,
+                point=click_point,
                 pause=1
             )
 
@@ -2558,7 +2569,7 @@ class Bot(object):
             "master",
             self.images.master_active,
             self.images.raid_cards,
-            self.images.intimidating_presence,
+            self.images.silent_march,
             collapsed=collapsed,
             top=top
         )
