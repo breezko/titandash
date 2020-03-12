@@ -180,7 +180,7 @@ def perform_update(request):
             exception=exc,
             extra="<br/>This error could not be recovered from and your code base is now in an inconsistent state. "
                   "Don't worry though! You can go and download the newest release manually still. Check out "
-                  "<a href='https://titanda.sh'>this</a> link to do that now.<br/>You're data has <strong>not</strong> been "
+                  "<a href='https://titandash.net'>this</a> link to do that now.<br/>You're data has <strong>not</strong> been "
                   "lost due to this error."
         )
 
