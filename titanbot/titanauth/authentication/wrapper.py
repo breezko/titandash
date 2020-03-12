@@ -4,6 +4,7 @@ from titanauth.authentication.constants import (
 )
 
 import requests
+import json
 
 
 class AuthWrapper(object):
@@ -28,6 +29,33 @@ class AuthWrapper(object):
                 "token": self.reference.token
             }
         )
+
+    def authenticate_runner(self):
+        """
+        Attempt to authenticate a user and return simple booleans to determine status.
+        """
+        if not self.reference.valid:
+            # User is logged in already, and they're reference is not
+            # in a valid state, return false early.
+            return False
+
+        try:
+            response = requests.post(
+                url=AUTH_AUTHENTICATE_URL,
+                data={
+                    "email": self.reference.email,
+                    "token": self.reference.token,
+                }
+            )
+            _content = json.loads(response.content)
+        except Exception:
+            # Return false if any errors occur while requesting
+            # authentication status.
+            return False
+
+        # Return the current status for this users authentication
+        # check, this allows us to force a logout or instance termination.
+        return _content["status"]
 
     def _state(self, state):
         if not self.reference.valid:
