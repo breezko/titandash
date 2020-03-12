@@ -8,6 +8,9 @@ let BotInstanceConsumer = function() {
     let initialAjaxUrl = "/ajax/bot_instance/get";
     let signalsAjaxUrl = "/ajax/signal";
 
+    /* Init */
+    let _initialTitle = document.title;
+
     /* Consts */
     const PLAY = "PLAY";
     const PAUSE = "PAUSE";
@@ -367,6 +370,10 @@ let BotInstanceConsumer = function() {
      * Setup the instance data. This includes the generic instance variables.
      */
     this.setupInstance = function(active, data) {
+        // Also setting up the page title so that the state is also included
+        // in the title. Allows a quick glance to see current state of the selected instance.
+        document.title = `${_initialTitle} [${data["state"]}]`;
+
         if (active) {
             if (elements.instanceName.text() !== data["name"])
                 elements.instanceName.text(data["name"]);
