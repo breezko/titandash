@@ -14,7 +14,7 @@ class BotProperty(object):
     """
     Queueable Function Decorator.
     """
-    def __init__(self, queueable=False, forceable=False, reload=False, shortcut=None, tooltip=None, interval=None):
+    def __init__(self, queueable=False, forceable=False, reload=False, shortcut=None, tooltip=None, interval=None, wrap_name=True):
         """
         Initialize the queueable decorator on a function, we should be able to choose
         a couple of options when making a function queueable, including whether ot not it
@@ -26,6 +26,7 @@ class BotProperty(object):
         :param shortcut: Specify a keyboard shortcut that can be used to queue the function.
         :param tooltip:  Specify a tooltip that will be displayed when the function is hovered over.
         :param interval: Specify an interval that will be used to derive scheduled function periods.
+        :param wrap_name: Whether or not this function should also update the instances current function property when called.
         """
         self.queueable = queueable
         self.forceable = forceable
@@ -33,6 +34,7 @@ class BotProperty(object):
         self.shortcut = shortcut
         self.tooltip = tooltip
         self.interval = interval
+        self.wrap_name = wrap_name
 
     def __call__(self, function):
         """
@@ -45,10 +47,14 @@ class BotProperty(object):
         )
 
         @wraps(function)
-        def wrapper(*args, **kwargs):
+        def wrapper(bot, *args, **kwargs):
+            # Ensure instance has its "Props" object updated to ensure
+            # that the bot instance is saved and web sockets are sent.
+            if self.wrap_name:
+                bot.props.current_function = function.__name__
             # Run our function normally once we've added it to our
             # globally available queueable dictionary.
-            return function(*args, **kwargs)
+            return function(bot, *args, **kwargs)
 
         # Returning wrapper function here, retain class decorator norms.
         return wrapper
@@ -167,22 +173,5 @@ def wait_afterwards(function, floor, ceiling):
         if ceiling:
             # Wait for a random amount of time after function finishes execution.
             sleep(randint(floor, ceiling))
-
-    return wrapped
-
-
-def wrap_current_function(function):
-    """
-    Wrap the decorated function to allow for property updates used with the live dashboard.
-
-    This allows the current function display to change based on the function being executed.
-    """
-    @wraps(function)
-    def wrapped(instance, *args, **kwargs):
-        # Ensure instance has its "Props" object updated to ensure
-        # that the bot instance is saved and web sockets are sent.
-        instance.props.current_function = function.__name__
-        # Run function normally after updating props instance.
-        return function(instance, *args, **kwargs)
 
     return wrapped
