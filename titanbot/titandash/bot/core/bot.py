@@ -42,6 +42,13 @@ class TerminationEncountered(Exception):
     pass
 
 
+class InvalidAuthenticationError(Exception):
+    """
+    Basic exception raised when an invalid authentication is found while a bot session is running.
+    """
+    pass
+
+
 class Bot(object):
     """
     Main Bot Class.
@@ -57,7 +64,6 @@ class Bot(object):
                  window,
                  enable_shortcuts,
                  instance,
-                 logger=None,
                  start=False,
                  debug=False):
 
@@ -72,6 +78,7 @@ class Bot(object):
         self.minigame_order = None
         self.enabled_perks = None
         self.scheduler = None
+        self.authenticator = AuthWrapper()
 
         self.current_prestige_master_levelled = False
         self.current_prestige_skill_levels = {
@@ -136,7 +143,7 @@ class Bot(object):
         self.logger.info("==========================================================================================")
 
         if not debug:
-            AuthWrapper().online()
+            self.authenticator.online()
 
         self.calculate_minigames_order()
         self.calculate_enabled_perks()
@@ -263,6 +270,14 @@ class Bot(object):
                 trigger="interval",
                 id=prop["name"]
             )
+
+    @bot_property(interval=180, wrap_name=False)
+    def authenticate(self):
+        """
+        Attempt to authenticate the user currently attempting to start a bot instance.
+        """
+        if self.authenticator.authenticate_runner() is False:
+            raise InvalidAuthenticationError()
 
     @bot_property(queueable=True, reload=True, tooltip="Parse selected artifacts to upgrade, generating a list of artifacts that will be upgraded on prestige.")
     def get_upgrade_artifacts(self, testing=False):
@@ -2794,6 +2809,10 @@ class Bot(object):
         """
         if start:
             try:
+                # Ensure authentication check takes place before
+                # running any other functionality.
+                self.authenticate()
+
                 if self.enable_shortcuts:
                     self.setup_shortcuts()
 
@@ -2848,6 +2867,8 @@ class Bot(object):
                             ceiling=self.configuration.post_action_max_wait_time
                         )()
 
+            except InvalidAuthenticationError:
+                self.logger.info("authentication credentials are no longer valid... terminating!")
             except TerminationEncountered:
                 self.logger.info("manual termination encountered... terminating!")
             except FailSafeException:
