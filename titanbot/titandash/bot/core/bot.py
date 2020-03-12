@@ -2238,7 +2238,7 @@ class Bot(object):
                         # Make sure we don't accidentally mis-click or click on collect while
                         # the game is lagging or some other oddity that would cause this to loop forever.
                         self.find_and_click(
-                            image=self.images.collect_ad,
+                            image=self.images.watch_ad,
                             pause=2,
                             log="waiting for pi hole to finish ad..."
                         )
