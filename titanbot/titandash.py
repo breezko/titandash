@@ -181,20 +181,20 @@ class TitandashApplication(object):
 
             # If the server is currently running, we want to begin an indefinite loop that sends a task to kill
             # the server and only once no more processes are running, do we exit gracefully from the loop.
-            while len(processes) > 0:
-                logging.debug("ATTEMPTING TO KILL SERVER...")
+            logging.debug("ATTEMPTING TO KILL SERVER...")
 
-                if processes[0]["pid"] == 0:
-                    return True
+            if processes[0]["pid"] == 0:
+                return True
 
-                # Kill server with kill command in subprocess.
-                subprocess.run(args=["taskkill", "/F", "/PID", processes[0]["pid"]])
-                # Obtain state and processes again.
-                processes = self.procs()
+            # Kill server with kill command in subprocess...
+            # If this does not, we'll just forget it. It's likely that this fails
+            # because the server is in a weird state, we can fire and forget.
+            subprocess.run(args=["taskkill", "/F", "/PID", processes[0]["pid"]])
 
             # Return true once we can safely assume the server is not running...
             return True
 
+        # If the command can not be called for some reason, just exit early.
         except subprocess.CalledProcessError:
             return True
 
