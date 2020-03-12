@@ -58,21 +58,33 @@ def credentials(request):
     )
 
     # Attempt to retrieve authentication response.
-    response = AuthWrapper().authenticate()
-    response_content = json.loads(response.content)
-    response_status = response.status_code
+    try:
+        response = AuthWrapper().authenticate()
+        response_content = json.loads(response.content)
+        response_status = response.status_code
 
-    if response_status == 200:
-        if response_content["status"] == "success":
-            reference.valid = True
-    else:
+        if response_status == 200:
+            if response_content["status"] == "success":
+                reference.valid = True
+        else:
+            reference.valid = False
+
+        reference.save()
+
+        # Response should have a json dictionary and the status code is returned.
+        return JsonResponse(
+            data=response_content,
+            status=response.status_code
+        )
+    # If any errors occur while authenticating the credentials,
+    # we can go ahead and just mock an invalid authentication.
+    except Exception:
         reference.valid = False
+        reference.save()
 
-    reference.save()
-
-    # Response should have a json dictionary and the status code is returned.
-    return JsonResponse(
-        data=json.loads(response.content),
-        status=response.status_code
-    )
-
+        # Mock the content that should be present for an invalid
+        # authentication attempt.
+        return JsonResponse(
+            data={"status": False, "message": "Authentication failed."},
+            status=200
+        )
