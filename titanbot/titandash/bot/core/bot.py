@@ -437,6 +437,8 @@ class Bot(object):
             minigames.append("heart_of_midas")
         if self.configuration.enable_flash_zip:
             minigames.append("flash_zip")
+        if self.configuration.enable_forbidden_contract:
+            minigames.append("forbidden_contract")
 
         self.minigame_order = minigames
 

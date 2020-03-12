@@ -195,6 +195,13 @@
                     <label class="form-check-label" for="enable_flash_zip">Enable Flash Zip</label>
                     <p class="text-muted">{{ help.enable_flash_zip }}</p>
                 </div>
+
+                <div class="form-check">
+                    {# Enable Forbidden Contract #}
+                    <input {% if config.enable_forbidden_contract %}checked{% endif %} type="checkbox" class="form-check-input" id="enable_forbidden_contract" name="enable_forbidden_contract">
+                    <label class="form-check-label" for="enable_forbidden_contract">Enable Forbidden Contract</label>
+                    <p class="text-muted">{{ help.enable_forbidden_contract }}</p>
+                </div>
             </div>
         </div>
     </div>
