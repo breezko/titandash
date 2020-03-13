@@ -123,6 +123,7 @@ COMPRESSION_KEYS = {
     "enable_headgear_swap": 111,
     "headgear_swap_every_x_seconds": 112,
     "headgear_swap_on_start": 113,
+    "enable_forbidden_contract": 114,
 }
 
 HELP_TEXT = {
@@ -143,6 +144,7 @@ HELP_TEXT = {
     "enable_astral_awakening": "Enable astral awakening tapping skill minigame.",
     "enable_heart_of_midas": "Enable heart of midas tapping skill minigame.",
     "enable_flash_zip": "Enable flash zip tapping skill minigame.",
+    "enable_forbidden_contract": "Enable forbidden contract tapping skill minigame..",
     "enable_breaks": "Enable the ability to take breaks in game.",
     "breaks_jitter": "Specify a jitter amount so that breaks take place at different intervals.",
     "breaks_minutes_required": "How many minutes of concurrent playtime is required before a break takes place.",
@@ -262,6 +264,7 @@ class Configuration(ParanoidModel, ExportModelMixin):
     enable_astral_awakening = models.BooleanField(verbose_name="Enable Astral Awakening", default=False, help_text=HELP_TEXT["enable_astral_awakening"])
     enable_heart_of_midas = models.BooleanField(verbose_name="Enable Heart Of Midas", default=False, help_text=HELP_TEXT["enable_heart_of_midas"])
     enable_flash_zip = models.BooleanField(verbose_name="Enable Flash Zip", default=False, help_text=HELP_TEXT["enable_flash_zip"])
+    enable_forbidden_contract = models.BooleanField(verbose_name="Enable Forbidden Contract", default=False, help_text=HELP_TEXT["enable_forbidden_contract"])
 
     # BREAKS Settings.
     enable_breaks = models.BooleanField(verbose_name="Enable Breaks", default=True, help_text=HELP_TEXT["enable_breaks"])

@@ -3,6 +3,7 @@ import pathlib
 import json
 import shutil
 import datetime
+import socket
 
 
 # Version file used to determine the current project version.
@@ -15,8 +16,20 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(ROOT_DIR, VERSION_FILE), "r") as version_file:
     BOT_VERSION = json.load(version_file)["version"]
 
-# Specify the port that the django server will listen on.
-TITANDASH_PORT = 8000
+
+def _get_port():
+    """
+    Automatically derive a port that will be used to start the web server.
+    """
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(("localhost", 0))
+
+    return sock.getsockname()[1]
+
+
+# Dynamically allocate a port that will be used with the web server.
+# This will make starting/stopping the server much easier to deal with.
+TITANDASH_PORT = _get_port()
 
 # Specify the url used by the application to derive accessible status.
 TITANDASH_DASHBOARD_URL = "http://localhost:%d/" % TITANDASH_PORT

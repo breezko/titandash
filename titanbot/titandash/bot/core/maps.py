@@ -96,6 +96,14 @@ GAME_LOCS = {
             (381, 230), (336, 351), (333, 293), (283, 371), (213, 367), (155, 291), (159, 179), (254, 145), (327, 206),
             (320, 286), (273, 342), (216, 313), (224, 219)
         ),
+        "forbidden_contract": (
+            (205, 394), (172, 374), (156, 359), (143, 350), (114, 326), (105, 302), (105, 287), (116, 207), (118, 203),
+            (125, 198), (144, 194), (166, 187), (199, 162), (234, 161), (275, 165), (308, 169), (321, 184), (198, 394),
+            (165, 374), (152, 359), (139, 350), (110, 326), (100, 302), (101, 287), (111, 207), (114, 203), (119, 198),
+            (139, 194), (160, 187), (194, 162), (230, 161), (270, 165), (300, 169), (315, 184), (209, 394), (176, 374),
+            (162, 359), (150, 350), (119, 326), (111, 302), (108, 287), (120, 207), (125, 203), (127, 198), (149, 194),
+            (171, 187), (204, 162), (239, 161), (280, 165), (314, 169), (325, 184),
+        ),
     },
     "PANELS": {
         "expand_collapse_top": (386, 9),
@@ -122,13 +130,6 @@ GAME_LOCS = {
         "purchase": (254, 554)
     },
     "PERKS": {
-        "mega_boost": (356, 148),
-        "power_of_swiping": (356, 229),
-        "adrenaline_rush": (356, 310),
-        "make_it_rain": (356, 387),
-        "mana_potion": (356, 470),
-        "doom": (356, 548),
-        "clan_crate": (356, 627),
         "perks_okay": (326, 444),
         "perks_cancel": (150, 444),
     },
@@ -223,6 +224,13 @@ ARTIFACTS_LOCS = {
     "buy_multiplier": (410, 71),
     "buy_max": (50, 71),
     "percent_toggle": (303, 70),
+}
+
+PERK_LOCS = {
+    "perk_push": {
+        "x": 396,
+        "y": 20,
+    },
 }
 
 SKILL_CAN_LEVEL_LOCS = {
@@ -328,6 +336,7 @@ IMAGES = {
         "unlock_at": IMAGE_DIR + "/master/unlock_at.png",
         "war_cry": IMAGE_DIR + "/master/war_cry.png",
         "intimidating_presence": IMAGE_DIR + "/master/intimidating_presence.png",
+        "silent_march": IMAGE_DIR + "/master/silent_march.png",
     },
     "NO_PANELS": {
         "clan_raid_ready": IMAGE_DIR + "/no_panels/clan_raid_ready.png",
@@ -374,6 +383,13 @@ IMAGES = {
         "rate_icon": IMAGE_DIR + "/rate/rate_icon.png",
     },
     "PERKS": {
+        "perks_mega_boost": IMAGE_DIR + "/perks/perks_mega_boost.png",
+        "perks_power_of_swiping": IMAGE_DIR + "/perks/perks_power_of_swiping.png",
+        "perks_adrenaline_rush": IMAGE_DIR + "/perks/perks_adrenaline_rush.png",
+        "perks_make_it_rain": IMAGE_DIR + "/perks/perks_make_it_rain.png",
+        "perks_mana_potion": IMAGE_DIR + "/perks/perks_mana_potion.png",
+        "perks_doom": IMAGE_DIR + "/perks/perks_doom.png",
+        "perks_clan_crate": IMAGE_DIR + "/perks/perks_clan_crate.png",
         "perks_diamond": IMAGE_DIR + "/perks/perks_diamond.png",
         "perks_header": IMAGE_DIR + "/perks/perks_header.png",
         "perk_header": IMAGE_DIR + "/perks/perk_header.png",

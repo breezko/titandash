@@ -5,14 +5,14 @@
 <h3 align="center">TapTitans 2 Bot/Progression Application</h3>
 <p align="center">
   <img src="https://badge.fury.io/gh/becurrie%2Ftitandash.svg">
-  <a href="https://titanda.sh"><img src="https://img.shields.io/badge/site-titanda.sh-lightgrey"></a>
+  <a href="https://titandash.net"><img src="https://img.shields.io/badge/site-titanda.sh-lightgrey"></a>
   <a href="https://github.com/becurrie/titandash/issues"><img alt="GitHub issues" src="https://img.shields.io/github/issues/becurrie/titandash"></a>
 </p>
 
 ## Getting Started
 Take a look at the [wiki](https://github.com/becurrie/titandash/wiki) for information about setting up and configuring the dependencies and requirements needed to start the dashboard and initiate a new bot instance.
 
-You can also visit our homepage, [here](https://titanda.sh) for more information!
+You can also visit our homepage, [here](https://titandash.net) for more information!
 
 ## Features
 ### Bot

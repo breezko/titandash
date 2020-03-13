@@ -5,7 +5,7 @@ Store constants relating to the external authentication backend.
 """
 
 # Base urls.
-AUTH_BASE_URL = "https://titanda.sh"
+AUTH_BASE_URL = "https://titandash.net"
 AUTH_API_URL = "/api"
 
 # Endpoints.
