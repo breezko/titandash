@@ -70,6 +70,7 @@ class Bot(object):
         self.ADVANCED_START = None
         self.TERMINATE = False
         self.PAUSE = False
+        self.VALID_AUTHENTICATION = True
 
         self.last_stage = None
         self.owned_artifacts = None
@@ -277,7 +278,7 @@ class Bot(object):
         Attempt to authenticate the user currently attempting to start a bot instance.
         """
         if self.authenticator.authenticate_runner() is False:
-            raise InvalidAuthenticationError()
+            self.VALID_AUTHENTICATION = False
 
     @bot_property(queueable=True, reload=True, tooltip="Parse selected artifacts to upgrade, generating a list of artifacts that will be upgraded on prestige.")
     def get_upgrade_artifacts(self, testing=False):
@@ -2826,6 +2827,11 @@ class Bot(object):
                 # running any other functionality.
                 self.authenticate()
 
+                # Perform an initial validation check before running
+                # any bot functions.
+                if self.VALID_AUTHENTICATION is False:
+                    raise InvalidAuthenticationError()
+
                 if self.enable_shortcuts:
                     self.setup_shortcuts()
 
@@ -2864,6 +2870,8 @@ class Bot(object):
                                 else:
                                     wait()
 
+                        if self.VALID_AUTHENTICATION is False:
+                            raise InvalidAuthenticationError()
                         if self.TERMINATE:
                             raise TerminationEncountered()
                         if self.PAUSE:

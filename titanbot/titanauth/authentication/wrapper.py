@@ -55,7 +55,7 @@ class AuthWrapper(object):
 
         # Return the current status for this users authentication
         # check, this allows us to force a logout or instance termination.
-        return _content["status"]
+        return _content["status"] != "error"
 
     def _state(self, state):
         if not self.reference.valid:
