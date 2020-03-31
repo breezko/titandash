@@ -111,7 +111,7 @@ class Stats:
         kernel = np.ones((1, 1), np.uint8)
         image = cv2.dilate(image, kernel, iterations=iterations)
         image = cv2.erode(image, kernel, iterations=iterations)
-
+        
         return Image.fromarray(image)
 
     def _process_stage(self, scale=5, threshold=100, image=None):
@@ -127,7 +127,7 @@ class Stats:
         # Create gray scale.
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         # Perform threshold on image.
-        retr, mask = cv2.threshold(image, 230, 255, cv2.THRESH_BINARY)
+        retr, mask = cv2.threshold(image, 230, 255, cv2.THRESH_BINARY_INV)
 
         # Find contours.
         contours, hier = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -352,8 +352,9 @@ class Stats:
         else:
             self.grabber.snapshot(region=region)
             image = self._process_stage(scale=3)
-
-        text = pytesseract.image_to_string(image, config='--psm 7 nobatch digits')
+        
+        text = pytesseract.image_to_string(image, config="--psm 7 nobatch digits --oem 0")
+               
         self.logger.debug("parsed value: {text}".format(text=text))
 
         # Do some light parse work here to make sure only digit like characters are present
@@ -374,9 +375,9 @@ class Stats:
             image = self._process_stage(test_image)
         else:
             self.grabber.snapshot(region=region)
-            image = self._process_stage()
+            image = self._process(region=region)
 
-        text = pytesseract.image_to_string(image, config="--psm 7 nobatch digits")
+        text = pytesseract.image_to_string(image, config="--psm 7 nobatch digits --oem 0")
         self.logger.info("parsed value: {text}".format(text=text))
 
         # Doing some light parse work, similar to the stage ocr function to remove letters if present.
@@ -399,7 +400,8 @@ class Stats:
         if test_image:
             image = self._process(scale=3, image=test_image)
         else:
-            image = self._process(scale=3, current=True, region=region)
+            self.grabber.snapshot(region=region)
+            image = self._process(scale=3)
 
         text = pytesseract.image_to_string(image, config='--psm 7')
         self.logger.info("parsed value: {text}".format(text=text))

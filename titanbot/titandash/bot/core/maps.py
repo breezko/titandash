@@ -423,7 +423,7 @@ STAGE_COORDS = {
 PRESTIGE_COORDS = {
     "base": {
         "time_since": (301, 155, 380, 177),
-        "advance_start": (136, 584, 212, 612),
+        "advance_start": (137, 600, 195, 620),
     },
     "event": {
         "time_since": (301, 121, 380, 139),
