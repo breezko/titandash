@@ -281,7 +281,7 @@ class Stats:
                 image = Image.open(test_set[key])
             else:
                 self.grabber.snapshot(region=region)
-                image = self._process()
+                image = self._process(scale=3)
 
             text = pytesseract.image_to_string(image, config='--psm 7')
             self.logger.debug("ocr result: {key} -> {text}".format(key=key, text=text))
@@ -354,7 +354,6 @@ class Stats:
             image = self._process_stage(scale=3)
         
         text = pytesseract.image_to_string(image, config="--psm 7 nobatch digits --oem 0")
-               
         self.logger.debug("parsed value: {text}".format(text=text))
 
         # Do some light parse work here to make sure only digit like characters are present
