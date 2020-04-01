@@ -2380,14 +2380,9 @@ class Bot(object):
 
                     # Every fifth click, we should check to see if an ad is present on the
                     # screen now, since our clicks could potentially trigger a fairy ad.
-                    
-                #TODO: Just check add each iter since the process is very time heavy 
-                self.collect_ad_no_transition()
-                
-                #Sleep 500ms for astral to fly
-                #TODO: Only enable if astral is configured
-                sleep(0.5)
-
+                    if index % 5 == 0:	
+                        self.collect_ad_no_transition()
+                        
             # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
             # clicked just as the tapping ended.
             sleep(2)
