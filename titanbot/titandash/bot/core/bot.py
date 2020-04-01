@@ -2445,6 +2445,7 @@ class Bot(object):
             )
             if found:
                 return True
+            # TODO: Do we need to sleep?
             sleep(1)
             loops += 1
 
