@@ -111,7 +111,7 @@ class Stats:
         kernel = np.ones((1, 1), np.uint8)
         image = cv2.dilate(image, kernel, iterations=iterations)
         image = cv2.erode(image, kernel, iterations=iterations)
-
+        
         return Image.fromarray(image)
 
     def _process_stage(self, scale=5, threshold=100, image=None):
@@ -127,7 +127,7 @@ class Stats:
         # Create gray scale.
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         # Perform threshold on image.
-        retr, mask = cv2.threshold(image, 230, 255, cv2.THRESH_BINARY)
+        retr, mask = cv2.threshold(image, 230, 255, cv2.THRESH_BINARY_INV)
 
         # Find contours.
         contours, hier = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -281,7 +281,7 @@ class Stats:
                 image = Image.open(test_set[key])
             else:
                 self.grabber.snapshot(region=region)
-                image = self._process()
+                image = self._process(scale=3)
 
             text = pytesseract.image_to_string(image, config='--psm 7')
             self.logger.debug("ocr result: {key} -> {text}".format(key=key, text=text))
@@ -352,13 +352,38 @@ class Stats:
         else:
             self.grabber.snapshot(region=region)
             image = self._process_stage(scale=3)
-
-        text = pytesseract.image_to_string(image, config='--psm 7 nobatch digits')
+        
+        text = pytesseract.image_to_string(image, config="--psm 7 nobatch digits --oem 0")
         self.logger.debug("parsed value: {text}".format(text=text))
 
         # Do some light parse work here to make sure only digit like characters are present
         # in the returned 'text' variable retrieved through tesseract.
         return ''.join(filter(lambda x: x.isdigit(), text))
+
+
+    def _preprocess_stage(self, scale=5, threshold=100, image=None):
+         
+        if image:
+            image = image
+        else:
+            image = self.grabber.current
+
+        image = np.array(image)
+        # Resize image.
+        image = cv2.resize(image, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+            
+        # define range of white color in HSV
+        # change it according to your need !
+        lower_white = np.array([0,0,0], dtype=np.uint8)
+        upper_white = np.array([0,0,255], dtype=np.uint8)
+        hsv = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
+        # Threshold the HSV image to get only white colors
+        mask = cv2.inRange(hsv, lower_white, upper_white)
+        # Bitwise-AND mask and original image
+        res = cv2.bitwise_and(image,image, mask= mask)
+        dst = cv2.fastNlMeansDenoisingColored(image,None,10,10,7,21)
+
+        return Image.fromarray(res)
 
     def get_advance_start(self, test_image=None):
         """
@@ -374,11 +399,11 @@ class Stats:
             image = self._process_stage(test_image)
         else:
             self.grabber.snapshot(region=region)
-            image = self._process_stage()
+            image = self._preprocess_stage(scale=5)
 
-        text = pytesseract.image_to_string(image, config="--psm 7 nobatch digits")
+        text = pytesseract.image_to_string(image, config="--psm 7 nobatch digits --oem 0")
         self.logger.info("parsed value: {text}".format(text=text))
-
+        
         # Doing some light parse work, similar to the stage ocr function to remove letters if present.
         return ''.join(filter(lambda x: x.isdigit(), text))
 
@@ -399,7 +424,8 @@ class Stats:
         if test_image:
             image = self._process(scale=3, image=test_image)
         else:
-            image = self._process(scale=3, current=True, region=region)
+            self.grabber.snapshot(region=region)
+            image = self._process(scale=3)
 
         text = pytesseract.image_to_string(image, config='--psm 7')
         self.logger.info("parsed value: {text}".format(text=text))
