@@ -72,7 +72,7 @@ class Bot(object):
         self.PAUSE = False
         self.VALID_AUTHENTICATION = True
 
-        self.last_stage = None
+        self.last_stage = -1
         self.owned_artifacts = None
         self.next_artifact_index = None
         self.next_artifact_upgrade = None
