@@ -2424,10 +2424,9 @@ class Bot(object):
                         sleep(0.02)
 
                     # Every fifth click, we should check to see if an ad is present on the
-                    # screen now, since our clicks could potentially trigger a fairy ad.
-                    if index % 5 == 0:
-                        self.collect_ad_no_transition()
-                        
+                    # screen now, since our clicks could potentially trigger a fairy
+                
+                self.collect_ad_no_transition()        
                 #Sleep to let coordinate offensive fly
                 sleep(0.5)
             # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
