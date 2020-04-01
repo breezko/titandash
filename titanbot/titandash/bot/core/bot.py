@@ -2363,6 +2363,7 @@ class Bot(object):
         """
         Perform simple screen tap over entire game area.
         """
+        #TODO: Toggle tapping on fairy and just click clan member?
         if self.configuration.enable_tapping:
             self.logger.info("beginning generic tapping process...")
 
@@ -2380,8 +2381,13 @@ class Bot(object):
 
                     # Every fifth click, we should check to see if an ad is present on the
                     # screen now, since our clicks could potentially trigger a fairy ad.
-                    if index % 5 == 0:
-                        self.collect_ad_no_transition()
+                    
+                #TODO: Just check add each iter since the process is very time heavy 
+                self.collect_ad_no_transition()
+                
+                #Sleep 500ms for astral to fly
+                #TODO: Only enable if astral is configured
+                sleep(0.5)
 
             # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
             # clicked just as the tapping ended.
@@ -2414,12 +2420,16 @@ class Bot(object):
                         self.click(
                             point=point
                         )
+                        #Wait 20ms...Presses won't go off parallel otherwise
+                        sleep(0.02)
 
                     # Every fifth click, we should check to see if an ad is present on the
                     # screen now, since our clicks could potentially trigger a fairy ad.
                     if index % 5 == 0:
                         self.collect_ad_no_transition()
-
+                        
+                #Sleep to let coordinate offensive fly
+                sleep(0.5)
             # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
             # clicked just as the tapping ended.
             sleep(2)
