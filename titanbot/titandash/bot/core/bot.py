@@ -408,7 +408,7 @@ class Bot(object):
         through our background scheduler implementation.
         """
         try:
-            stage = int(self.stats.stage_ocr())
+            stage = int(self.stats.stage_ocr(previous=self.last_stage))
             if stage > STAGE_CAP:
                 return
             if self.ADVANCED_START and stage < self.ADVANCED_START:
@@ -417,7 +417,6 @@ class Bot(object):
             self.logger.debug("current stage parsed as: {stage}".format(stage=strfnumber(number=stage)))
             self.last_stage = self.props.current_stage
             self.props.current_stage = stage
-
         # ValueError when the parsed stage isn't able to be coerced.
         except ValueError:
             self.logger.debug("current stage could not be parsed... skipping.")
@@ -2381,14 +2380,13 @@ class Bot(object):
 
                     # Every fifth click, we should check to see if an ad is present on the
                     # screen now, since our clicks could potentially trigger a fairy ad.
-                    
+ 
                 #TODO: Just check add each iter since the process is very time heavy 
                 self.collect_ad_no_transition()
                 
                 #Sleep 500ms for astral to fly
                 #TODO: Only enable if astral is configured
                 sleep(0.5)
-
             # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
             # clicked just as the tapping ended.
             sleep(2)
