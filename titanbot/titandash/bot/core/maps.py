@@ -65,7 +65,7 @@ GAME_LOCS = {
             # Click on spot where equipment appears.
             (355, 411),
             # Click on clan helper
-            (176,411)
+            (176,411),
         ),
         "collect_clan_crate": (70, 131),
     },
