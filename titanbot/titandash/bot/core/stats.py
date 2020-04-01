@@ -352,9 +352,11 @@ class Stats:
         """
         
         # if first check is faulty we need to fallback to highest stage
-        if(previous > int(self.statistics.game_statistics.highest_stage_reached)):
-            previous = -1
-        
+        try:
+            if(previous > int(self.statistics.game_statistics.highest_stage_reached)):
+                previous = -1
+        except TypeError:
+            previous=-1
         return value if value > previous else previous
 
     def stage_ocr(self,previous=-1, test_image=None):
@@ -375,11 +377,9 @@ class Stats:
         
         value =''.join(filter(lambda x: x.isdigit(), text))
         value = value if value else 0 # fallback to 0 if None
-        
         stage = self._postprocess_stage_ocr(int(value),previous)
         # Do some light parse work here to make sure only digit like characters are present
         # in the returned 'text' variable retrieved through tesseract.
-        print(stage)
         return str(stage)
 
     def _preprocess_stage(self, scale=5, threshold=100, image=None):
