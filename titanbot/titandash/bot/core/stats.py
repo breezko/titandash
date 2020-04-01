@@ -360,6 +360,31 @@ class Stats:
         # in the returned 'text' variable retrieved through tesseract.
         return ''.join(filter(lambda x: x.isdigit(), text))
 
+
+    def _preprocess_stage(self, scale=5, threshold=100, image=None):
+         
+        if image:
+            image = image
+        else:
+            image = self.grabber.current
+
+        image = np.array(image)
+        # Resize image.
+        image = cv2.resize(image, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+            
+        # define range of white color in HSV
+        # change it according to your need !
+        lower_white = np.array([0,0,0], dtype=np.uint8)
+        upper_white = np.array([0,0,255], dtype=np.uint8)
+        hsv = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
+        # Threshold the HSV image to get only white colors
+        mask = cv2.inRange(hsv, lower_white, upper_white)
+        # Bitwise-AND mask and original image
+        res = cv2.bitwise_and(image,image, mask= mask)
+        dst = cv2.fastNlMeansDenoisingColored(image,None,10,10,7,21)
+
+        return Image.fromarray(res)
+
     def get_advance_start(self, test_image=None):
         """
         Another portion of the functionality that should be used right before a prestige takes place.
@@ -374,11 +399,11 @@ class Stats:
             image = self._process_stage(test_image)
         else:
             self.grabber.snapshot(region=region)
-            image = self._process(region=region)
+            image = self._preprocess_stage(scale=5)
 
         text = pytesseract.image_to_string(image, config="--psm 7 nobatch digits --oem 0")
         self.logger.info("parsed value: {text}".format(text=text))
-
+        
         # Doing some light parse work, similar to the stage ocr function to remove letters if present.
         return ''.join(filter(lambda x: x.isdigit(), text))
 
