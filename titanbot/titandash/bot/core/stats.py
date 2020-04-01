@@ -340,6 +340,17 @@ class Stats:
             except ValueError:
                 self.logger.error("could not parse {key}: (ocr result: {text})".format(key=key, text=text))
 
+    def _postprocess_stage_ocr(self,value):
+        """Do a post check on the computed OCR-value wether it is unrealistic since earlier checks were higher.
+        
+        Arguments:
+            value {int} -- computed ocr val
+        
+        Returns:
+            int -- corrected ocr val
+        """
+        return value if value < self.props.current_stage else self.props.current_stage
+
     def stage_ocr(self, test_image=None):
         """
         Attempt to parse out the current stage in game through an OCR check.
@@ -355,11 +366,13 @@ class Stats:
         
         text = pytesseract.image_to_string(image, config="--psm 7 nobatch digits --oem 0")
         self.logger.debug("parsed value: {text}".format(text=text))
-
+        
+        value =''.join(filter(lambda x: x.isdigit(), text))
+                       
+        stage = self._postprocess_stage_ocr(int(value))
         # Do some light parse work here to make sure only digit like characters are present
         # in the returned 'text' variable retrieved through tesseract.
-        return ''.join(filter(lambda x: x.isdigit(), text))
-
+        return stage
 
     def _preprocess_stage(self, scale=5, threshold=100, image=None):
          
