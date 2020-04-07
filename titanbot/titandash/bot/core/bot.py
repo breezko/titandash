@@ -2555,17 +2555,41 @@ class Bot(object):
             loops = 0
             end_drag = self.locs.scroll_top_end if top else self.locs.scroll_bottom_end
 
-            while not self.grabber.search(find, bool_only=True):
-                if loops == FUNCTION_LOOP_TIMEOUT:
-                    self.logger.warning("error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
-                    return False
+            if not find:
+                _last = self.grabber.snapshot(region=PANEL_COORDS["panel_check"])
+                _current = _last
 
-                loops += 1
-                self.drag(
-                    start=self.locs.scroll_start,
-                    end=end_drag,
-                    pause=1
-                )
+                while True:
+                    if loops == FUNCTION_LOOP_TIMEOUT:
+                        self.logger.warning("error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
+                        return False
+
+                    loops += 1
+                    self.drag(
+                        start=self.locs.scroll_start,
+                        end=end_drag,
+                        pause=1
+                    )
+                    _last = _current
+                    _current = self.grabber.snapshot(region=PANEL_COORDS["panel_check"])
+
+                    # If the images are currently duplicates, it means we can no longer
+                    # travel up or down anymore, essentially the top or bottom is hit.
+                    if self.stats.images_duplicate(image_one=_last, image_two=_current):
+                        break
+
+            else:
+                while not self.grabber.search(find, bool_only=True):
+                    if loops == FUNCTION_LOOP_TIMEOUT:
+                        self.logger.warning("error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
+                        return False
+
+                    loops += 1
+                    self.drag(
+                        start=self.locs.scroll_start,
+                        end=end_drag,
+                        pause=1
+                    )
 
             # Reaching this point represents that the specified panel
             # was successfully reached in the game.
@@ -2578,7 +2602,7 @@ class Bot(object):
         return self.goto_panel(
             "master",
             self.images.master_active,
-            self.images.raid_cards,
+            self.images.master,
             self.images.silent_march,
             collapsed=collapsed,
             top=top
@@ -2591,8 +2615,8 @@ class Bot(object):
         return self.goto_panel(
             "heroes",
             self.images.heroes_active,
-            self.images.masteries,
-            self.images.maya_muerta,
+            None,
+            None,
             collapsed=collapsed,
             top=top
         )
@@ -2618,7 +2642,7 @@ class Bot(object):
         return self.goto_panel(
             "pets",
             self.images.pets_active,
-            self.images.next_egg,
+            None,
             None,
             collapsed=collapsed,
             top=top
@@ -2631,7 +2655,7 @@ class Bot(object):
         return self.goto_panel(
             "artifacts",
             self.images.artifacts_active,
-            self.images.salvaged,
+            self.images.artifacts,
             None,
             collapsed=collapsed,
             top=top
