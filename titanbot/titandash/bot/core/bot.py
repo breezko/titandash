@@ -1603,6 +1603,13 @@ class Bot(object):
                 return False
 
             artifact = self.next_artifact_upgrade
+
+            # Ensure no artifact available just skips the current
+            # artifact purchase.
+            if artifact is None:
+                self.logger.info("no artifact to upgrade, skipping purchase...")
+                return
+            
             # Access to current upgrade is present above,
             # go ahead and update the next artifact to purchase.
             self.update_next_artifact_upgrade()
