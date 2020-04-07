@@ -265,6 +265,7 @@ IMAGES = {
         "no_thanks": IMAGE_DIR + "/ads/no_thanks.png",
     },
     "ARTIFACTS": {
+        "artifacts": IMAGE_DIR + "/artifacts/artifacts.png",
         "artifacts_discovered": IMAGE_DIR + "/artifacts/artifacts_discovered.png",
         "book_of_shadows": IMAGE_DIR + "/artifacts/book_of_shadows.png",
         "spend_max": IMAGE_DIR + "/artifacts/spend_max.png",
@@ -429,6 +430,10 @@ PRESTIGE_COORDS = {
         "time_since": (301, 121, 380, 139),
         "advance_start": (138, 567, 191, 588),
     }
+}
+
+PANEL_COORDS = {
+    "panel_check": (0, 550, 479, 762)
 }
 
 # The regions for each skill present on the master screen if the panel
@@ -624,6 +629,8 @@ ARTIFACT_TIER_MAP = {
         "the_magnifier": (IMAGE_DIR + "/artifacts/the_magnifier.png", 80),
         "the_treasure_of_fergus": (IMAGE_DIR + "/artifacts/the_treasure_of_fergus.png", 81),
         "the_white_dwarf": (IMAGE_DIR + "/artifacts/the_white_dwarf.png", 85),
+        "strange_fruit": (IMAGE_DIR + "/artifacts/strange_fruit.png", 96),
+        "hades_orb": (IMAGE_DIR + "/artifacts/hades_orb.png", 97),
     },
     "B": {
         "chest_of_contentment": (IMAGE_DIR + "/artifacts/chest_of_contentment.png", 19),
