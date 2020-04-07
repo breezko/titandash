@@ -139,6 +139,20 @@ class Stats:
 
         return Image.fromarray(mask)
 
+    @staticmethod
+    def images_duplicate(image_one, image_two, cutoff=2):
+        """
+        Determine if the specified images are the same or not through the use of the imagehash
+        library.
+
+        We can get an average hash of each image and compare them, using a cutoff to determine if
+        they are similar enough to end the loop.
+        """
+        if imagehash.average_hash(image=image_one) - imagehash.average_hash(image=image_two) < cutoff:
+            return True
+        else:
+            return False
+
     def parse_artifacts(self):
         """
         Parse artifacts in game through OCR, need to make use of mouse dragging here to make sure that all possible
@@ -157,19 +171,6 @@ class Stats:
         _threads = []
         _found = []
 
-        def images_duplicate(image_one, image_two, cutoff=2):
-            """
-            Determine if the specified images are the same or not through the use of the imagehash
-            library.
-
-            We can get an average hash of each image and compare them, using a cutoff to determine if
-            they are similar enough to end the loop.
-            """
-            if imagehash.average_hash(image=image_one) - imagehash.average_hash(image=image_two) < cutoff:
-                return True
-            else:
-                return False
-
         def parse_image(_artifacts, _image):
             """
             Threaded Function.
@@ -184,7 +185,6 @@ class Stats:
                 # Get cv2 re-sized version of the artifact image.
                 # We use cv2 because the imagesearch library uses that image module.
                 artifact_image = cv2.imread(ARTIFACT_MAP.get(artifact.artifact.name))
-                artifact_image = cv2.resize(artifact_image, None, fx=0.5, fy=0.5)
                 if self.grabber.search(image=artifact_image, bool_only=True, im=_image):
                     _local_found.append(artifact.artifact.name)
 
@@ -197,7 +197,7 @@ class Stats:
         locs = GAME_LOCS["GAME_SCREEN"]
 
         # Take an initial screenshot of the artifacts panel.
-        self.grabber.snapshot(region=capture_region, downsize=2)
+        self.grabber.snapshot(region=capture_region)
         # Creating a list that will be used to place image objects
         # into from the grabber.
         images_container = [self.grabber.current]
@@ -213,9 +213,9 @@ class Stats:
 
             # Take another screenshot of the screen now.
             self.logger.info("taking screenshot {loop} of current artifacts on screen.".format(loop=loops))
-            self.grabber.snapshot(region=capture_region, downsize=2)
+            self.grabber.snapshot(region=capture_region)
 
-            if images_duplicate(image_one=self.grabber.current, image_two=images_container[-1]):
+            if self.images_duplicate(image_one=self.grabber.current, image_two=images_container[-1]):
                 # We should now have a list of all images available with the users entire
                 # set of owned artifacts. We can use this during parsing.
                 self.logger.info("duplicate images found, ending screenshot loop.")
