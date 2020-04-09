@@ -1092,9 +1092,13 @@ class Bot(object):
                         # After we have levelled our skill to it's appropriate values.
                         # We need to perform an OCR check on the skill in it's current state
                         # so that our current prestige level information is up to date.
-                        self.current_prestige_skill_levels[skill] = self.stats.skill_ocr(
-                            region=SKILL_LEVEL_COORDS[skill]
-                        )
+                        if self.grabber.search(image=self.images.skill_max_level, region=MASTER_COORDS["skills"][skill], bool_only=True):
+                            self.logger.info("skill: {skill} is currently maxed, setting to {max_level}".format(skill=skill, max_level=SKILL_MAX_LEVEL))
+                            self.current_prestige_skill_levels[skill] = SKILL_MAX_LEVEL
+                        else:
+                            self.current_prestige_skill_levels[skill] = self.stats.skill_ocr(
+                                region=SKILL_LEVEL_COORDS[skill]
+                            )
 
                 # Recalculate the next skill level process.
                 self.calculate_next_skills_level()
