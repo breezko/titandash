@@ -221,20 +221,20 @@ class ArtifactStatisticsManager(models.Manager):
         from .artifact import Artifact, Tier
         if self.filter(instance=instance).count() == 0:
             arts = self.create(instance=instance)
-            for tier, dct in ARTIFACT_TIER_MAP.items():
-                for key, value in dct.items():
-                    if key not in arts.artifacts.all().values_list("artifact__name", flat=True):
-                        arts.artifacts.add(ArtifactOwned.objects.create(
-                            instance=instance,
-                            artifact=Artifact.objects.get_or_create(
-                                name=key,
-                                tier=Tier.objects.get_or_create(tier=tier, name="Tier {tier}".format(tier=tier))[0],
-                                key=value[1],
-                                image="{name}.png".format(name=key.replace("'", ""))
-                            )[0]))
-
         else:
             arts = self.get(instance=instance)
+
+        for tier, dct in ARTIFACT_TIER_MAP.items():
+            for key, value in dct.items():
+                if key not in arts.artifacts.all().values_list("artifact__name", flat=True):
+                    arts.artifacts.add(ArtifactOwned.objects.create(
+                        instance=instance,
+                        artifact=Artifact.objects.get_or_create(
+                            name=key,
+                            tier=Tier.objects.get_or_create(tier=tier, name="Tier {tier}".format(tier=tier))[0],
+                            key=value[1],
+                            image="{name}.png".format(name=key.replace("'", ""))
+                        )[0]))
 
         return arts
 

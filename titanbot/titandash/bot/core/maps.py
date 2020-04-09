@@ -112,7 +112,7 @@ GAME_LOCS = {
         "close_bottom": (449, 445),
     },
     "TOURNAMENT": {
-        "tournament": (30, 71),
+        "tournament": (30, 78),
         "tournament_prestige": (330, 546),
         "collect_prize": (245, 731),
         "join": (245, 696),
@@ -157,12 +157,12 @@ MASTER_LOCS = {
         "shadow_clone": (415, 723),
     },
     "skill_level_max": {
-        "heavenly_strike": (268, 352),
+        "heavenly_strike": (268, 354),
         "deadly_strike": (268, 427),
         "hand_of_midas": (268, 503),
         "fire_sword": (268, 578),
-        "war_cry": (268, 653),
-        "shadow_clone": (268, 728),
+        "war_cry": (268, 657),
+        "shadow_clone": (268, 734),
     },
 }
 
@@ -265,6 +265,7 @@ IMAGES = {
         "no_thanks": IMAGE_DIR + "/ads/no_thanks.png",
     },
     "ARTIFACTS": {
+        "artifacts": IMAGE_DIR + "/artifacts/artifacts.png",
         "artifacts_discovered": IMAGE_DIR + "/artifacts/artifacts_discovered.png",
         "book_of_shadows": IMAGE_DIR + "/artifacts/book_of_shadows.png",
         "spend_max": IMAGE_DIR + "/artifacts/spend_max.png",
@@ -431,16 +432,20 @@ PRESTIGE_COORDS = {
     }
 }
 
+PANEL_COORDS = {
+    "panel_check": (0, 550, 479, 762)
+}
+
 # The regions for each skill present on the master screen if the panel
 # is expanded and scrolled all the way to the top.
 MASTER_COORDS = {
     "skills": {
-        "heavenly_strike": (0, 306, 480, 374),
-        "deadly_strike": (0, 382, 480, 451),
-        "hand_of_midas": (0, 457, 480, 526),
-        "fire_sword": (0, 532, 480, 601),
-        "war_cry": (0, 608, 480, 677),
-        "shadow_clone": (0, 684, 480, 752),
+        "heavenly_strike": (0, 310, 480, 379),
+        "deadly_strike": (0, 385, 480, 455),
+        "hand_of_midas": (0, 460, 480, 531),
+        "fire_sword": (0, 538, 480, 607),
+        "war_cry": (0, 611, 480, 682),
+        "shadow_clone": (0, 687, 480, 759),
     },
 }
 
@@ -448,12 +453,12 @@ MASTER_COORDS = {
 # skills are not their specified level or maxed.. We use these regions to grab
 # the current level through an OCR check.
 SKILL_LEVEL_COORDS = {
-    "heavenly_strike": (70, 327, 115, 342),
-    "deadly_strike": (70, 403, 115, 418),
-    "hand_of_midas": (70, 478, 115, 493),
-    "fire_sword": (70, 555, 115, 569),
-    "war_cry": (70, 629, 115, 645),
-    "shadow_clone": (70, 707, 115, 721),
+    "heavenly_strike": (70, 331, 115, 348),
+    "deadly_strike": (70, 407, 115, 423),
+    "hand_of_midas": (70, 483, 115, 498),
+    "fire_sword": (70, 558, 115, 574),
+    "war_cry": (70, 634, 115, 650),
+    "shadow_clone": (70, 709, 115, 725),
 }
 
 CLAN_COORDS = {
@@ -624,6 +629,8 @@ ARTIFACT_TIER_MAP = {
         "the_magnifier": (IMAGE_DIR + "/artifacts/the_magnifier.png", 80),
         "the_treasure_of_fergus": (IMAGE_DIR + "/artifacts/the_treasure_of_fergus.png", 81),
         "the_white_dwarf": (IMAGE_DIR + "/artifacts/the_white_dwarf.png", 85),
+        "strange_fruit": (IMAGE_DIR + "/artifacts/strange_fruit.png", 96),
+        "hades_orb": (IMAGE_DIR + "/artifacts/hades_orb.png", 97),
     },
     "B": {
         "chest_of_contentment": (IMAGE_DIR + "/artifacts/chest_of_contentment.png", 19),
