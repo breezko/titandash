@@ -112,7 +112,7 @@ GAME_LOCS = {
         "close_bottom": (449, 445),
     },
     "TOURNAMENT": {
-        "tournament": (30, 71),
+        "tournament": (30, 78),
         "tournament_prestige": (330, 546),
         "collect_prize": (245, 731),
         "join": (245, 696),
