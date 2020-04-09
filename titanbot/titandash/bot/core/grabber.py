@@ -35,6 +35,8 @@ class Grabber:
                 self.current.height / downsize
             ))
 
+        return self.current
+
     def search(self, image, region=None, precision=0.8, bool_only=False, testing=False, im=None):
         """
         Search the specified image for another image with a specified amount of precision.
