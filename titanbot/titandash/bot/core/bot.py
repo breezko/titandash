@@ -2655,7 +2655,7 @@ class Bot(object):
         return self.goto_panel(
             "artifacts",
             self.images.artifacts_active,
-            self.images.artifacts,
+            None,
             None,
             collapsed=collapsed,
             top=top
