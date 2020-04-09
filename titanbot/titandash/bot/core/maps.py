@@ -157,12 +157,12 @@ MASTER_LOCS = {
         "shadow_clone": (415, 723),
     },
     "skill_level_max": {
-        "heavenly_strike": (268, 352),
+        "heavenly_strike": (268, 354),
         "deadly_strike": (268, 427),
         "hand_of_midas": (268, 503),
         "fire_sword": (268, 578),
-        "war_cry": (268, 653),
-        "shadow_clone": (268, 728),
+        "war_cry": (268, 657),
+        "shadow_clone": (268, 734),
     },
 }
 
@@ -440,12 +440,12 @@ PANEL_COORDS = {
 # is expanded and scrolled all the way to the top.
 MASTER_COORDS = {
     "skills": {
-        "heavenly_strike": (0, 306, 480, 374),
-        "deadly_strike": (0, 382, 480, 451),
-        "hand_of_midas": (0, 457, 480, 526),
-        "fire_sword": (0, 532, 480, 601),
-        "war_cry": (0, 608, 480, 677),
-        "shadow_clone": (0, 684, 480, 752),
+        "heavenly_strike": (0, 310, 480, 379),
+        "deadly_strike": (0, 385, 480, 455),
+        "hand_of_midas": (0, 460, 480, 531),
+        "fire_sword": (0, 538, 480, 607),
+        "war_cry": (0, 611, 480, 682),
+        "shadow_clone": (0, 687, 480, 759),
     },
 }
 
@@ -453,12 +453,12 @@ MASTER_COORDS = {
 # skills are not their specified level or maxed.. We use these regions to grab
 # the current level through an OCR check.
 SKILL_LEVEL_COORDS = {
-    "heavenly_strike": (70, 327, 115, 342),
-    "deadly_strike": (70, 403, 115, 418),
-    "hand_of_midas": (70, 478, 115, 493),
-    "fire_sword": (70, 555, 115, 569),
-    "war_cry": (70, 629, 115, 645),
-    "shadow_clone": (70, 707, 115, 721),
+    "heavenly_strike": (70, 331, 115, 348),
+    "deadly_strike": (70, 407, 115, 423),
+    "hand_of_midas": (70, 483, 115, 498),
+    "fire_sword": (70, 558, 115, 574),
+    "war_cry": (70, 634, 115, 650),
+    "shadow_clone": (70, 709, 115, 725),
 }
 
 CLAN_COORDS = {
