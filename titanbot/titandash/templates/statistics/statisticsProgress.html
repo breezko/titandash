@@ -1,0 +1,4 @@
+<h5><small>Stage {{ progress.stage }} / {{ progress.max_stage }} ({{ progress.percent }}%)</small></h5>
+<div class="progress" style="height: 30px;">
+    <div class="progress-bar bg-info progress-bar-striped" role="progressbar" style="width: {{ progress.percent }}%;" aria-valuenow="{{ progress.percent }}" aria-valuemin="0" aria-valuemax="100"><strong>{{ progress.percent }}%</strong></div>
+</div>

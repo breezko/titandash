@@ -1,0 +1,21 @@
+{% load static_buster %}
+<thead>
+<tr>
+    <th>Select</th>
+    <th>Image</th>
+    <th>Key</th>
+    <th>Name</th>
+</tr>
+</thead>
+<tbody>
+{% for artifact in choices.artifacts %}
+    <tr data-key="{{ artifact.key }}">
+        <td style="vertical-align: middle;">
+            <input {% if artifact in model.all %}checked{% endif %} style="height: 20px; width: 20px;" id="artifactSelect" aria-label="check" type="checkbox">
+        </td>
+        <td><img height="37" width="37" src="{% static artifact.image %}" alt="{{ artifact.name }}"></td>
+        <td>{{ artifact.key }}</td>
+        <td>{{ artifact.title }}</td>
+    </tr>
+{% endfor %}
+</tbody>

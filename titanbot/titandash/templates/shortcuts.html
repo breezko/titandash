@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static_buster %}
+
+{% block head_title %}
+    Shortcuts
+{% endblock %}
+
+{% block content %}
+    <div id="accordion">
+        <div class="card">
+            <div class="card-header" id="allStatistics">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne">Shortcuts</button>
+                </h5>
+            </div>
+
+            <div id="collapseOne" class="collapse show" data-parent="#accordion">
+                <div class="card-body">
+                    <table id="shortcutsTable" class="display table table-sm table-borderless table-hover table-striped titan-responsive" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <td>Function</td>
+                                <td>Shortcut</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for key, value in shortcuts.items %}
+                               <tr>
+                                   <td><strong>{{ key }}</strong></td>
+                                   <td>
+                                       {% for pressed in value %}
+                                           <kbd>{{ pressed }}</kbd> {% if not forloop.last %} + {% endif %}
+                                       {% endfor %}
+                                   </td>
+                               </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static "js/botShortcuts.js" %}"></script>
+{% endblock %}

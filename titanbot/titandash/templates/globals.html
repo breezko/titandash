@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load static_buster %}
+
+{% block head_title %}
+    Global Settings
+{% endblock %}
+
+{% block content %}
+    <form id="globalsForm">
+    {% csrf_token %}
+
+    {# Globals #}
+    <div id="accordionGlobals">
+        <div class="card">
+            <div class="card-header" id="globalSettingsHeader">
+                <h5 class="modal-title" id="globalSettingsTitle">
+                    <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#collapseGlobals">Global Settings</button>
+                    <button id="exportGlobalsJson" type="button" class="float-right btn btn-primary">Export JSON<span style="margin-left: 8px;" class="fa fa-file-export"></span></button>
+                </h5>
+            </div>
+
+            <div id="collapseGlobals" class="collapse show" data-parent="#accordionGlobals">
+                <div id="globalsBody" class="card-body">
+                    <div class="form-group">
+                        {# Failsafe Settings #}
+                        <label for="failsafe_settings">Failsafe Settings:</label>
+                        <select id="failsafe_settings" class="form-control" name="failsafe_settings">
+                            {% for choice in choices.failsafe_settings %}
+                                <option {% if global_settings.failsafe_settings == choice.0 %}selected{% endif %} data-value="{{ choice.0 }}">{{ choice.1 }}</option>
+                            {% endfor %}
+                        </select>
+                        <p style="padding: 3px;" class="text-muted">{{ help.failsafe_settings }}</p>
+                    </div>
+
+                    <div class="form-group">
+                        {# Event Settings #}
+                        <label for="event_settings">Event Settings:</label>
+                        <select id="event_settings" class="form-control" name="event_settings">
+                            {% for choice in choices.event_settings %}
+                                <option {% if global_settings.event_settings == choice.0 %}selected{% endif %} data-value="{{ choice.0 }}">{{ choice.1 }}</option>
+                            {% endfor %}
+                        </select>
+                        <p style="padding: 3px;" class="text-muted">{{ help.event_settings }}</p>
+                    </div>
+
+                    <div class="form-group">
+                        {# PI Hole Ad Settings #}
+                        <label for="pihole_ads_settings">PI-Hole Ads Settings:</label>
+                        <select id="pihole_ads_settings" class="form-control" name="pihole_ads_settings">
+                            {% for choice in choices.pihole_settings %}
+                                <option {% if global_settings.pihole_ads_settings == choice.0 %}selected{% endif %} data-value="{{ choice.0 }}">{{ choice.1 }}</option>
+                            {% endfor %}
+                        </select>
+                        <p style="padding: 3px;" class="text-muted">{{ help.pihole_ads_settings }}</p>
+                    </div>
+
+                    <div class="form-group">
+                        {# Logging Level #}
+                        <label for="logging_level">Logging Level:</label>
+                        <select id="logging_level" class="form-control" name="logging_level">
+                            {% for choice in choices.logging_level %}
+                                <option {% if global_settings.logging_level == choice.0 %}selected{% endif %} data-value="{{ choice.0 }}">{{ choice.1 }}</option>
+                            {% endfor %}
+                        </select>
+                        <p style="padding: 3px;" class="text-muted">{{ help.logging_level }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </form>
+    {# Buttons For Saving The Global Settings #}
+    <div class="card">
+        <div class="card-body">
+            <button id="saveGlobalsButton" class="btn btn-lg btn-success float-right" style="margin-left: 15px;">Save</button>
+        </div>
+    </div>
+    <div id="jsonData" data-json="{{ GLOBALS_JSON }}" style="display: none;"></div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static "js/globals.js" %}"></script>
+{% endblock %}

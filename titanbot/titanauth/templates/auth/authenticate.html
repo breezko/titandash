@@ -1,0 +1,72 @@
+{% load static_buster %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="TitanDash Dashboard for TapTitans2 Bot.">
+    <meta name="author" content="Votum">
+
+    <link rel="shortcut icon" type="image/png" href="{% static "favicon.ico" %}"/>
+
+    <title>Login</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{% static "bootstrap/dist/css/bootstrap.min.css" %}" rel="stylesheet">
+    <!-- Custom Theme -->
+    <link href="/static/css/theme/{{ THEMES.selected }}.min.css" rel="stylesheet">
+
+    <!-- Spinner CSS -->
+    <link href="{% static "css/spinners/bits.css" %}" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="{% static "css/login.min.css" %}" rel="stylesheet">
+
+    <!-- Extra CSS -->
+    {% block extra_css %}{% endblock %}
+
+</head>
+
+<body class="text-center">
+    <div class="container">
+        <form class="form-signin">
+            {% csrf_token %}
+            <fieldset>
+                <img style="padding: 10px;" src="{% static "favicon.ico" %}" alt="" width="80px" height="80px">
+                <h1 class="h3 mb-3 font-weight-normal">Titandash Authentication</h1>
+
+                <!-- Email Address -->
+                <label for="inputEmail" class="sr-only">Email Address</label>
+                <input name="email" type="email" id="inputEmail" class="form-control" placeholder="Email address" required autofocus>
+
+                <!-- Token -->
+                <label for="inputToken" class="sr-only">Token</label>
+                <input style="margin-bottom: 10px;" name="token" type="password" id="inputToken" class="form-control" placeholder="Token" required>
+
+                <!-- Sign In -->
+                <button style="width: 49%;" id="signInButton" class="btn btn-lg btn-primary" type="submit">Sign In</button>
+                <a href="{{ signup }}" style="width: 49%; color: white;" id="signUpButton" class="btn btn-lg btn-primary">Sign Up</a>
+            </fieldset>
+        </form>
+        <div id="loaderContainer"></div>
+        <div id="messageContainer"></div>
+    </div>
+
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="{% static "jquery/dist/jquery.min.js" %}"></script>
+    <script src="{% static "bootstrap/dist/js/bootstrap.bundle.min.js" %}"></script>
+
+    <!-- JS Utils -->
+    <script src="{% static "js/utils.js" %}"></script>
+
+    <!-- TitanAuth Utilities -->
+    <script src="{% static "js/login.js" %}"></script>
+
+    <!-- Extra JS -->
+    {% block extra_js %}{% endblock %}
+
+</body>
+</html>

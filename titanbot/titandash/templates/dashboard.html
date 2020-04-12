@@ -1,0 +1,513 @@
+{% extends "base.html" %}
+{% load static_buster %}
+
+{% block head_title %}
+    Dashboard
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static "js/dashboard/timers.js" %}"></script>
+    <script src="{% static "js/dashboard/botInstances.js" %}"></script>
+    <script src="{% static "js/dashboard/botInstance.js" %}"></script>
+    <script src="{% static "js/dashboard/botLogger.js" %}"></script>
+    <script src="{% static "js/dashboard/botPrestige.js" %}"></script>
+    <script src="{% static "js/dashboard/botDashboard.js" %}"></script>
+    <script src="{% static "js/dashboard/botGameScreen.js" %}"></script>
+    <script src="{% static "js/dashboard/botQueue.js" %}"></script>
+    <script src="{% static "js/dashboard/tools.js" %}"></script>
+    <script src="{% static "js/dashboard/releases.js" %}"></script>
+    <script src="{% static "js/away.js" %}"></script>
+{% endblock %}
+
+{% block content %}
+
+    <!-- Release Modal -->
+    <div class="modal fade" id="releaseModal" tabindex="-1" role="dialog" aria-labelledby="releaseModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="releaseModalTitle">Titandash X.X.X</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="releaseModalBody">
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bot Instances Card -->
+    <div id="dashboardInstancesAccordion">
+        <div class="card">
+            <div class="card-header" id="dashboardInstances">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" id="dashboardInstancesHeaderBtn" data-toggle="collapse" data-target="#collapseInstances">Instances</button>
+                    <button id="dashboardInstancesAddButton" type="button" class="btn btn-primary float-right">Add Instance</button>
+                </h5>
+            </div>
+
+            <div id="collapseInstances" class="collapse show" data-parent="#dashboardInstancesAccordion">
+                <div class="card-body" id="dashboardInstancesBody">
+                    <div id="dashboardInstancesContent">
+                        <div>
+                            <table id="dashboardInstancesTable" class="table table-sm table-hover table-borderless dash-table" style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th class="text-center">Select</th>
+                                        <th class="text-center">Remove</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboardInstancesTableBody">
+                                    {% for instance in INSTANCES %}
+                                        <tr data-id="{{ instance.id }}">
+                                            <td>{{ instance.name }}</td>
+                                            {% if forloop.first %}
+                                                <td style="width: 50%;"><button style="width: 100%;" disabled class="btn btn-sm btn-primary instance-select-btn">Selected</button></td>
+                                                <td style="width: 50%;"><button style="width: 100%;" disabled class="btn btn-sm btn-danger instance-remove-btn">Remove</button></td>
+                                            {% else %}
+                                                <td style="width: 50%;"><button style="width: 100%;" class="btn btn-sm btn-primary instance-select-btn">Select</button></td>
+                                                <td style="width: 50%;"><button style="width: 100%;" class="btn btn-sm btn-danger instance-remove-btn">Remove</button></td>
+                                            {% endif %}
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bot Settings Card -->
+    <div id="dashboardSettingsAccordion">
+        <div class="card">
+            <div class="card-header" id="dashboardSettings">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" id="dashboardSettingsHeaderBtn" data-toggle="collapse" data-target="#collapseSettings">Settings</button>
+                </h5>
+            </div>
+
+            <div id="collapseSettings" class="collapse show" data-parent="#dashboardSettingsAccordion">
+                <div class="card-body" id="dashboardSettingsBody">
+                    <div id="dashboardSettingsContent">
+                        <div>
+                            <label for="dashboardBotConfigurationSelect">Configuration:</label>
+                            <select style="width: 100%;" id="dashboardBotConfigurationSelect" class="form-control">
+                                {% for config in configurations %}
+                                    <option value="{{ config.id }}">{{ config.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <br/>
+                        <div>
+                            <label for="dashboardBotWindowSelect">Window:</label>
+                            <select style="width: 100%;" id="dashboardBotWindowSelect" class="form-control">
+                                {# Display Filtered Options In List. #}
+                                <option disabled value="">---------------- Filtered Windows ----------------</option>
+                                {% for filtered in windows.filtered %}
+                                    <option value="{{ filtered.hwnd }}">{{ filtered.formatted }}</option>
+                                {% endfor %}
+                                {# Display All Options In List. #}
+                                <option disabled value="">---------------- All Windows ----------------</option>
+                                {% for window in windows.all %}
+                                    <option value="{{ window.hwnd }}">{{ window.formatted }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <br/>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="dashboardBotShortcutCheckbox">
+                            <label class="form-check-label" for="dashboardBotShortcutCheckbox">Enable Keyboard Shortcuts</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bot Actions Card -->
+    <div id="dashboardActionsAccordion">
+        <div class="card">
+            <div class="card-header" id="dashboardActions">
+                <h5 class="mb-0" style="line-height: 1.8;">
+                    <button class="btn btn-link" id="dashboardActionsHeaderBtn" data-toggle="collapse" data-target="#collapseActions">Actions</button>
+                    <button id="killInstanceButton" class="btn btn-primary float-right" data-toggle="tooltip" data-placement="right" title="Kill the existing bot instance (if one exists). This may occur when the server is restarted or ended unexpectedly at some point. After killing the instance, you can start a new one without issue.">
+                        Kill Instance
+                    </button>
+                </h5>
+            </div>
+
+            <div id="collapseActions" class="collapse show" data-parent="#dashboardActionsAccordion">
+                <div class="card-body" id="dashboardActionsBody">
+                    <!-- Initial Loader -->
+                    <div class="w-100 d-flex justify-content-center align-items-center" id="dashboardActionsLoader">
+                        {% include "spinners/bits.html" %}
+                    </div>
+                    <div id="dashboardActionsContent" style="display: none;" class="container">
+                        <div class="row">
+                            <div style="width: 33%;" class="col-sm text-center border-right">
+                                <span id="dashboardActionsPlay" class="fa fa-3x fa-play text-success"></span>
+                            </div>
+                            <div style="width: 33%;" class="col-sm text-center border-right">
+                                <span id="dashboardActionsPause" class="fa fa-3x fa-pause text-warning"></span>
+                            </div>
+                            <div style="width: 33%;" class="col-sm text-center">
+                                <span id="dashboardActionsStop" class="fa fa-3x fa-stop text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Queue Function Card -->
+    <div id="dashboardQueueAccordion">
+        <div class="card">
+            <div class="card-header" id="dashboardQueueHeader">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" id="dashboardQueueHeaderBtn" data-toggle="collapse" data-target="#collapseQueue">Queue Function</button>
+                </h5>
+            </div>
+
+            <div id="collapseQueue" class="collapse show" data-parent="#dashboardQueueAccordion">
+                <div class="card-body align-items-center d-flex justify-content-center" id="dashboardQueueBody">
+                    <div id="dashboardQueueInitial">
+                        <h6 class="text-dark">Available queued functions will appear here when the bot is actively running...</h6>
+                    </div>
+                    <div id="dashboardQueueContent" style="width: 100%; display: none;">
+                        <div id="dashboardQueueFunctionContainer">
+                            {% for queue in queueable %}
+                                <button  data-func="{{ queue.func }}" title="{{ queue.tooltip }}" style="margin: 5px; display: none;" class="btn btn-sm btn-success">{{ queue.name }}</button>
+                            {% endfor %}
+                        </div>
+                        <hr/>
+                        <h6>Currently Queued:</h6>
+                        <div id="dashboardQueueCurrent">
+                            <table class="table table-sm table-borderless table-hover table-striped" style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 33%;">Id</th>
+                                        <th style="width: 33%;">Function</th>
+                                        <th style="width: 33%;">Created</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboardQueueCurrentTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bot Status Card -->
+    <div id="accordion">
+        <div class="card">
+            <div class="card-header" id="dashboardBot">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseBot">Instance</button>
+                    <span style="display: none; margin-top: 7px;" class="float-right fa" id="dashboardBotStatusIcon"></span>
+                </h5>
+            </div>
+
+            <div id="collapseBot" class="collapse show" data-parent="#accordion">
+                <div class="card-body" id="dashboardBotBody">
+                    <!-- Initial Loader -->
+                    <div class="w-100 d-flex justify-content-center align-items-center" id="dashboardBotLoader">
+                        {% include "spinners/bits.html" %}
+                    </div>
+
+                    <!-- Base Information (Updated Dynamically). -->
+                    <div id="dashboardBotContent" style="display: none;">
+                        <table class="table table-sm table-borderless table-hover table-striped dash-table" style="width: 100%;">
+                            <tbody>
+                                <tr>
+                                    <td><small>Name</small></td>
+                                    <td><strong id="dashboardBotNameValue">------</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><small>State</small></td>
+                                    <td><strong id="dashboardBotStateValue">------</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><small>Session</small></td>
+                                    <td><strong><a href="#" id="dashboardBotSessionValue">------</a></strong></td>
+                                </tr>
+                                <tr>
+                                    <td><small>Started</small></td>
+                                    <td><strong id="dashboardBotStartedValue">N/A</strong></td>
+                                </tr>
+                                <tr>
+                                    <td><small>Current Function</small></td>
+                                    <td><strong id="dashboardBotCurrentFunctionValue" class="text-uppercase">------</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <hr/>
+                        <a data-toggle="collapse" href="#collapseBotLastPrestigeVars" role="button">Last Prestige</a>
+                        <div class="collapse show" id="collapseBotLastPrestigeVars">
+                            <table id="dashboardBotLastPrestigeVariablesTable" class="table table-sm table-borderless table-hover table-striped dash-table">
+                                <tbody>
+                                    <tr>
+                                        <td><small>Timestamp</small></td>
+                                        <td><strong id="dashboardBotLastPrestigeTimestampValue">N/A</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Stage</small></td>
+                                        <td><strong id="dashboardBotLastPrestigeStageValue">N/A</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Duration</small></td>
+                                        <td><strong id="dashboardBotLastPrestigeDurationValue">N/A</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Artifact</small></td>
+                                        <td><strong id="dashboardBotLastPrestigeArtifactValue">N/A</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <hr/>
+                        <a data-toggle="collapse" href="#collapseBotVars" role="button">Variables</a>
+                        <div class="collapse show" id="collapseBotVars">
+                            <table id="dashboardBotCurrentVariablesTable" class="table table-sm table-borderless table-hover table-striped">
+                                <tbody>
+                                    <tr>
+                                        <td><small>Configuration</small></td>
+                                        <td><strong><a class="varsItem" href="#" id="dashboardBotConfigurationValue">------</a></strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Window</small></td>
+                                        <td><strong class="varsItem" id="dashboardBotWindowValue">------</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Shortcuts Enabled</small></td>
+                                        <td><strong class="varsItem" id="dashboardBotShortcutsValue">------</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Log File</small></td>
+                                        <td><strong><a class="varsItem" id="dashboardBotLogFileValue">------</a></strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Current Stage</small></td>
+                                        <td><strong class="varsItem" id="dashboardBotCurrentStageValue">------</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Newest Hero</small></td>
+                                        <td><strong class="varsItem" id="dashboardBotNewestHeroValue">------</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Raid Attack Reset</small></td>
+                                        <td><div class="varsItem" id="dashboardBotRaidAttackResetValue">------</div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Break</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextBreakValue">------</div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Break Resume</small></td>
+                                        <td><div class="varsItem" id="dashboardBotBreakResumeValue">------</div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Artifact Upgrade</small></td>
+                                        <td class="varsItem" id="dashboardBotNextArtifactUpgradeValue">------</td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Master Level</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextMasterLevelValue">------</div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Heroes Level</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextHeroesLevelValue">------</div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Skills Level</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextSkillsLevelValue">------</div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Skills Activation</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextSkillsActivationValue">------</div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Miscellaneous Actions</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextMiscellaneousActionsValue">------</div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Headgear Swap</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextHeadgearSwapValue">------</div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Perk Check</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextPerkCheckValue">------</div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Timed Threshold Prestige</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextPrestigeValue">------</div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Randomized Threshold Prestige</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextRandomizedPrestigeValue">------</div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Stats Update</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextStatsUpdateValue">------</div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Daily Achievement Check</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextDailyAchievementCheckValue">------</div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Milestone Check</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextMilestoneCheckValue">------</div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Raid Notifications Check</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextRaidNotificationsCheckValue">------</div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Clan Results Parse</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextClanResultsParseValue">------</div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Heavenly Strike</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextHeavenlyStrikeValue"><strong>------</strong></div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Deadly Strike</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextDeadlyStrikeValue"><strong>------</strong></div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Hand Of Midas</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextHandOfMidasValue"><strong>------</strong></div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Fire Sword</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextFireSwordValue"><strong>------</strong></div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next War Cry</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextWarCryValue"><strong>------</strong></div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><small>Next Shadow Clone</small></td>
+                                        <td><div class="varsItem" id="dashboardBotNextShadowCloneValue"><strong>------</strong></div></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logging Data Card -->
+    <div id="dashboardLogAccordion">
+        <div class="card">
+            <div class="card-header" id="dashboardLogHeader">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseLog">Logs</button>
+                    <select style="width: 200px; display: initial;" id="dashboardLogLevelSelect" class="form-control form-control-sm form-inline">
+                        {% for level in BOT.LOG_LEVELS %}
+                            <option {% if BOT.GLOBALS.logging_level == level %}selected{% endif %} value="{{ level }}">{{ level }}</option>
+                        {% endfor %}
+                    </select>
+                    <span style="margin-top: 7px;" title="Click here to prune your current logs." class="float-right fa fa-trash" id="dashboardLogTrash"></span>
+                    <span style="margin-top: 7px; margin-right: 15px;" title="Toggle logs automatically scrolling to the bottom when one is emitted." class="float-right fa fa-arrow-down text-success" id="dashboardLogScroller"></span>
+                </h5>
+            </div>
+
+            <div id="collapseLog" class="collapse show" data-parent="#dashboardLogAccordion">
+                <div class="card-body align-items-center d-flex justify-content-center" style="max-height: 900px; overflow: auto;" id="dashboardLogBody">
+                    <!-- Base Information (Updated Dynamically). -->
+                    <div id="dashboardLogContent">
+                        <div id="dashboardLogInitial" class="text-center">
+                            <h6 class="text-dark">Log records will appear here as they are generated...</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Prestige Card -->
+    <div id="dashboardPrestigeAccordion">
+        <div class="card">
+            <div class="card-header" id="dashboardPrestigeHeader">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapsePrestige">Recent Prestiges</button>
+                </h5>
+            </div>
+
+            <div id="collapsePrestige" class="collapse hide" data-parent="#dashboardPrestigeAccordion">
+                <div class="card-body align-items-center d-flex justify-content-center" style="overflow: auto;" id="dashboardPrestigeBody">
+                    <!-- Base Information (Updated Dynamically). -->
+                    <div id="dashboardPrestigeContent" style="width: 100%;">
+                        <div class="row">
+                          <div style="width: 25%;" class="col-sm text-center border-right">
+                                <small>Prestiges This Session</small><br/>
+                                <strong id="dashboardPrestigeThisSessionValue">0</strong>
+                            </div>
+                            <div style="width: 25%;" class="col-sm text-center border-right">
+                                <small>Average Duration</small><br/>
+                                <strong id="dashboardPrestigeAvgDurationValue">00:00:00</strong>
+                            </div>
+                            <div style="width: 25%;" class="col-sm text-center border-right">
+                                <small>Average Stage</small><br/>
+                                <strong id="dashboardPrestigeAvgStageValue">0</strong>
+                            </div>
+                            <div style="width: 25%;" class="col-sm text-center">
+                                <small>Last Artifact Upgraded</small><br/>
+                                <strong id="dashboardPrestigeLastArtifactValue">------</strong>
+                            </div>
+                        </div>
+                        <hr/>
+                        <table id="dashboardPrestigeTable" class="display table table-sm table-borderless table-hover table-striped dash-prestige-table" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th><small><strong>Timestamp</strong></small></th>
+                                    <th><small><strong>Duration</strong></small></th>
+                                    <th><small><strong>Stage</strong></small></th>
+                                    <th><small><strong>Artifact</strong></small></th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboardPrestigeTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- Footer -->
+                <div class="card-footer text-center">
+                    <a href="{% url "all_prestiges" %}">View All</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- In-Game Screen Card -->
+     <div id="dashboardScreenAccordion">
+        <div class="card">
+            <div class="card-header" id="dashboardScreenHeader">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" id="dashboardScreenHeaderCollapse" data-toggle="collapse" data-target="#collapseScreen">Game Screen</button>
+                    <button disabled id="dashboardScreenStop" class="btn float-right fa fa-stop text-success" style="margin-top: 7px;" title="Click here to stop game screen updates."></button>
+                    <button disabled id="dashboardScreenStart" class="btn float-right fa fa-play text-dark" style="margin-top: 7px; margin-right: 15px;" title="Click here to start game screen updates."></button>
+                </h5>
+            </div>
+
+            <div id="collapseScreen" class="collapse hide" data-parent="#dashboardScreenAccordion">
+                <div class="card-body align-items-center d-flex justify-content-center" style="overflow: auto;" id="dashboardPrestigeBody">
+                   <img alt="In-game screen" id="dashboardScreenImage" style="display: none;" src=""/>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

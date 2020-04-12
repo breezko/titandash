@@ -1,0 +1,7 @@
+.idea/
+logs/
+/titanbot/static/
+__pycache__
+titan.sqlite3
+node_modules/
+package-lock.json

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load static_buster %}
+{% load replace %}
+
+{% block head_title %}
+    Session {{ session.uuid }}
+{% endblock %}
+
+{% block content %}
+    <div id="accordion">
+        <div class="card">
+            <div class="card-header" id="sessionHeader">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseSession">
+                        {{ session.uuid }}
+                    </button>
+                    <button id="exportSessionJson" type="button" class="float-right btn btn-primary">Export JSON<span style="margin-left: 8px;" class="fa fa-file-export"></span></button>
+                </h5>
+            </div>
+
+            <div id="collapseSession" class="collapse show" data-parent="#accordion">
+                <div class="card-body">
+                    <table id="sessionTable" class="table table-sm table-borderless table-hover table-striped dash-session-table titan-responsive">
+                        <tbody>
+                            <tr>
+                                <td>UUID</td>
+                                <td><strong id="sessionUuidValue">{{ session.uuid }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Instance</td>
+                                <td><strong>{{ session.instance }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Version</td>
+                                <td><strong>{{ session.version }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Start</td>
+                                <td><strong>{{ session.start.formatted }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>End</td>
+                                <td><strong>{{ session.end.formatted }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Duration</td>
+                                <td><strong>{{ session.duration }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Log</td>
+                                <td><strong><a href="{{ session.log }}">Link</a></strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+     <div id="accordion2">
+        <div class="card">
+            <div class="card-header" id="prestigesHeader">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapsePrestiges">
+                        Prestiges
+                    </button>
+                </h5>
+            </div>
+
+            <div id="collapsePrestiges" class="collapse show" data-parent="#accordion2">
+                <div class="card-body">
+                    <table id="sessionPrestigesTable" class="table table-sm table-borderless table-hover table-striped titan-responsive">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Duration</th>
+                                <th>Stage</th>
+                                <th>Artifact</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prestige in session.prestiges.prestiges %}
+                                <tr>
+                                    <td>{{ prestige.timestamp.formatted }}</td>
+                                    <td>{{ prestige.duration.formatted }}</td>
+                                    <td>{{ prestige.stage|default_if_none:"N/A" }}</td>
+                                    <td>
+                                        {% if prestige.artifact == "N/A" %}
+                                            {{ prestige.artifact }}
+                                        {% else %}
+                                            <img height="20" width="20" src="{% static prestige.artifact.image %}" alt="{{ prestige.artifact.name }}">
+                                            {{ prestige.artifact.title }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="accordion3">
+        <div class="card">
+            <div class="card-header" id="prestigesHeader">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapseConfiguration">
+                        Configuration
+                    </button>
+                </h5>
+            </div>
+
+            <div id="collapseConfiguration" class="collapse show" data-parent="#accordion3">
+                <div class="card-body">
+                    {% for group, dct in session.configuration.items %}
+                        <h5>{{ group | title }}</h5>
+                        <table class="table table-sm table-borderless table-hover table-striped titan-responsive">
+                            <tbody>
+                                {% for key, setting in dct.items %}
+                                    <tr>
+                                        <td>{{ key | title | replace_underscore:" " }}</td>
+                                        <td style="width: 50%;">{{ setting }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <hr/>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="jsonData" data-json="{{ SESSION_JSON }}" style="display: none;"></div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static "js/sessions/session.js" %}"></script>
+{% endblock %}

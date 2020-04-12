@@ -1,0 +1,183 @@
+{% load static_buster %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="TitanDash Dashboard for TapTitans2 Bot.">
+    <meta name="author" content="Votum">
+
+    <title>
+        {% block head_title %}
+            Titandash
+        {% endblock %}
+    </title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="{% static "bootstrap/dist/css/bootstrap.min.css"  %}" rel="stylesheet">
+    <link href="/static/css/theme/{{ THEMES.selected }}.min.css?{{ BOT.TITANBOT_VERSION }}" rel="stylesheet">
+
+    <!-- Font Awesome CSS -->
+    <link href="{% static "@fortawesome/fontawesome-free/css/all.min.css" %}" rel="stylesheet">
+
+    <!-- DataTables CSS -->
+    <link href="{% static "datatables.net-bs4/css/dataTables.bootstrap4.min.css" %}" rel="stylesheet">
+    <link href="{% static "datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css" %}" rel="stylesheet">
+
+    <!-- Chart CSS -->
+    <link href="{% static "chart.js/dist/Chart.min.css" %}">
+
+    <!-- Custom styles for this template -->
+    <link href="{% static "css/simple-sidebar.css" %}" rel="stylesheet">
+    <link href="{% static "css/dashboard.css" %}" rel="stylesheet">
+    <link href="{% static "css/spinners/bits.css" %}" rel="stylesheet">
+
+    <link rel="shortcut icon" type="image/png" href="{% static "favicon.ico" %}"/>
+
+    <!-- Extra CSS -->
+    {% block extra_css %}{% endblock %}
+
+</head>
+
+<body>
+    <div id="alert-container" class="sticky-top dash-sticky-top" style="width: 100%;"></div>
+    <div id="away-overlay">
+        <h3 id="away-text" class="text-center" style="margin-top: 100px;">AFK</h3>
+        <h5 id="away-help" class="text-center">
+            Click anywhere to resume your dashboard session...
+        </h5>
+        <h1 class="text-center" id="away-time"></h1>
+    </div>
+    <div class="d-flex" id="wrapper">
+
+        <!-- Themes Modal -->
+        <div class="modal fade" id="themesModal" tabindex="-1" role="dialog" aria-labelledby="themesModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">Themes</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table table-sm table-borderless table-hover">
+                            <tbody>
+                                {% for theme in THEMES.available %}
+                                    <tr>
+                                        <td>{{ theme.theme|title }}</td>
+                                        <td>
+                                            {% if theme.selected %}
+                                                <button style="width: 100%;" class="btn btn-sm btn-primary" disabled>Selected</button>
+                                            {% else %}
+                                                <button onclick="selectTheme('{{ theme.theme }}')" style="width: 100%;" class="btn btn-sm btn-primary">Select</button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="bg-light border-right" id="sidebar-wrapper">
+            <div class="sidebar-heading text-uppercase" style="border-right: 0; padding: 0.8rem 1.25rem;"><img style="margin-top: -6px;" width="30" height="30" src="{% static "favicon.ico" %}" alt="logo"><small><strong>Titandash {{ BOT.TITANBOT_VERSION }}</strong></small></div>
+            <div class="list-group list-group-flush">
+                <a href="{% url "dashboard" %}" class="list-group-item list-group-item-action bg-light">Dashboard</a>
+                <a href="{% url "sessions" %}" class="list-group-item list-group-item-action bg-light">Sessions</a>
+                <a href="{% url "raids" %}" class="list-group-item list-group-item-action bg-light">Raids</a>
+                <a href="{% url "configurations" %}" class="list-group-item list-group-item-action bg-light">Configurations</a>
+                <a href="{% url "statistics" %}" class="list-group-item list-group-item-action bg-light">Statistics</a>
+                <a href="{% url "artifacts" %}" class="list-group-item list-group-item-action bg-light">Artifacts</a>
+                <a href="{% url "all_prestiges" %}" class="list-group-item list-group-item-action bg-light">Prestiges</a>
+                <a href="{% url "globals" %}" class="list-group-item list-group-item-action bg-light">Global Settings</a>
+                <a href="{% url "settings" %}" class="list-group-item list-group-item-action bg-light">Bot Settings</a>
+                <a href="{% url "shortcuts" %}" class="list-group-item list-group-item-action bg-light">Shortcuts</a>
+                <a href="#" data-toggle="modal" data-target="#themesModal" class="list-group-item list-group-item-action bg-light">Theme <strong>({{ THEMES.selected | title }})</strong></a>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+
+            <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom" style="border-left: 0;">
+                <button class="btn btn-primary" id="menu-toggle">Toggle Menu</button>
+                <button class="navbar-toggler" style="padding: 1px 7px;" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
+                        <li class="nav-link">
+                            <small class="text-muted">Logged in as <a style="text-decoration: none;" class="text-primary" href="{{ auth_account }}"><strong>{{ auth.email }}</strong></a></small>
+                        </li>
+                        <li class="nav-link">
+                            <small><a style="text-decoration: none;" class="text-primary" href="{% url "authenticate_logout" %}">Logout</a></small>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            <div class="container-fluid">
+                {% block title %}{% endblock %}
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <footer id="sticky-footer" class="py-4 bg-light border-top">
+    <div class="container text-center">
+        <a class="text-dark align-items-center justify-content-center" style="text-decoration: none;" href="https://github.com/becurrie/titandash{% if BOT.GIT_COMMIT %}/commit/{{ BOT.GIT_COMMIT }}{% endif %}">
+            <span class="fab fa-github text-primary"></span>
+            <code class="text-dark">
+                <small class="text-primary">
+                    {% if BOT.GIT_COMMIT %}
+                        {{ BOT.GIT_COMMIT }} ({{ BOT.TITANBOT_VERSION }})
+                    {% else %}
+                        TITANDASH {{ BOT.TITANBOT_VERSION }}
+                    {% endif %}
+                </small>
+            </code>
+        </a>
+    </div>
+    </footer>
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="{% static "jquery/dist/jquery.min.js" %}"></script>
+    <script src="{% static "bootstrap/dist/js/bootstrap.bundle.min.js" %}"></script>
+
+     <!-- Moment JS -->
+     <script src="{% static "moment/min/moment.min.js" %}"></script>
+
+    <!-- Charts -->
+    <script src="{% static "chart.js/dist/Chart.min.js" %}"></script>
+
+    <!-- DataTables JavaScript -->
+    <script src="{% static "datatables.net/js/jquery.dataTables.min.js" %}"></script>
+    <script src="{% static "datatables.net-bs4/js/dataTables.bootstrap4.min.js" %}"></script>
+    <script src="{% static "datatables.net-responsive/js/dataTables.responsive.min.js" %}"></script>
+    <script src="{% static "datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js" %}"></script>
+
+     <!-- TitanDash Utilities -->
+    <script src="{% static "js/utils.js" %}"></script>
+    <!-- Extra JS -->
+    {% block extra_js %}{% endblock %}
+
+    <!-- Menu Toggle Script -->
+    <script>
+        $("#menu-toggle").click(function(e) {
+          e.preventDefault();
+          $("#wrapper").toggleClass("toggled");
+        });
+    </script>
+
+</body>
+</html>
