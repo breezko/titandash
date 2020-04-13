@@ -210,12 +210,21 @@ class Bot(object):
             if log:
                 self.logger.info(log)
             if not padding:
-                self.click_image(
-                    image=image,
-                    pos=position,
-                    button=button,
-                    pause=pause
-                )
+                if isinstance(image,list):
+                    for _image in image:
+                        self.click_image(
+                            image=_image,
+                            pos=position,
+                            button=button,
+                            pause=pause
+                        )
+                else:
+                    self.click_image(
+                            image=image,
+                            pos=position,
+                            button=button,
+                            pause=pause
+                        )
             else:
                 self.click(
                     point=(
