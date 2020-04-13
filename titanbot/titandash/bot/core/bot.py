@@ -210,12 +210,21 @@ class Bot(object):
             if log:
                 self.logger.info(log)
             if not padding:
-                self.click_image(
-                    image=image,
-                    pos=position,
-                    button=button,
-                    pause=pause
-                )
+                if isinstance(image,list):
+                    for _image in image:
+                        self.click_image(
+                            image=_image,
+                            pos=position,
+                            button=button,
+                            pause=pause
+                        )
+                else:
+                    self.click_image(
+                            image=image,
+                            pos=position,
+                            button=button,
+                            pause=pause
+                        )
             else:
                 self.click(
                     point=(
@@ -1091,9 +1100,13 @@ class Bot(object):
                         # After we have levelled our skill to it's appropriate values.
                         # We need to perform an OCR check on the skill in it's current state
                         # so that our current prestige level information is up to date.
-                        self.current_prestige_skill_levels[skill] = self.stats.skill_ocr(
-                            region=SKILL_LEVEL_COORDS[skill]
-                        )
+                        if self.grabber.search(image=self.images.skill_max_level, region=MASTER_COORDS["skills"][skill], bool_only=True):
+                            self.logger.info("skill: {skill} is currently maxed, setting to {max_level}".format(skill=skill, max_level=SKILL_MAX_LEVEL))
+                            self.current_prestige_skill_levels[skill] = SKILL_MAX_LEVEL
+                        else:
+                            self.current_prestige_skill_levels[skill] = self.stats.skill_ocr(
+                                region=SKILL_LEVEL_COORDS[skill]
+                            )
 
                 # Recalculate the next skill level process.
                 self.calculate_next_skills_level()
@@ -1602,6 +1615,14 @@ class Bot(object):
                 return False
 
             artifact = self.next_artifact_upgrade
+
+            # Ensure no artifact available just skips the current
+            # artifact purchase.
+            if artifact is None:
+                self.logger.info("no artifact to upgrade, skipping purchase...")
+                return
+            
+
             # Access to current upgrade is present above,
             # go ahead and update the next artifact to purchase.
             self.update_next_artifact_upgrade()
@@ -1665,7 +1686,7 @@ class Bot(object):
         """
         if self.configuration.enable_tournaments:
             self.logger.info("checking for tournament ready to join or in progress.")
-            if not self.ensure_collapsed():
+            if not self.ensure_panel_collapsed_closed():
                 return False, None
 
             # Looping to find tournament here, since there's a chance that the tournament is finished, which
@@ -1713,7 +1734,7 @@ class Bot(object):
 
                         # Ensuring that any panels are collapsed, then attempting to join
                         # the tournament through the interface.
-                        self.ensure_collapsed()
+                        self.ensure_panel_collapsed_closed()
                         self.click(
                             point=self.locs.tournament,
                             pause=2
@@ -1763,7 +1784,7 @@ class Bot(object):
         Collect any daily gifts if they're available.
         """
         self.logger.info("checking if any daily rewards are currently available to collect.")
-        if not self.ensure_collapsed():
+        if not self.ensure_panel_collapsed_closed():
             return False
 
         self.click(
@@ -1798,7 +1819,7 @@ class Bot(object):
         """
         if self.configuration.enable_egg_collection:
             self.logger.info("checking if any eggs are available to be hatched in game and hatching them.")
-            if not self.ensure_collapsed():
+            if not self.ensure_panel_collapsed_closed():
                 return False
 
             self.click(
@@ -1820,7 +1841,7 @@ class Bot(object):
         """
         Check if a clan crate is currently available and collect it if one is.
         """
-        if not self.ensure_collapsed():
+        if not self.ensure_panel_collapsed_closed():
             return False
 
         for i in range(5):
@@ -1840,7 +1861,7 @@ class Bot(object):
         """
         Open up the inbox if it's available on the screen, clicking from header to header, ensuring that the icon is gone.
         """
-        if not self.ensure_collapsed():
+        if not self.ensure_panel_collapsed_closed():
             return False
 
         self.click(
@@ -2367,7 +2388,7 @@ class Bot(object):
             self.logger.info("beginning generic tapping process...")
 
             # Ensure the game screen is currently displaying the titan correctly.
-            self.ensure_collapsed()
+            self.ensure_panel_collapsed_closed()
 
             # Looping through all of our fairy map locations... Clicking and checking
             # for ads throughout the process.
@@ -2398,7 +2419,7 @@ class Bot(object):
             self.logger.info("beginning minigame execution process...")
 
             # Ensure the game screen is currently displaying the titan correctly.
-            self.ensure_collapsed()
+            self.ensure_panel_collapsed_closed()
 
             tapping_map = []
             # Based on the enabled minigames, tapping locations are appended
@@ -2433,7 +2454,7 @@ class Bot(object):
             sleep(2)
 
     @not_in_transition
-    def ensure_collapsed(self):
+    def ensure_panel_collapsed_closed(self):
         """
         Ensure that regardless of the current panel that is active, our game screen is present.
 
@@ -2445,21 +2466,14 @@ class Bot(object):
 
         # If we reach this point, it means our settings are not yet available, let's minimize
         # the panel that's currently expanded (if one is present)
-        loops = 0
-        while loops != FUNCTION_LOOP_TIMEOUT:
-            found = self.find_and_click(
-                image=self.images.collapse_panel,
+        # Even if we don't find the images we can verify that the panel is collapsed
+        self.find_and_click(
+                image=[self.images.collapse_panel,self.images.exit_panel, self.images.large_exit_panel],
                 pause=1
             )
-            if found:
-                return True
-            # TODO: Do we need to sleep?
-            sleep(1)
-            loops += 1
+        return True
 
-        # Additionally, maybe the shop panel was opened for some reason. We should also
-        # handle this edge case by closing it if the collapse panel is not visible.
-        return self.no_panel()
+
 
     @not_in_transition
     def goto_panel(self, panel, icon, top_find, bottom_find, collapsed=True, top=True, equipment_tab=None):
@@ -2557,17 +2571,41 @@ class Bot(object):
             loops = 0
             end_drag = self.locs.scroll_top_end if top else self.locs.scroll_bottom_end
 
-            while not self.grabber.search(find, bool_only=True):
-                if loops == FUNCTION_LOOP_TIMEOUT:
-                    self.logger.warning("error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
-                    return False
+            if not find:
+                _last = self.grabber.snapshot(region=PANEL_COORDS["panel_check"])
+                _current = _last
 
-                loops += 1
-                self.drag(
-                    start=self.locs.scroll_start,
-                    end=end_drag,
-                    pause=1
-                )
+                while True:
+                    if loops == FUNCTION_LOOP_TIMEOUT:
+                        self.logger.warning("error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
+                        return False
+
+                    loops += 1
+                    self.drag(
+                        start=self.locs.scroll_start,
+                        end=end_drag,
+                        pause=1
+                    )
+                    _last = _current
+                    _current = self.grabber.snapshot(region=PANEL_COORDS["panel_check"])
+
+                    # If the images are currently duplicates, it means we can no longer
+                    # travel up or down anymore, essentially the top or bottom is hit.
+                    if self.stats.images_duplicate(image_one=_last, image_two=_current):
+                        break
+
+            else:
+                while not self.grabber.search(find, bool_only=True):
+                    if loops == FUNCTION_LOOP_TIMEOUT:
+                        self.logger.warning("error occurred while travelling to {panel} panel, exiting function early.".format(panel=panel))
+                        return False
+
+                    loops += 1
+                    self.drag(
+                        start=self.locs.scroll_start,
+                        end=end_drag,
+                        pause=1
+                    )
 
             # Reaching this point represents that the specified panel
             # was successfully reached in the game.
@@ -2580,7 +2618,7 @@ class Bot(object):
         return self.goto_panel(
             "master",
             self.images.master_active,
-            self.images.raid_cards,
+            self.images.master,
             self.images.silent_march,
             collapsed=collapsed,
             top=top
@@ -2593,8 +2631,8 @@ class Bot(object):
         return self.goto_panel(
             "heroes",
             self.images.heroes_active,
-            self.images.masteries,
-            self.images.maya_muerta,
+            None,
+            None,
             collapsed=collapsed,
             top=top
         )
@@ -2620,7 +2658,7 @@ class Bot(object):
         return self.goto_panel(
             "pets",
             self.images.pets_active,
-            self.images.next_egg,
+            None,
             None,
             collapsed=collapsed,
             top=top
@@ -2633,7 +2671,7 @@ class Bot(object):
         return self.goto_panel(
             "artifacts",
             self.images.artifacts_active,
-            self.images.salvaged,
+            None,
             None,
             collapsed=collapsed,
             top=top
@@ -2682,7 +2720,7 @@ class Bot(object):
             loops = 0
             while loops != FUNCTION_LOOP_TIMEOUT:
                 found = self.find_and_click(
-                    image=self.images.exit_panel,
+                    image=[self.images.exit_panel,self.images.exit_large_panel],
                     pause=0.5
                 )
                 if found:
