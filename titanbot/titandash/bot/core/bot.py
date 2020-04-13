@@ -1677,7 +1677,7 @@ class Bot(object):
         """
         if self.configuration.enable_tournaments:
             self.logger.info("checking for tournament ready to join or in progress.")
-            if not self.ensure_collapsed():
+            if not self.ensure_panel_collapsed_closed():
                 return False, None
 
             # Looping to find tournament here, since there's a chance that the tournament is finished, which
@@ -1725,7 +1725,7 @@ class Bot(object):
 
                         # Ensuring that any panels are collapsed, then attempting to join
                         # the tournament through the interface.
-                        self.ensure_collapsed()
+                        self.ensure_panel_collapsed_closed()
                         self.click(
                             point=self.locs.tournament,
                             pause=2
@@ -1775,7 +1775,7 @@ class Bot(object):
         Collect any daily gifts if they're available.
         """
         self.logger.info("checking if any daily rewards are currently available to collect.")
-        if not self.ensure_collapsed():
+        if not self.ensure_panel_collapsed_closed():
             return False
 
         self.click(
@@ -1810,7 +1810,7 @@ class Bot(object):
         """
         if self.configuration.enable_egg_collection:
             self.logger.info("checking if any eggs are available to be hatched in game and hatching them.")
-            if not self.ensure_collapsed():
+            if not self.ensure_panel_collapsed_closed():
                 return False
 
             self.click(
@@ -1832,7 +1832,7 @@ class Bot(object):
         """
         Check if a clan crate is currently available and collect it if one is.
         """
-        if not self.ensure_collapsed():
+        if not self.ensure_panel_collapsed_closed():
             return False
 
         for i in range(5):
@@ -1852,7 +1852,7 @@ class Bot(object):
         """
         Open up the inbox if it's available on the screen, clicking from header to header, ensuring that the icon is gone.
         """
-        if not self.ensure_collapsed():
+        if not self.ensure_panel_collapsed_closed():
             return False
 
         self.click(
@@ -2378,7 +2378,7 @@ class Bot(object):
             self.logger.info("beginning generic tapping process...")
 
             # Ensure the game screen is currently displaying the titan correctly.
-            self.ensure_collapsed()
+            self.ensure_panel_collapsed_closed()
 
             # Looping through all of our fairy map locations... Clicking and checking
             # for ads throughout the process.
@@ -2405,7 +2405,7 @@ class Bot(object):
             self.logger.info("beginning minigame execution process...")
 
             # Ensure the game screen is currently displaying the titan correctly.
-            self.ensure_collapsed()
+            self.ensure_panel_collapsed_closed()
 
             tapping_map = []
             # Based on the enabled minigames, tapping locations are appended
@@ -2436,7 +2436,7 @@ class Bot(object):
             sleep(2)
 
     @not_in_transition
-    def ensure_collapsed(self):
+    def ensure_panel_collapsed_closed(self):
         """
         Ensure that regardless of the current panel that is active, our game screen is present.
 
@@ -2451,13 +2451,12 @@ class Bot(object):
         loops = 0
         while loops != FUNCTION_LOOP_TIMEOUT:
             found = self.find_and_click(
-                image=self.images.collapse_panel,
+                image=[self.images.collapse_panel,self.images.exit_panel, self.images.large_exit_panel],
                 pause=1
             )
-            if found:
-                return True
-            sleep(1)
-            loops += 1
+            # Even if we don't find the images we can verify that the panel is collapsed
+            return True
+
 
         # Additionally, maybe the shop panel was opened for some reason. We should also
         # handle this edge case by closing it if the collapse panel is not visible.
