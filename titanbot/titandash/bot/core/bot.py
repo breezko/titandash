@@ -2457,19 +2457,13 @@ class Bot(object):
 
         # If we reach this point, it means our settings are not yet available, let's minimize
         # the panel that's currently expanded (if one is present)
-        loops = 0
-        while loops != FUNCTION_LOOP_TIMEOUT:
-            found = self.find_and_click(
+        # Even if we don't find the images we can verify that the panel is collapsed
+        self.find_and_click(
                 image=[self.images.collapse_panel,self.images.exit_panel, self.images.large_exit_panel],
                 pause=1
             )
-            # Even if we don't find the images we can verify that the panel is collapsed
-            return True
+        return True
 
-
-        # Additionally, maybe the shop panel was opened for some reason. We should also
-        # handle this edge case by closing it if the collapse panel is not visible.
-        return self.no_panel()
 
     @not_in_transition
     def goto_panel(self, panel, icon, top_find, bottom_find, collapsed=True, top=True, equipment_tab=None):
@@ -2716,7 +2710,7 @@ class Bot(object):
             loops = 0
             while loops != FUNCTION_LOOP_TIMEOUT:
                 found = self.find_and_click(
-                    image=self.images.exit_panel,
+                    image=[self.images.exit_panel,self.images.exit_large_panel],
                     pause=0.5
                 )
                 if found:
