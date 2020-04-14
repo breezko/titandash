@@ -430,7 +430,7 @@ PRESTIGE_COORDS = {
 }
 
 PANEL_COORDS = {
-    "panel_check": (0, 550, 479, 762)
+    "panel_check": (0, 550, 232, 762)
 }
 
 # The regions for each skill present on the master screen if the panel
