@@ -1679,7 +1679,10 @@ class Bot(object):
         if self.configuration.enable_tournaments:
             self.logger.info("checking for tournament ready to join or in progress.")
             if not self.ensure_collapsed_closed():
+<<<<<<< HEAD
 
+=======
+>>>>>>> ae00c16... "#495 Fix Tap routine enters LOOP TIMEOUT on false negative"
                 return False, None
 
             # Looping to find tournament here, since there's a chance that the tournament is finished, which
@@ -1728,7 +1731,10 @@ class Bot(object):
                         # Ensuring that any panels are collapsed, then attempting to join
                         # the tournament through the interface.
                         self.ensure_collapsed_closed()
+<<<<<<< HEAD
 
+=======
+>>>>>>> ae00c16... "#495 Fix Tap routine enters LOOP TIMEOUT on false negative"
                         self.click(
                             point=self.locs.tournament,
                             pause=2
@@ -2395,6 +2401,7 @@ class Bot(object):
 
                     # Every fifth click, we should check to see if an ad is present on the
                     # screen now, since our clicks could potentially trigger a fairy ad.
+<<<<<<< HEAD
  
                 #TODO: Just check add each iter since the process is very time heavy 
                 self.collect_ad_no_transition()
@@ -2402,6 +2409,11 @@ class Bot(object):
                 #Sleep 500ms for astral to fly
                 #TODO: Only enable if astral is configured
                 sleep(0.5)
+=======
+                     if index % 5 == 0:
+                        self.collect_ad_no_transition()
+                
+>>>>>>> ae00c16... "#495 Fix Tap routine enters LOOP TIMEOUT on false negative"
             # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
             # clicked just as the tapping ended.
             sleep(2)
@@ -2441,8 +2453,11 @@ class Bot(object):
                     if index % 5 == 0:
                         self.collect_ad_no_transition()
                         
+<<<<<<< HEAD
                 #Sleep to let coordinate offensive fly
                 sleep(0.5)
+=======
+>>>>>>> ae00c16... "#495 Fix Tap routine enters LOOP TIMEOUT on false negative"
             # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
             # clicked just as the tapping ended.
             sleep(2)
@@ -2462,7 +2477,12 @@ class Bot(object):
         self.find_and_click(
                 image=[self.images.collapse_panel,self.images.exit_panel, self.images.large_exit_panel],
                 pause=1
+<<<<<<< HEAD
                 )      
+=======
+                )
+
+>>>>>>> ae00c16... "#495 Fix Tap routine enters LOOP TIMEOUT on false negative"
         return True
 
     @not_in_transition
@@ -2707,7 +2727,11 @@ class Bot(object):
         Instruct the bot to make sure no panels are currently open.
         """
         loops = 0
+<<<<<<< HEAD
         while self.grabber.search(image=[self.images.exit_panel,self.images.large_exit_panel], bool_only=True) or (loops != FUNCTION_LOOP_TIMEOUT):
+=======
+        while self.grabber.search(image=[self.images.exit_panel,self.images.large_exit_panel], bool_only=True) and (loops != FUNCTION_LOOP_TIMEOUT):
+>>>>>>> ae00c16... "#495 Fix Tap routine enters LOOP TIMEOUT on false negative"
                 found = self.find_and_click(
                     image=[self.images.exit_panel,self.images.large_exit_panel],
                     pause=0.5
