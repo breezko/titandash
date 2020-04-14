@@ -199,10 +199,11 @@ class Bot(object):
         """
         Local image find and click method for use with the bot. Allowing us to "fire and forget" to look for the image and click it.
         """
-        found, position = self.grabber.search(
+        found, position, found_image = self.grabber.search(
             image=image,
             region=region,
-            precision=precision
+            precision=precision,
+            return_image=True
         )
 
         # Is the image specified (or one of them), currently on the screen?
@@ -210,21 +211,12 @@ class Bot(object):
             if log:
                 self.logger.info(log)
             if not padding:
-                if isinstance(image,list):   
-                    for _image in image:
-                            self.click_image(
-                                image=_image,
-                                pos=position,
-                                button=button,
-                                pause=pause
-                            )
-                else:
-                    self.click_image(
-                            image=image,
-                            pos=position,
-                            button=button,
-                            pause=pause
-                        )
+                self.click_image(
+                        image=found_image,
+                        pos=position,
+                        button=button,
+                        pause=pause
+                    )
             else:
                 self.click(
                     point=(
