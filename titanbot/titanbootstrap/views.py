@@ -12,7 +12,7 @@ import traceback
 import dirsync
 import datetime
 import os
-
+from itertools import chain
 
 class DependencyError(Exception):
     """
@@ -288,7 +288,28 @@ def perform_static(request):
     except Exception as exc:
         return _exception_response(title="Collect Staticfiles", exception=exc)
 
+def _find_tesseract():
+    """Force find 'tesseract.exe'
+    
+    Raises:
+        exception: TesseractCheckError
+    
+    Returns:
+        string -- path to tesseract.exe
+    """
 
+    exe = "tesseract.exe"
+    import fnmatch
+    exception = TesseractCheckError("It seems like tesseract is not currently installed on your system, or titandash "
+                                    "was unable to find the program")
+    match = None
+    paths = ('C:/','D:/','E:/','F:/','G:/')
+    for root, dirnames, filenames in chain.from_iterable(os.walk(path) for path in paths):
+        for filename in fnmatch.filter(filenames, exe):
+           return os.path.join(root)
+    
+    raise exception
+     
 def _check_tesseract():
     """
     Test that the tesseract is installed and that the executable (if one is available) is set
@@ -303,13 +324,7 @@ def _check_tesseract():
     # We are explicitly adding the "ProgramW6432" environment variable to the end in case
     # issues come up with the os module when grabbing the paths.
     environ_vars = ["ProgramW6432", "ProgramFiles(x86)"]
-    potential_paths = [os.path.join(os.environ[var], "Tesseract-OCR") for var in environ_vars]
-
-    # Base exception raised if issues come up with the tesseract pathing.
-    exception = TesseractCheckError("It seems like tesseract is not currently installed on your system, or titandash "
-                                    "was unable to find the program in any of these directories: {dirs}. Some of the "
-                                    "functionality used by the bot relies on this program. The bot may break or "
-                                    "crash unexpectedly until you've installed tesseract.".format(dirs=", ".join(potential_paths)))
+    potential_paths = [os.path.join(os.environ[var], "Tesseract-OCR") for var in environ_vars]    
 
     installed_path = None
     try:
@@ -327,8 +342,9 @@ def _check_tesseract():
                 # command is just "tesseract" which will always work.
                 return True
             else:
-                raise exception
-
+                # At this point tesseract isn't configured in the environment variables nor at the default location
+                installed_path = _find_tesseract()
+                # TODO: Add installed_path
         # Tesseract is available, set the proper path for use by any piece of functionality
         # that makes use of text recognition.
         settings.TESSERACT_COMMAND = "{path}/tesseract".format(path=installed_path)
