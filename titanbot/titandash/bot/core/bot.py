@@ -1677,7 +1677,7 @@ class Bot(object):
         """
         if self.configuration.enable_tournaments:
             self.logger.info("checking for tournament ready to join or in progress.")
-            if not self.ensure_collapsed():
+            if not self.ensure_collapsed_closed():
                 return False, None
 
             # Looping to find tournament here, since there's a chance that the tournament is finished, which
@@ -1725,7 +1725,8 @@ class Bot(object):
 
                         # Ensuring that any panels are collapsed, then attempting to join
                         # the tournament through the interface.
-                        self.ensure_collapsed()
+                        self.ensure_collapsed_closed()
+
                         self.click(
                             point=self.locs.tournament,
                             pause=2
@@ -2391,9 +2392,14 @@ class Bot(object):
 
                     # Every fifth click, we should check to see if an ad is present on the
                     # screen now, since our clicks could potentially trigger a fairy ad.
-                    if index % 5 == 0:
-                        self.collect_ad_no_transition()
 
+ 
+                #TODO: Just check add each iter since the process is very time heavy 
+                self.collect_ad_no_transition()
+                
+                #Sleep 500ms for astral to fly
+                #TODO: Only enable if astral is configured
+                sleep(0.5)
             # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
             # clicked just as the tapping ended.
             sleep(2)
@@ -2430,9 +2436,9 @@ class Bot(object):
                         sleep(0.05)
 
                 self.collect_ad_no_transition()
-                        
-                # Sleep to let coordinated offensive fly
+                #Sleep to let coordinate offensive fly
                 sleep(0.5)
+
 
     @not_in_transition
     def ensure_collapsed(self):
@@ -2703,9 +2709,7 @@ class Bot(object):
         """
         Instruct the bot to make sure no panels are currently open.
         """
-        while self.grabber.search(image=self.images.exit_panel, bool_only=True):
-            loops = 0
-            while loops != FUNCTION_LOOP_TIMEOUT:
+        while self.grabber.search(image=[self.images.exit_panel,self.images.large_exit_panel], bool_only=True) and (loops != FUNCTION_LOOP_TIMEOUT):
                 found = self.find_and_click(
                     image=self.images.exit_panel,
                     pause=0.5
