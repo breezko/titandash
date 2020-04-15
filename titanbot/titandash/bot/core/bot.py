@@ -1679,7 +1679,6 @@ class Bot(object):
         if self.configuration.enable_tournaments:
             self.logger.info("checking for tournament ready to join or in progress.")
             if not self.ensure_collapsed_closed():
-
                 return False, None
 
             # Looping to find tournament here, since there's a chance that the tournament is finished, which
@@ -1728,7 +1727,6 @@ class Bot(object):
                         # Ensuring that any panels are collapsed, then attempting to join
                         # the tournament through the interface.
                         self.ensure_collapsed_closed()
-
                         self.click(
                             point=self.locs.tournament,
                             pause=2
@@ -2441,7 +2439,7 @@ class Bot(object):
                     # screen now, since our clicks could potentially trigger a fairy ad.
                     if index % 5 == 0:
                         self.collect_ad_no_transition()
-                        
+
                 #Sleep to let coordinate offensive fly
                 sleep(0.5)
             # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
@@ -2473,7 +2471,7 @@ class Bot(object):
         self.find_and_click(
                 image=[self.images.collapse_panel,self.images.exit_panel, self.images.large_exit_panel],
                 pause=1
-                )      
+                )
         return True
 
     @not_in_transition
@@ -2719,6 +2717,10 @@ class Bot(object):
         """
         loops = 0
         while self.grabber.search(image=[self.images.exit_panel,self.images.large_exit_panel], bool_only=True) and (loops != FUNCTION_LOOP_TIMEOUT):
+<<<<<<< HEAD
+=======
+
+>>>>>>> 1b2c4571472ed806398ffb2e980301cb8b03230a
                 found = self.find_and_click(
                     image=[self.images.exit_panel,self.images.large_exit_panel],
                     pause=0.5
