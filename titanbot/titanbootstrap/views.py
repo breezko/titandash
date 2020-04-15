@@ -4,8 +4,12 @@ from django.conf import settings
 from django.core.management import call_command
 from django.http.response import JsonResponse
 
+from titanbootstrap.models.settings import ApplicationSettings
 from titanbootstrap.utils import VersionChecker, purge_dir
 
+from itertools import chain
+
+import fnmatch
 import redis
 import subprocess
 import traceback
@@ -294,12 +298,27 @@ def _check_tesseract():
     Test that the tesseract is installed and that the executable (if one is available) is set
     to be used by our titandash settings.
 
-    We'll check first to determine if the program is available in either of the available program files
-    directories.
+    We'll check first to determine if we've already parsed out a tesseract path and see if it's still
+    valid, if it is, we use it and move on.
 
-    If it is, we can use this path to ensure settings TESSERACT_COMMAND is set to a valid value and test it.
-    If not, we can display an exception to let the user know they they should install tesseract.
+    If the directory has changed, we check the default locations and fallback to a dynamic search
+    of the system to make sure it's available. Application settings will remember the last used location.
     """
+    def _find_tesseract(paths, exclude):
+        """
+        Attempt to find the tesseract executable file on the system.
+        """
+        for root, dirs, files in chain.from_iterable(os.walk(p) for p in paths):
+            for _ in fnmatch.filter(files, "tesseract.exe"):
+                # tesseract.exe is on the system in a location
+                # that's a "non default" and isn't in an excluded location.
+                if not any(excl in root for excl in exclude):
+                    return root
+
+    possible_paths = ("C:/", "D:/", "E:/", "F:/", "G:/")
+    # Make sure any recycle bin locations are excluded.
+    # Could happen if old installations are deleted.
+    exclude_paths = ["Recycle.Bin"]
     # We are explicitly adding the "ProgramW6432" environment variable to the end in case
     # issues come up with the os module when grabbing the paths.
     environ_vars = ["ProgramW6432", "ProgramFiles(x86)"]
@@ -311,36 +330,44 @@ def _check_tesseract():
                                     "functionality used by the bot relies on this program. The bot may break or "
                                     "crash unexpectedly until you've installed tesseract.".format(dirs=", ".join(potential_paths)))
 
-    installed_path = None
     try:
-        for path in potential_paths:
-            if os.path.exists(path):
-                installed_path = path
-                break
+        # Grab a reference to our application settings instance.
+        # We can use this to determine if we need to even bother
+        # with dynamic location checking.
+        app_settings = ApplicationSettings.objects.grab()
+        tesseract_path = None
 
-        # Unable to find the installed path means one of two things, something in the users environment has
-        # gone awry and we can't find the path, or they do not have it installed. We'll do a final check to
-        # see if tesseract has been put on their path and works in a command prompt. Otherwise we error out.
-        if not installed_path:
-            if subprocess.run("tesseract --version", shell=True, universal_newlines=True).returncode == 0:
-                # Tesseract is on users path, we can just return true, default
-                # command is just "tesseract" which will always work.
-                return True
-            else:
-                raise exception
+        if app_settings.tesseract_directory:
+            # A previous boot had found a valid directory.
+            # Check that this one still works before continuing.
+            if os.path.exists(path=app_settings.tesseract_directory):
+                tesseract_path = app_settings.tesseract_directory
 
-        # Tesseract is available, set the proper path for use by any piece of functionality
-        # that makes use of text recognition.
-        settings.TESSERACT_COMMAND = "{path}/tesseract".format(path=installed_path)
-        return True
+        if not tesseract_path:
+            # Instead, let's check our default paths that could
+            # possibly (and most likely) house tesseract.
+            for path in potential_paths:
+                if os.path.exists(path):
+                    tesseract_path = path
 
-    # Check for a file not found error which may occur when tesseract is not installed at all.
-    except subprocess.CalledProcessError:
-        return _exception_response(
-            title="Dependencies - Tesseract",
-            exception=exception,
-            as_json=True
-        )
+            # Tesseract is not present in any of our default paths,
+            # try a system search to find it.
+            if not tesseract_path:
+                tesseract_path = _find_tesseract(paths=possible_paths, exclude=exclude_paths)
+
+        # Final check after all conditional paths reached.
+        # If we have a path, we can update our app settings if
+        # it's changed from the previous one.
+        if not tesseract_path:
+            raise exception
+
+        # Path is available, update and setup proper settings.
+        if app_settings.tesseract_directory != tesseract_path:
+            app_settings.tesseract_directory = tesseract_path
+            app_settings.save()
+
+        settings.TESSERACT_COMMAND = "{path}/tesseract".format(path=tesseract_path)
+
     # Broadly catch exceptions so our TesseractCheckError is caught as well as any other error.
     except Exception as exc:
         return _exception_response(
