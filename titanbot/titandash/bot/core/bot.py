@@ -2707,7 +2707,7 @@ class Bot(object):
         Instruct the bot to make sure no panels are currently open.
         """
         loops = 0
-        while self.grabber.search(image=[self.images.exit_panel,self.images.large_exit_panel], bool_only=True) or (loops != FUNCTION_LOOP_TIMEOUT):
+        while self.grabber.search(image=[self.images.exit_panel,self.images.large_exit_panel], bool_only=True) and (loops != FUNCTION_LOOP_TIMEOUT):
                 found = self.find_and_click(
                     image=[self.images.exit_panel,self.images.large_exit_panel],
                     pause=0.5
