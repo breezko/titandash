@@ -72,7 +72,7 @@ class Bot(object):
         self.PAUSE = False
         self.VALID_AUTHENTICATION = True
 
-        self.last_stage = None
+        self.last_stage = -1
         self.owned_artifacts = None
         self.next_artifact_index = None
         self.next_artifact_upgrade = None
@@ -199,10 +199,11 @@ class Bot(object):
         """
         Local image find and click method for use with the bot. Allowing us to "fire and forget" to look for the image and click it.
         """
-        found, position = self.grabber.search(
+        found, position, found_image = self.grabber.search(
             image=image,
             region=region,
-            precision=precision
+            precision=precision,
+            return_image=True
         )
 
         # Is the image specified (or one of them), currently on the screen?
@@ -211,11 +212,11 @@ class Bot(object):
                 self.logger.info(log)
             if not padding:
                 self.click_image(
-                    image=image,
-                    pos=position,
-                    button=button,
-                    pause=pause
-                )
+                        image=found_image,
+                        pos=position,
+                        button=button,
+                        pause=pause
+                    )
             else:
                 self.click(
                     point=(
@@ -408,7 +409,7 @@ class Bot(object):
         through our background scheduler implementation.
         """
         try:
-            stage = int(self.stats.stage_ocr())
+            stage = int(self.stats.stage_ocr(previous=self.last_stage))
             if stage > STAGE_CAP:
                 return
             if self.ADVANCED_START and stage < self.ADVANCED_START:
@@ -417,7 +418,6 @@ class Bot(object):
             self.logger.debug("current stage parsed as: {stage}".format(stage=strfnumber(number=stage)))
             self.last_stage = self.props.current_stage
             self.props.current_stage = stage
-
         # ValueError when the parsed stage isn't able to be coerced.
         except ValueError:
             self.logger.debug("current stage could not be parsed... skipping.")
@@ -1127,7 +1127,7 @@ class Bot(object):
                 # If we have enabled skills, begin our loop to activate them
                 # if the intervals are correct.
                 if enabled:
-                    self.no_panel()
+                    self.ensure_no_panel()
                     next_key = "next_{skill}"
 
                     # Looping through each skill that's enabled to be activated.
@@ -1614,6 +1614,7 @@ class Bot(object):
                 self.logger.info("no artifact to upgrade, skipping purchase...")
                 return
             
+
             # Access to current upgrade is present above,
             # go ahead and update the next artifact to purchase.
             self.update_next_artifact_upgrade()
@@ -1677,7 +1678,8 @@ class Bot(object):
         """
         if self.configuration.enable_tournaments:
             self.logger.info("checking for tournament ready to join or in progress.")
-            if not self.ensure_collapsed():
+            if not self.ensure_collapsed_closed():
+
                 return False, None
 
             # Looping to find tournament here, since there's a chance that the tournament is finished, which
@@ -1725,7 +1727,8 @@ class Bot(object):
 
                         # Ensuring that any panels are collapsed, then attempting to join
                         # the tournament through the interface.
-                        self.ensure_collapsed()
+                        self.ensure_collapsed_closed()
+
                         self.click(
                             point=self.locs.tournament,
                             pause=2
@@ -1775,7 +1778,7 @@ class Bot(object):
         Collect any daily gifts if they're available.
         """
         self.logger.info("checking if any daily rewards are currently available to collect.")
-        if not self.ensure_collapsed():
+        if not self.ensure_collapsed_closed():
             return False
 
         self.click(
@@ -1810,7 +1813,7 @@ class Bot(object):
         """
         if self.configuration.enable_egg_collection:
             self.logger.info("checking if any eggs are available to be hatched in game and hatching them.")
-            if not self.ensure_collapsed():
+            if not self.ensure_collapsed_closed():
                 return False
 
             self.click(
@@ -1832,7 +1835,7 @@ class Bot(object):
         """
         Check if a clan crate is currently available and collect it if one is.
         """
-        if not self.ensure_collapsed():
+        if not self.ensure_collapsed_closed():
             return False
 
         for i in range(5):
@@ -1852,7 +1855,7 @@ class Bot(object):
         """
         Open up the inbox if it's available on the screen, clicking from header to header, ensuring that the icon is gone.
         """
-        if not self.ensure_collapsed():
+        if not self.ensure_collapsed_closed():
             return False
 
         self.click(
@@ -2129,7 +2132,7 @@ class Bot(object):
                     force_or_initiate="forcing" if force else "beginning"))
 
                 # The clan results parse should take place.
-                if not self.no_panel():
+                if not self.ensure_no_panel():
                     return False
                 if not self.leave_boss():
                     return False
@@ -2374,11 +2377,12 @@ class Bot(object):
         """
         Perform simple screen tap over entire game area.
         """
+        #TODO: Toggle tapping on fairy and just click clan member?
         if self.configuration.enable_tapping:
             self.logger.info("beginning generic tapping process...")
 
             # Ensure the game screen is currently displaying the titan correctly.
-            self.ensure_collapsed()
+            self.ensure_collapsed_closed()
 
             # Looping through all of our fairy map locations... Clicking and checking
             # for ads throughout the process.
@@ -2391,9 +2395,13 @@ class Bot(object):
 
                     # Every fifth click, we should check to see if an ad is present on the
                     # screen now, since our clicks could potentially trigger a fairy ad.
-                    if index % 5 == 0:
-                        self.collect_ad_no_transition()
-
+ 
+                #TODO: Just check add each iter since the process is very time heavy 
+                self.collect_ad_no_transition()
+                
+                #Sleep 500ms for astral to fly
+                #TODO: Only enable if astral is configured
+                sleep(0.5)
             # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
             # clicked just as the tapping ended.
             sleep(2)
@@ -2405,7 +2413,7 @@ class Bot(object):
             self.logger.info("beginning minigame execution process...")
 
             # Ensure the game screen is currently displaying the titan correctly.
-            self.ensure_collapsed()
+            self.ensure_collapsed_closed()
 
             tapping_map = []
             # Based on the enabled minigames, tapping locations are appended
@@ -2425,18 +2433,22 @@ class Bot(object):
                         self.click(
                             point=point
                         )
+                        #Wait 20ms...Presses won't go off parallel otherwise
+                        sleep(0.02)
 
                     # Every fifth click, we should check to see if an ad is present on the
                     # screen now, since our clicks could potentially trigger a fairy ad.
                     if index % 5 == 0:
                         self.collect_ad_no_transition()
-
+                        
+                #Sleep to let coordinate offensive fly
+                sleep(0.5)
             # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
             # clicked just as the tapping ended.
             sleep(2)
 
     @not_in_transition
-    def ensure_collapsed(self):
+    def ensure_collapsed_closed(self):
         """
         Ensure that regardless of the current panel that is active, our game screen is present.
 
@@ -2446,22 +2458,12 @@ class Bot(object):
         if self.grabber.search(image=[self.images.settings, self.images.clan_raid_ready, self.images.clan_no_raid], bool_only=True):
             return True
 
-        # If we reach this point, it means our settings are not yet available, let's minimize
-        # the panel that's currently expanded (if one is present)
-        loops = 0
-        while loops != FUNCTION_LOOP_TIMEOUT:
-            found = self.find_and_click(
-                image=self.images.collapse_panel,
+        # Even if we don't find the images we can verify that the panel is collapsed
+        self.find_and_click(
+                image=[self.images.collapse_panel,self.images.exit_panel, self.images.large_exit_panel],
                 pause=1
-            )
-            if found:
-                return True
-            sleep(1)
-            loops += 1
-
-        # Additionally, maybe the shop panel was opened for some reason. We should also
-        # handle this edge case by closing it if the collapse panel is not visible.
-        return self.no_panel()
+                )      
+        return True
 
     @not_in_transition
     def goto_panel(self, panel, icon, top_find, bottom_find, collapsed=True, top=True, equipment_tab=None):
@@ -2700,24 +2702,23 @@ class Bot(object):
         return True
 
     @not_in_transition
-    def no_panel(self):
+    def ensure_no_panel(self):
         """
         Instruct the bot to make sure no panels are currently open.
         """
-        while self.grabber.search(image=self.images.exit_panel, bool_only=True):
-            loops = 0
-            while loops != FUNCTION_LOOP_TIMEOUT:
+        loops = 0
+        while self.grabber.search(image=[self.images.exit_panel,self.images.large_exit_panel], bool_only=True) or (loops != FUNCTION_LOOP_TIMEOUT):
                 found = self.find_and_click(
-                    image=self.images.exit_panel,
+                    image=[self.images.exit_panel,self.images.large_exit_panel],
                     pause=0.5
                 )
                 if found:
                     return True
                 loops += 1
                 sleep(0.5)
-            self.logger.warning("unable to close all panels on the screen, skipping...")
-            return False
-        return True
+        
+        self.logger.warning("unable to close all panels on the screen, skipping...")
+        return False
 
     @bot_property(queueable=True, shortcut="p", tooltip="Pause all bot functionality.")
     def pause(self):

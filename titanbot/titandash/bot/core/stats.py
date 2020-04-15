@@ -87,9 +87,9 @@ class Stats:
         try:
             return int(value)
         except ValueError:
-            return None
+            return 0
         except TypeError:
-            return None
+            return 0
 
     def _process(self, scale=3, iterations=1, image=None, current=False, region=None):
         """
@@ -111,7 +111,7 @@ class Stats:
         kernel = np.ones((1, 1), np.uint8)
         image = cv2.dilate(image, kernel, iterations=iterations)
         image = cv2.erode(image, kernel, iterations=iterations)
-
+        
         return Image.fromarray(image)
 
     def _process_stage(self, scale=5, threshold=100, image=None):
@@ -127,7 +127,7 @@ class Stats:
         # Create gray scale.
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         # Perform threshold on image.
-        retr, mask = cv2.threshold(image, 230, 255, cv2.THRESH_BINARY)
+        retr, mask = cv2.threshold(image, 230, 255, cv2.THRESH_BINARY_INV)
 
         # Find contours.
         contours, hier = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -281,7 +281,7 @@ class Stats:
                 image = Image.open(test_set[key])
             else:
                 self.grabber.snapshot(region=region)
-                image = self._process()
+                image = self._process(scale=3)
 
             text = pytesseract.image_to_string(image, config='--psm 7')
             self.logger.debug("ocr result: {key} -> {text}".format(key=key, text=text))
@@ -340,7 +340,26 @@ class Stats:
             except ValueError:
                 self.logger.error("could not parse {key}: (ocr result: {text})".format(key=key, text=text))
 
-    def stage_ocr(self, test_image=None):
+    def _postprocess_stage_ocr(self,value,previous):
+        """Do a post check on the computed OCR-value wether it is unrealistic since earlier checks were higher.
+        
+        Arguments:
+            value {int} -- computed ocr val
+            value {int} -- previous computed val
+        
+        Returns:
+            int -- corrected ocr val
+        """
+        
+        # if first check is faulty we need to fallback to highest stage
+        try:
+            if(previous > int(self.statistics.game_statistics.highest_stage_reached)):
+                previous = -1
+        except TypeError:
+            previous=-1
+        return value if value > previous else previous
+
+    def stage_ocr(self,previous=-1, test_image=None):
         """
         Attempt to parse out the current stage in game through an OCR check.
         """
@@ -352,13 +371,40 @@ class Stats:
         else:
             self.grabber.snapshot(region=region)
             image = self._process_stage(scale=3)
-
-        text = pytesseract.image_to_string(image, config='--psm 7 nobatch digits')
+        
+        text = pytesseract.image_to_string(image, config="--psm 7 nobatch digits --oem 0")
         self.logger.debug("parsed value: {text}".format(text=text))
-
+        
+        value =''.join(filter(lambda x: x.isdigit(), text))
+        value = value if value else 0 # fallback to 0 if None
+        stage = self._postprocess_stage_ocr(int(value),previous)
         # Do some light parse work here to make sure only digit like characters are present
         # in the returned 'text' variable retrieved through tesseract.
-        return ''.join(filter(lambda x: x.isdigit(), text))
+        return str(stage)
+
+    def _preprocess_stage(self, scale=5, threshold=100, image=None):
+         
+        if image:
+            image = image
+        else:
+            image = self.grabber.current
+
+        image = np.array(image)
+        # Resize image.
+        image = cv2.resize(image, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+            
+        # define range of white color in HSV
+        # change it according to your need !
+        lower_white = np.array([0,0,0], dtype=np.uint8)
+        upper_white = np.array([0,0,255], dtype=np.uint8)
+        hsv = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
+        # Threshold the HSV image to get only white colors
+        mask = cv2.inRange(hsv, lower_white, upper_white)
+        # Bitwise-AND mask and original image
+        res = cv2.bitwise_and(image,image, mask= mask)
+        dst = cv2.fastNlMeansDenoisingColored(image,None,10,10,7,21)
+
+        return Image.fromarray(res)
 
     def get_advance_start(self, test_image=None):
         """
@@ -374,11 +420,11 @@ class Stats:
             image = self._process_stage(test_image)
         else:
             self.grabber.snapshot(region=region)
-            image = self._process_stage()
+            image = self._preprocess_stage(scale=5)
 
-        text = pytesseract.image_to_string(image, config="--psm 7 nobatch digits")
+        text = pytesseract.image_to_string(image, config="--psm 7 nobatch digits --oem 0")
         self.logger.info("parsed value: {text}".format(text=text))
-
+        
         # Doing some light parse work, similar to the stage ocr function to remove letters if present.
         return ''.join(filter(lambda x: x.isdigit(), text))
 
@@ -399,7 +445,8 @@ class Stats:
         if test_image:
             image = self._process(scale=3, image=test_image)
         else:
-            image = self._process(scale=3, current=True, region=region)
+            self.grabber.snapshot(region=region)
+            image = self._process(scale=3)
 
         text = pytesseract.image_to_string(image, config='--psm 7')
         self.logger.info("parsed value: {text}".format(text=text))
