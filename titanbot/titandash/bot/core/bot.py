@@ -2416,7 +2416,6 @@ class Bot(object):
                 tapping_map += (minigame,)
                 tapping_map += getattr(self.locs, minigame)
 
-            
             self.logger.info("executing minigames process {repeats} time(s)".format(repeats=self.configuration.minigames_repeat))
             for i in range(self.configuration.minigames_repeat):
                 for index, point in enumerate(tapping_map, start=1):
@@ -2426,12 +2425,13 @@ class Bot(object):
                         self.click(
                             point=point
                         )
-                        #Wait 50ms...Presses won't go off parallel otherwise (pyautogui defaults to 100clicks/s)
+                        # Wait 50 milliseconds... Presses won't go off parallel otherwise
+                        # (PyAutoGUI defaults to 100 clicks per second.)
                         sleep(0.05)
 
                 self.collect_ad_no_transition()
                         
-                #Sleep to let coordinate offensive fly
+                # Sleep to let coordinated offensive fly
                 sleep(0.5)
 
     @not_in_transition
