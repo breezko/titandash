@@ -2416,6 +2416,7 @@ class Bot(object):
                 tapping_map += (minigame,)
                 tapping_map += getattr(self.locs, minigame)
 
+            
             self.logger.info("executing minigames process {repeats} time(s)".format(repeats=self.configuration.minigames_repeat))
             for i in range(self.configuration.minigames_repeat):
                 for index, point in enumerate(tapping_map, start=1):
@@ -2425,15 +2426,13 @@ class Bot(object):
                         self.click(
                             point=point
                         )
+                        #Wait 50ms...Presses won't go off parallel otherwise (pyautogui defaults to 100clicks/s)
+                        sleep(0.05)
 
-                    # Every fifth click, we should check to see if an ad is present on the
-                    # screen now, since our clicks could potentially trigger a fairy ad.
-                    if index % 5 == 0:
-                        self.collect_ad_no_transition()
-
-            # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
-            # clicked just as the tapping ended.
-            sleep(2)
+                self.collect_ad_no_transition()
+                        
+                #Sleep to let coordinate offensive fly
+                sleep(0.5)
 
     @not_in_transition
     def ensure_collapsed(self):
