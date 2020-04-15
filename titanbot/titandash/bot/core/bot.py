@@ -2433,6 +2433,7 @@ class Bot(object):
                         self.click(
                             point=point
                         )
+<<<<<<< HEAD
                         #Wait 20ms...Presses won't go off parallel otherwise
                         sleep(0.02)
 
@@ -2446,6 +2447,16 @@ class Bot(object):
             # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
             # clicked just as the tapping ended.
             sleep(2)
+=======
+                        # Wait 50 milliseconds... Presses won't go off parallel otherwise
+                        # (PyAutoGUI defaults to 100 clicks per second.)
+                        sleep(0.05)
+
+                self.collect_ad_no_transition()
+                        
+                # Sleep to let coordinated offensive fly
+                sleep(0.5)
+>>>>>>> 3cdab449fc32508e99cfe06036520481dad4bc54
 
     @not_in_transition
     def ensure_collapsed_closed(self):
