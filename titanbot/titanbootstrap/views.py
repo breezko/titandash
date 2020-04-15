@@ -346,29 +346,6 @@ def _check_tesseract():
     potential_paths = [os.path.join(os.environ[var], "Tesseract-OCR") for var in environ_vars]    
 
     try:
-<<<<<<< HEAD
-        for path in potential_paths:
-            if os.path.exists(path):
-                installed_path = path
-                break
-
-        # Unable to find the installed path means one of two things, something in the users environment has
-        # gone awry and we can't find the path, or they do not have it installed. We'll do a final check to
-        # see if tesseract has been put on their path and works in a command prompt. Otherwise we error out.
-        if not installed_path:
-            if subprocess.run("tesseract --version", shell=True, universal_newlines=True).returncode == 0:
-                # Tesseract is on users path, we can just return true, default
-                # command is just "tesseract" which will always work.
-                return True
-            else:
-                # At this point tesseract isn't configured in the environment variables nor at the default location
-                installed_path = _find_tesseract()
-                # TODO: Add installed_path
-        # Tesseract is available, set the proper path for use by any piece of functionality
-        # that makes use of text recognition.
-        settings.TESSERACT_COMMAND = "{path}/tesseract".format(path=installed_path)
-        return True
-=======
         # Grab a reference to our application settings instance.
         # We can use this to determine if we need to even bother
         # with dynamic location checking.
@@ -405,7 +382,6 @@ def _check_tesseract():
             app_settings.save()
 
         settings.TESSERACT_COMMAND = "{path}/tesseract".format(path=tesseract_path)
->>>>>>> 3cdab449fc32508e99cfe06036520481dad4bc54
 
     # Broadly catch exceptions so our TesseractCheckError is caught as well as any other error.
     except Exception as exc:

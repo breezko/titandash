@@ -2701,10 +2701,6 @@ class Bot(object):
         """
         loops = 0
         while self.grabber.search(image=[self.images.exit_panel,self.images.large_exit_panel], bool_only=True) and (loops != FUNCTION_LOOP_TIMEOUT):
-<<<<<<< HEAD
-=======
-
->>>>>>> 1b2c4571472ed806398ffb2e980301cb8b03230a
                 found = self.find_and_click(
                     image=[self.images.exit_panel,self.images.large_exit_panel],
                     pause=0.5
