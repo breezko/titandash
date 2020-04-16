@@ -2389,6 +2389,7 @@ class Bot(object):
                     # screen now, since our clicks could potentially trigger a fairy ad.
                     if index % 5 == 0:
                         self.collect_ad_no_transition()
+                    sleep(0.05)
 
 
     @not_in_transition
