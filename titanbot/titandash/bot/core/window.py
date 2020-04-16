@@ -1,6 +1,4 @@
-from .constants import (
-    MEMU_WINDOW_FILTER, NOX_WINDOW_FILTER
-)
+from .constants import MEMU_WINDOW_FILTER
 
 from .utilities import globals
 
@@ -37,12 +35,7 @@ class Window(object):
         self.hwnd = hwnd
         self.x_subtract = 0
         self.debug = hwnd == "DEBUG"
-
-        # Depending on the type of emulator being used (and supported), some differences in the way their window object is defined.
-        # Nox: X Axis is not included in window rectangle.  MEmu: X Axis is included. Based on these differences, we should modify appropriately
-        # the width and height values before calculating padding.
-        if self.text.lower() in MEMU_WINDOW_FILTER:
-            self.x_subtract = 38
+        self.x_subtract = 38
 
     def __str__(self):
         return "{text} ({x}, {y}, {w}, {h})".format(
@@ -243,7 +236,7 @@ class InvalidHwndValue(Exception):
 class WindowHandler(object):
     """Window handle encapsulates all functionality for handling windows and processes needed."""
     def __init__(self):
-        self.filter_lst = MEMU_WINDOW_FILTER + NOX_WINDOW_FILTER
+        self.filter_lst = MEMU_WINDOW_FILTER
         self.windows = dict()
 
     def _cb(self, hwnd, extra):

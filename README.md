@@ -59,9 +59,8 @@ You can also visit our homepage, [here](https://titandash.net) for more informat
 - View all log records associated with the current bot session and filter on specific log levels.
 - Countdowns until specific functionality takes place.
 - View all sessions that have taken place and review logs/duration/prestiges that happened while a session was active.
-- View all raid results instances and view data about damage done and who dealt damage.
 - Create multiple configurations that can be swapped out quickly when needed (farming, tournaments, push).
-- Import/export your configurations in a small, shareable string.
+- Import/export your configurations in a small, shareable string with other users.
 - View and edit globally available settings that are used by every bot session.
 - Review all current statistics taken from the game, as well as statistics related to the bot.
 - View all prestiges and review additional information (average stage, average duration).
@@ -86,7 +85,7 @@ You can also visit our homepage, [here](https://titandash.net) for more informat
 - [Node/NPM](https://nodejs.org/en/)
 - [Tesseract-OCR](https://github.com/tesseract-ocr/tesseract)
 - [Redis Server](https://redislabs.com/)
-- [MEmu Emulator 7.0.1](https://drive.google.com/open?id=19WVZleJjRAcoKK4s-2pSnhiv8pKO_t1g) or [Nox Android Emulator (Not Fully Supported)](https://www.bignox.com/)
+- [MEmu Emulator 7.0.1](https://drive.google.com/open?id=19WVZleJjRAcoKK4s-2pSnhiv8pKO_t1g)
 
 ## Development
 Thanks for taking the time to check out this project. If you have any suggestions, 
