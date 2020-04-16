@@ -195,7 +195,7 @@ class Bot(object):
             pause=pause
         )
 
-    def find_and_click(self, image, region=None, precision=0.8, button="left", pause=0.0, padding=None, log=None):
+    def find_and_click(self, image, region=None, precision=0.8, button="left", pause=0.5, padding=None, log=None):
         """
         Local image find and click method for use with the bot. Allowing us to "fire and forget" to look for the image and click it.
         """
@@ -1841,7 +1841,7 @@ class Bot(object):
                 point=self.locs.collect_clan_crate,
                 pause=1
             )
-            if self.find_and_click(image=self.images.okay, pause=1):
+            if self.find_and_click(image=self.images.okay):
                 return True
 
         # No clan crate was found or collected, return false.
@@ -2280,7 +2280,6 @@ class Bot(object):
                         # the game is lagging or some other oddity that would cause this to loop forever.
                         self.find_and_click(
                             image=self.images.watch_ad,
-                            pause=2,
                             log="waiting for pi hole to finish ad..."
                         )
 
@@ -2288,7 +2287,6 @@ class Bot(object):
                     # now be present somewhere on the screen.
                     found = self.find_and_click(
                         image=self.images.collect_ad,
-                        pause=1
                     )
                     if found:
                         collected = True
@@ -2298,7 +2296,6 @@ class Bot(object):
                 else:
                     self.find_and_click(
                         image=self.images.no_thanks,
-                        pause=1,
                         log="declining fairy ad now..."
                     )
 
@@ -2307,7 +2304,6 @@ class Bot(object):
         if collected:
             self.logger.info("ad was successfully collected...")
             self.stats.increment_ads()
-            sleep(1)
 
     @not_in_transition
     @bot_property(queueable=True, tooltip="Collect an ad in game if one is available.")
@@ -2328,7 +2324,6 @@ class Bot(object):
             while loops != BOSS_LOOP_TIMEOUT:
                 found = self.find_and_click(
                     image=self.images.fight_boss,
-                    pause=0.8,
                     log="initiating boss fight in game now..."
                 )
                 if found:
@@ -2353,7 +2348,6 @@ class Bot(object):
             while loops != BOSS_LOOP_TIMEOUT:
                 found = self.find_and_click(
                     image=self.images.leave_boss,
-                    pause=0.8,
                     log="leaving boss fight in game now..."
                 )
                 # Flipping our logic slightly here, since leaving the fight would occur when
@@ -2393,16 +2387,9 @@ class Bot(object):
 
                     # Every fifth click, we should check to see if an ad is present on the
                     # screen now, since our clicks could potentially trigger a fairy ad.
- 
-                #TODO: Just check add each iter since the process is very time heavy 
-                self.collect_ad_no_transition()
-                
-                #Sleep 500ms for astral to fly
-                #TODO: Only enable if astral is configured
-                sleep(0.5)
-            # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
-            # clicked just as the tapping ended.
-            sleep(2)
+                    if index % 5 == 0:
+                        self.collect_ad_no_transition()
+
 
     @not_in_transition
     @bot_property(queueable=True, tooltip="Begin minigame tapping process in game.")
@@ -2454,7 +2441,6 @@ class Bot(object):
         # Even if we don't find the images we can verify that the panel is collapsed
         self.find_and_click(
                 image=[self.images.collapse_panel,self.images.exit_panel, self.images.large_exit_panel],
-                pause=1
                 )
         return True
 
@@ -2703,15 +2689,14 @@ class Bot(object):
         while self.grabber.search(image=[self.images.exit_panel,self.images.large_exit_panel], bool_only=True) and (loops != FUNCTION_LOOP_TIMEOUT):
                 found = self.find_and_click(
                     image=[self.images.exit_panel,self.images.large_exit_panel],
-                    pause=0.5
                 )
                 if found:
-                    return True
+                    break
                 loops += 1
                 sleep(0.5)
         
-        self.logger.warning("unable to close all panels on the screen, skipping...")
-        return False
+        self.logger.info("All panels should be closed.")
+        return True
 
     @bot_property(queueable=True, shortcut="p", tooltip="Pause all bot functionality.")
     def pause(self):
@@ -2863,7 +2848,8 @@ class Bot(object):
 
                 if self.enable_shortcuts:
                     self.setup_shortcuts()
-
+                self.welcome_screen_check()
+                self.rate_screen_check()
                 self.goto_master()
                 self.initialize()
                 self.get_upgrade_artifacts()
