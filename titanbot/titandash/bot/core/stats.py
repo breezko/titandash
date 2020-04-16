@@ -459,7 +459,7 @@ class Stats:
         if test_image:
             image = self._process(image=test_image)
         else:
-            image = self._process(region=region, use_current=True)
+            image = self._process(scale=3, region=region, use_current=True, invert=True)
 
         text = pytesseract.image_to_string(image=image, config="--psm 7")
         self.logger.info("text parsed: {text}".format(text=text))
