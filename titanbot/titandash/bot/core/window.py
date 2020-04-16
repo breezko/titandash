@@ -33,9 +33,8 @@ class Window(object):
 
     def __init__(self, hwnd):
         self.hwnd = hwnd
-        self.x_subtract = 0
-        self.debug = hwnd == "DEBUG"
         self.x_subtract = 38
+        self.debug = hwnd == "DEBUG"
 
     def __str__(self):
         return "{text} ({x}, {y}, {w}, {h})".format(
