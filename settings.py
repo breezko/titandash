@@ -53,6 +53,11 @@ LOG_DIR = os.path.join(BOT_DIR, "logs")
 DATA_DIR = os.path.join(BOT_DIR, "data")
 # Additional data directories.
 IMAGE_DIR = os.path.join(DATA_DIR, "images")
+DEPENDENCIES_DIR = os.path.join(DATA_DIR, "dependencies")
+
+# Additional data files.
+TESSERACT_TRAINED_DATA_NAME = "eng.traineddata"
+TESSERACT_TRAINED_DATA_FILE = os.path.join(DEPENDENCIES_DIR, TESSERACT_TRAINED_DATA_NAME)
 
 # Scripts.
 PROGRAM_BAT = os.path.join(ROOT_DIR, "titandash.bat")
