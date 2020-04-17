@@ -12,28 +12,38 @@ import os
 
 def bot(request):
     """
-    Grab all bot setting information that's used by the dashboard.
-
-    We do not need to lazily load this data since it's not using our database for any information.
+    Grab all bot/global settings information that's used by the dashboard lazily.
     """
-    context = {
-        "BOT": {
+    def _bot_query():
+        """
+        Retrieve all information about the bot that is used to derive settings within dashboard.
+        """
+        dct = {
             "STAGE_CAP": settings.STAGE_CAP,
             "TITANBOT_VERSION": settings.BOT_VERSION,
-            "LOG_LEVELS": [level[0] for level in LOGGING_LEVEL_CHOICES],
-            "GLOBALS": GlobalSettings.objects.grab().json()
-        },
+            "LOG_LEVELS": [level[0] for level in LOGGING_LEVEL_CHOICES]
+        }
+
+        # Grab all values from the bot's settings file and generate a key: value for each one.
+        values = {k: v for k, v in vars(settings).items() if any(char.isupper() for char in k)}
+        for setting, val in {k: v for k, v in values.items() if k not in ["VERSION", "BOT_VERSION", "STAGE_CAP"]}.items():
+            dct[setting] = val
+
+        # Including all settings as a json string.
+        dct["SETTINGS_JSON"] = json.dumps(dct)
+
+        return dct
+
+    def _globals_query():
+        """
+        Retrieve all information about global settings used by dashboard.
+        """
+        return GlobalSettings.objects.grab().json()
+
+    return {
+        "BOT": SimpleLazyObject(_bot_query),
+        "GLOBALS": SimpleLazyObject(_globals_query)
     }
-
-    # Grab all values from the bot's settings file and generate a key: value for each one.
-    values = {k: v for k, v in vars(settings).items() if any(char.isupper() for char in k)}
-    for setting, val in {k: v for k, v in values.items() if k not in ["VERSION", "BOT_VERSION", "STAGE_CAP"]}.items():
-        context["BOT"][setting] = val
-
-    # Including all settings as a json string.
-    context["SETTINGS_JSON"] = json.dumps(context["BOT"])
-
-    return context
 
 
 def instances(request):
