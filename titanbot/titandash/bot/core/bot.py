@@ -1677,7 +1677,7 @@ class Bot(object):
         """
         if self.configuration.enable_tournaments:
             self.logger.info("checking for tournament ready to join or in progress.")
-            if not self.ensure_collapsed_closed():
+            if not self.ensure_collapsed():
                 return False, None
 
             # Looping to find tournament here, since there's a chance that the tournament is finished, which
@@ -2391,16 +2391,10 @@ class Bot(object):
                         pause=0.05
                     )
 
-                    # Every fifth click, we should check to see if an ad is present on the
-                    # screen now, since our clicks could potentially trigger a fairy ad.
-
- 
-                #TODO: Just check add each iter since the process is very time heavy 
+                # Check for ads after each routine iteration, check is expensive
+                # so no need to run multiple checks.
                 self.collect_ad_no_transition()
-                
-                #Sleep 500ms for astral to fly
-                #TODO: Only enable if astral is configured
-                sleep(0.5)
+
             # If no transition state was found during clicks, wait a couple of seconds in case a fairy was
             # clicked just as the tapping ended.
             sleep(2)
@@ -2435,9 +2429,11 @@ class Bot(object):
                         )
 
                 self.collect_ad_no_transition()
-                #Sleep to let coordinate offensive fly
-                sleep(0.5)
 
+                # Sleep for an additional amount of time if astral awakening
+                # is currently enabled (allow orb to fly).
+                if "astral_awakening" in self.minigame_order:
+                    sleep(0.5)
 
     @not_in_transition
     def ensure_collapsed(self):
@@ -2447,7 +2443,12 @@ class Bot(object):
         We can do this by simply making sure that our settings icon is available on the screen,
         since this button is ALWAYS visible as long as no panel is expanded currently.
         """
-        if self.grabber.search(image=[self.images.settings, self.images.clan_raid_ready, self.images.clan_no_raid], bool_only=True):
+        self.logger.info("attempting to collapse any panels in game now.")
+
+        if self.grabber.search(image=[self.images.settings, self.images.fight_boss, self.images.leave_boss,
+                                      self.images.icon_boss, self.images.clan_raid_ready, self.images.clan_no_raid], bool_only=True):
+            # Return early if any images are present that could only be seen when the
+            # game is in a collapsed state, regardless of panel.
             return True
 
         # If we reach this point, it means our settings are not yet available, let's minimize
@@ -2460,12 +2461,9 @@ class Bot(object):
             )
             if found:
                 return True
+
             sleep(1)
             loops += 1
-
-        # Additionally, maybe the shop panel was opened for some reason. We should also
-        # handle this edge case by closing it if the collapse panel is not visible.
-        return self.no_panel()
 
     @not_in_transition
     def goto_panel(self, panel, icon, top_find, bottom_find, collapsed=True, top=True, equipment_tab=None):
@@ -2708,17 +2706,27 @@ class Bot(object):
         """
         Instruct the bot to make sure no panels are currently open.
         """
-        while self.grabber.search(image=[self.images.exit_panel,self.images.large_exit_panel], bool_only=True) and (loops != FUNCTION_LOOP_TIMEOUT):
-                found = self.find_and_click(
-                    image=self.images.exit_panel,
-                    pause=0.5
-                )
-                if found:
-                    return True
-                loops += 1
-                sleep(0.5)
-            self.logger.warning("unable to close all panels on the screen, skipping...")
-            return False
+        self.logger.info("attempting to close any panels in game.")
+
+        loops = 0
+        while self.grabber.search(image=[self.images.exit_panel, self.images.large_exit_panel], bool_only=True):
+            if loops == FUNCTION_LOOP_TIMEOUT:
+                self.logger.info("unable to close panels, giving up.")
+                return False
+
+            found = self.find_and_click(
+                image=self.images.exit_panel,
+                pause=0.5
+            )
+            # Return true if we've found the exit image and clicked on it.
+            if found:
+                return True
+
+            loops += 1
+            sleep(0.5)
+
+        # If no panels are already open, return true now since
+        # we can safely assume we're in a proper state if exit panels aren't found.
         return True
 
     @bot_property(queueable=True, shortcut="p", tooltip="Pause all bot functionality.")
