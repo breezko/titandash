@@ -72,7 +72,7 @@ class Bot(object):
         self.PAUSE = False
         self.VALID_AUTHENTICATION = True
 
-        self.last_stage = None
+        self.last_stage = -1
         self.owned_artifacts = None
         self.next_artifact_index = None
         self.next_artifact_upgrade = None
@@ -409,7 +409,7 @@ class Bot(object):
         through our background scheduler implementation.
         """
         try:
-            stage = int(self.stats.stage_ocr())
+            stage = int(self.stats.stage_ocr(previous=self.last_stage))
             if stage > STAGE_CAP:
                 return
             if self.ADVANCED_START and stage < self.ADVANCED_START:
@@ -418,7 +418,6 @@ class Bot(object):
             self.logger.debug("current stage parsed as: {stage}".format(stage=strfnumber(number=stage)))
             self.last_stage = self.props.current_stage
             self.props.current_stage = stage
-
         # ValueError when the parsed stage isn't able to be coerced.
         except ValueError:
             self.logger.debug("current stage could not be parsed... skipping.")
@@ -1615,6 +1614,7 @@ class Bot(object):
                 self.logger.info("no artifact to upgrade, skipping purchase...")
                 return
             
+
             # Access to current upgrade is present above,
             # go ahead and update the next artifact to purchase.
             self.update_next_artifact_upgrade()
@@ -2296,7 +2296,6 @@ class Bot(object):
         if collected:
             self.logger.info("ad was successfully collected...")
             self.stats.increment_ads()
-            sleep(1)
 
     @not_in_transition
     @bot_property(queueable=True, tooltip="Collect an ad in game if one is available.")
@@ -2317,7 +2316,6 @@ class Bot(object):
             while loops != BOSS_LOOP_TIMEOUT:
                 found = self.find_and_click(
                     image=self.images.fight_boss,
-                    pause=0.8,
                     log="initiating boss fight in game now..."
                 )
                 if found:
@@ -2342,7 +2340,6 @@ class Bot(object):
             while loops != BOSS_LOOP_TIMEOUT:
                 found = self.find_and_click(
                     image=self.images.leave_boss,
-                    pause=0.8,
                     log="leaving boss fight in game now..."
                 )
                 # Flipping our logic slightly here, since leaving the fight would occur when
@@ -2364,6 +2361,7 @@ class Bot(object):
         """
         Perform simple screen tap over entire game area.
         """
+        #TODO: Toggle tapping on fairy and just click clan member?
         if self.configuration.enable_tapping:
             self.logger.info("beginning generic tapping process...")
 
@@ -2383,7 +2381,7 @@ class Bot(object):
                 # Check for ads after each routine iteration, check is expensive
                 # so no need to run multiple checks.
                 self.collect_ad_no_transition()
-
+                
     @not_in_transition
     @bot_property(queueable=True, tooltip="Begin minigame tapping process in game.")
     def minigames(self):
@@ -2440,6 +2438,7 @@ class Bot(object):
         return self.find_and_click(
             image=[self.images.collapse_panel, self.images.exit_panel, self.images.large_exit_panel],
         )
+
 
     @not_in_transition
     def goto_panel(self, panel, icon, top_find, bottom_find, collapsed=True, top=True, equipment_tab=None):
@@ -2858,7 +2857,8 @@ class Bot(object):
 
                 if self.enable_shortcuts:
                     self.setup_shortcuts()
-
+                self.welcome_screen_check()
+                self.rate_screen_check()
                 self.goto_master()
                 self.initialize()
                 self.get_upgrade_artifacts()

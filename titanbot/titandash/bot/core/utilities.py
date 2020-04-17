@@ -320,11 +320,6 @@ def in_transition_func(*args, max_loops, **kwargs):
     loops = 0
 
     while True:
-        # Check for the early game/non vip game prompts that may pop up
-        # while playing the game.
-        _self.welcome_screen_check()
-        _self.rate_screen_check()
-
         # Is a panel open that should be closed? This large exit panel will close any in game
         # panels that may of been opened on accident.
         _self.find_and_click(
@@ -355,6 +350,7 @@ def in_transition_func(*args, max_loops, **kwargs):
         )
         _self.logger.info("in a transition? waiting briefly and trying again...")
         sleep(0.25)
+
 
         loops += 1
         if loops == max_loops:

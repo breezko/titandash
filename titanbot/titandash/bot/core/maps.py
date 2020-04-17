@@ -61,6 +61,8 @@ GAME_LOCS = {
             (110, 411),
             # Click on spot where equipment appears.
             (355, 411),
+            # Click on clan helper
+            (176,411),
         ),
         "collect_clan_crate": (70, 131),
     },
@@ -416,7 +418,7 @@ STAGE_COORDS = {
 PRESTIGE_COORDS = {
     "base": {
         "time_since": (301, 155, 380, 177),
-        "advance_start": (136, 584, 212, 612),
+        "advance_start": (137, 600, 195, 620),
     },
     "event": {
         "time_since": (301, 121, 380, 139),
