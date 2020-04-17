@@ -2221,27 +2221,23 @@ class Bot(object):
 
     def welcome_screen_check(self):
         """
-        Check to see if the welcome panel is currently on the screen, and close it.
+        Check to see if the welcome panel is currently on the screen, and close it if the global
+        configuration currently has welcome screen checks toggled.
         """
-        if self.grabber.search(image=self.images.welcome_header, bool_only=True):
-            # A welcome header is present, try to collect through
-            # non vip means first.
-            found = self.find_and_click(
-                image=self.images.welcome_collect_no_vip,
+        if globals.welcome_screen_checks():
+            # Try to find and click the non-vip or vip enabled welcome
+            # screen progress report to close the panel.
+            self.find_and_click(
+                image=[self.images.welcome_collect_no_vip, self.images.welcome_collect_vip]
             )
-            # Try using vip means if the first method does not work.
-            if not found:
-                self.find_and_click(
-                    image=self.images.welcome_collect_vip,
-                )
 
     def rate_screen_check(self):
         """
         Check to see if the game rate panel is currently on the screen, and close it.
         """
-        if self.grabber.search(image=self.images.rate_icon, bool_only=True):
+        if globals.rate_screen_checks():
             self.find_and_click(
-                image=self.images.rate_icon,
+                image=self.images.rate_icon
             )
 
     def ad(self):
