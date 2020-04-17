@@ -75,6 +75,18 @@ class GlobalsChecker:
         """
         return self._get_cache().pihole_ads_enabled
 
+    def _welcome_screen_checks_enabled(self):
+        """
+        Determine if our cached globals currently have welcome screen checks enabled.
+        """
+        return self._get_cache().welcome_screen_checks_enabled
+
+    def _rate_screen_checks_enabled(self):
+        """
+        Determine if our cached globals currently have rate screen checks enabled.
+        """
+        return self._get_cache().rate_screen_checks_enabled
+
     def _logging_level(self):
         return self._get_cache().logging_level
 
@@ -96,6 +108,18 @@ class GlobalsChecker:
         Return a boolean to represent if pihole ads are enabled.
         """
         return self._pihole_ads_enabled()
+
+    def welcome_screen_checks(self):
+        """
+        Return a boolean to represent if welcome screen checks are enabled.
+        """
+        return self._welcome_screen_checks_enabled()
+
+    def rate_screen_checks(self):
+        """
+        Return a boolean to represent if rate screen checks are enabled.
+        """
+        return self._rate_screen_checks_enabled()
 
     def logging_level(self):
         return self._logging_level()
