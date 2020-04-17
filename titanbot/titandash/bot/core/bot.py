@@ -2804,6 +2804,10 @@ class Bot(object):
         if self.scheduler.state == STATE_STOPPED:
             self.scheduler.start()
 
+        # Make sure the boss fight is entered if possible before beginning
+        # normal bot runtime loop.
+        self.fight_boss()
+
         # Parse current skill levels, done once on initialization
         # and taken care of by our prestige function for every prestige.
         self.parse_current_skills()
