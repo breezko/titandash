@@ -2386,7 +2386,8 @@ class Bot(object):
             for i in range(self.configuration.tapping_repeat):
                 for index, point in enumerate(self.locs.fairies_map, start=1):
                     self.click(
-                        point=point
+                        point=point,
+                        pause=0.05
                     )
 
                     # Every fifth click, we should check to see if an ad is present on the
@@ -2423,11 +2424,9 @@ class Bot(object):
                         self.logger.info("executing/tapping {minigame}".format(minigame=point))
                     else:
                         self.click(
-                            point=point
+                            point=point,
+                            pause=0.05
                         )
-                        # Wait 50 milliseconds... Presses won't go off parallel otherwise
-                        # (PyAutoGUI defaults to 100 clicks per second.)
-                        sleep(0.05)
 
                 self.collect_ad_no_transition()
                         

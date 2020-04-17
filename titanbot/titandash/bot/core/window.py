@@ -1,5 +1,4 @@
 from .constants import MEMU_WINDOW_FILTER
-
 from .utilities import globals
 
 from PIL import Image
@@ -18,6 +17,8 @@ import time
 # Only a SINGLE screenshot should be taken at any given time, otherwise we run into issues
 # with our DC retrieval (GetCompatibleDC) and DC deletion.
 _SCREENSHOT_LOCK = Lock()
+_CLICK_LOCK = Lock()
+_DRAG_LOCK = Lock()
 
 
 class Window(object):
@@ -33,8 +34,6 @@ class Window(object):
 
     def __init__(self, hwnd):
         self.hwnd = hwnd
-        self.x_subtract = 38
-        self.debug = hwnd == "DEBUG"
 
     def __str__(self):
         return "{text} ({x}, {y}, {w}, {h})".format(
@@ -45,35 +44,31 @@ class Window(object):
 
     @property
     def text(self):
-        return win32gui.GetWindowText(self.hwnd) if not self.debug else "DEBUG WINDOW"
+        return win32gui.GetWindowText(self.hwnd)
 
     @property
     def rect(self):
-        return win32gui.GetClientRect(self.hwnd) if not self.debug else [0, 0, self.EMULATOR_WIDTH, self.EMULATOR_HEIGHT]
-
-    @property
-    def x_padding(self):
-        return self.width - 480
-
-    @property
-    def y_padding(self):
-        return self.height - 800
+        return win32gui.GetClientRect(self.hwnd)
 
     @property
     def x(self):
-        return self.rect[0] + self.x_padding
+        return self.rect[0]
 
     @property
     def y(self):
-        return self.rect[1] + self.y_padding
+        return self.rect[1]
 
     @property
     def width(self):
-        return self.rect[2] - self.x_subtract
+        return self.rect[2] - self.x
 
     @property
     def height(self):
-        return self.rect[3]
+        return self.rect[3] - self.y
+
+    @property
+    def y_padding(self):
+        return self.height - self.EMULATOR_HEIGHT
 
     def find(self, search):
         """
@@ -95,28 +90,29 @@ class Window(object):
         Sending a message to the specified window so the click takes place
         whether the window is visible or not.
         """
-        globals.failsafe()
-        evt_d = self.SUPPORTED_CLICK_EVENTS[button][0]
-        evt_u = self.SUPPORTED_CLICK_EVENTS[button][1]
-
-        param = win32api.MAKELONG(
-            point[0],
-            point[1] + self.y_padding
-        )
-
-        # Loop through all clicks that should take place.
-        for x in range(clicks):
+        with _CLICK_LOCK:
             globals.failsafe()
-            win32api.SendMessage(self.hwnd, evt_d, 1, param)
-            win32api.SendMessage(self.hwnd, evt_u, 0, param)
+            evt_d = self.SUPPORTED_CLICK_EVENTS[button][0]
+            evt_u = self.SUPPORTED_CLICK_EVENTS[button][1]
 
-            # Interval sleeping?
-            if interval:
-                time.sleep(interval)
+            param = win32api.MAKELONG(
+                point[0],
+                point[1] + self.y_padding
+            )
 
-        # Pausing after clicks are finished?
-        if pause:
-            time.sleep(pause)
+            # Loop through all clicks that should take place.
+            for x in range(clicks):
+                globals.failsafe()
+                win32api.SendMessage(self.hwnd, evt_d, 1, param)
+                win32api.SendMessage(self.hwnd, evt_u, 0, param)
+
+                # Interval sleeping?
+                if interval:
+                    time.sleep(interval)
+
+            # Pausing after clicks are finished?
+            if pause:
+                time.sleep(pause)
 
     def drag_mouse(self, start, end, button="left", pause=0.5):
         """
@@ -125,91 +121,116 @@ class Window(object):
         Sending a message to the specified window so the drag can take place whether
         the window is visible or not.
         """
-        globals.failsafe()
-        evt_d = self.SUPPORTED_CLICK_EVENTS[button][0]
-        evt_u = self.SUPPORTED_CLICK_EVENTS[button][1]
+        with _DRAG_LOCK:
+            globals.failsafe()
+            evt_d = self.SUPPORTED_CLICK_EVENTS[button][0]
+            evt_u = self.SUPPORTED_CLICK_EVENTS[button][1]
 
-        start_param = win32api.MAKELONG(
-            start[0],
-            start[1] + self.y_padding
-        )
-        end_param = win32api.MAKELONG(
-            end[0],
-            end[1] + self.y_padding
-        )
+            start_param = win32api.MAKELONG(
+                start[0],
+                start[1] + self.y_padding
+            )
+            end_param = win32api.MAKELONG(
+                end[0],
+                end[1] + self.y_padding
+            )
 
-        # Perform actionable click on start point just to ensure that
-        # our drag will take place.
+            # Perform actionable click on start point just to ensure that
+            # our drag will take place.
 
-        # Moving the mouse to the starting position for the mouse drag.
-        # Mouse left button is DOWN after this point.
-        win32api.SendMessage(self.hwnd, evt_d, 1, start_param)
+            # Moving the mouse to the starting position for the mouse drag.
+            # Mouse left button is DOWN after this point.
+            win32api.SendMessage(self.hwnd, evt_d, 1, start_param)
 
-        # How many mouse movements are needed to complete our drag?
-        # DOWN DRAG
-        if start[1] > end[1]:
-            down = True
-            clicks = start[1] - end[1]
-        # UP DRAG.
-        else:
-            down = False
-            clicks = end[1] - start[1]
+            # How many mouse movements are needed to complete our drag?
+            # DOWN DRAG
+            if start[1] > end[1]:
+                down = True
+                clicks = start[1] - end[1]
+            # UP DRAG.
+            else:
+                down = False
+                clicks = end[1] - start[1]
 
-        time.sleep(0.05)
-        for i in range(clicks):
-            param = win32api.MAKELONG(start[0], start[1] - i if down else start[1] + i)
-            win32api.SendMessage(self.hwnd, win32con.WM_MOUSEMOVE, 1, param)
-            time.sleep(0.001)
+            time.sleep(0.05)
+            for i in range(clicks):
+                param = win32api.MAKELONG(start[0], start[1] - i if down else start[1] + i)
+                win32api.SendMessage(self.hwnd, win32con.WM_MOUSEMOVE, 1, param)
+                time.sleep(0.001)
 
-        time.sleep(0.1)
-        win32api.SendMessage(self.hwnd, evt_u, 0, end_param)
+            time.sleep(0.1)
+            win32api.SendMessage(self.hwnd, evt_u, 0, end_param)
 
-        if pause:
-            time.sleep(pause)
+            if pause:
+                time.sleep(pause)
 
     def screenshot(self, region=None):
         """
-        Take a screenshot of the current window. The window may be visible or behind another window.
+        Takes a screenshot of the current window.
+
+        A region can be provided to also only pick out a certain bounding box of image
+        data from the final image.
         """
-        _SCREENSHOT_LOCK.acquire()
+        # Ensure only one screenshot is ever being taken at a single
+        # time. We may run into windows api issues if this isn't done.
+        with _SCREENSHOT_LOCK:
+            # Retrieve the required handles and DC objects
+            # through the windows API.
+            hwnd_dc = win32gui.GetWindowDC(self.hwnd)
+            mfc_dc = win32ui.CreateDCFromHandle(hwnd_dc)
+            save_dc = mfc_dc.CreateCompatibleDC()
 
-        hwnd_dc = win32gui.GetWindowDC(self.hwnd)
-        mfc_dc = win32ui.CreateDCFromHandle(hwnd_dc)
-        save_dc = mfc_dc.CreateCompatibleDC()
-        save_bitmap = win32ui.CreateBitmap()
-        save_bitmap.CreateCompatibleBitmap(mfc_dc, self.width, self.height)
-        save_dc.SelectObject(save_bitmap)
-        result = windll.user32.PrintWindow(self.hwnd, save_dc.GetSafeHdc(), 0)
+            save_bitmap = win32ui.CreateBitmap()
+            save_bitmap.CreateCompatibleBitmap(mfc_dc, self.width, self.height)
+            save_dc.SelectObject(save_bitmap)
 
-        bmp_info = save_bitmap.GetInfo()
-        bmp_str = save_bitmap.GetBitmapBits(True)
-        image = Image.frombuffer("RGB", (bmp_info["bmWidth"], bmp_info["bmHeight"]), bmp_str, "raw", "BGRX", 0, 1)
+            # Perform the actual printing functionality to retrieve
+            # the content within our specified hwnd.
+            windll.user32.PrintWindow(self.hwnd, save_dc.GetSafeHdc(), 0)
 
-        save_dc.DeleteDC()
-        mfc_dc.DeleteDC()
-        win32gui.ReleaseDC(self.hwnd, hwnd_dc)
-        win32gui.DeleteObject(save_bitmap.GetHandle())
+            bmp_info = save_bitmap.GetInfo()
+            bmp_str = save_bitmap.GetBitmapBits(True)
 
-        image = image.crop(
-            box=(
+            # Create the actual image object from our bitmap buffer
+            # generated above.
+            image = Image.frombuffer(
+                "RGB",
+                (bmp_info["bmWidth"], bmp_info["bmHeight"]),
+                bmp_str,
+                "raw",
+                "BGRX",
                 0,
-                self.y_padding,
-                self.EMULATOR_WIDTH,
-                self.EMULATOR_HEIGHT + self.y_padding
+                1
             )
-        )
 
-        # If a region is present, we can ensure our image is cropped to the
-        # bounding box specified. The region should already take into account
-        # our expected y padding (ie: (110, 440) -> (110, 410). Give or take a couple of pixels.
-        if region:
+            # Cleanup windows api objects for use in repeated
+            # screenshots and functionality.
+            save_dc.DeleteDC()
+            mfc_dc.DeleteDC()
+            win32gui.ReleaseDC(self.hwnd, hwnd_dc)
+            win32gui.DeleteObject(save_bitmap.GetHandle())
+
+            # Before our actual region cropping takes place, we also want to
+            # make sure that the window itself is already cropped to only be displaying
+            # the proper emulator content.
             image = image.crop(
-                box=region
+                box=(
+                    0,
+                    self.y_padding,
+                    self.EMULATOR_WIDTH,
+                    self.EMULATOR_HEIGHT + self.y_padding
+                )
             )
 
-        _SCREENSHOT_LOCK.release()
+            # If a region is present, we can ensure our image is cropped to the
+            # bounding box specified. The region should already take into account
+            # our expected y padding (ie: (110, 440) -> (110, 410). Give or take a couple of pixels.
+            if region:
+                image = image.crop(
+                    box=region
+                )
 
-        return image
+            return image
 
     def json(self):
         """Convert window instance to a json compliant dictionary."""
