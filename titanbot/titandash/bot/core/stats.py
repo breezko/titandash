@@ -91,53 +91,36 @@ class Stats:
         except TypeError:
             return 0
 
-    def _process(self, scale=3, iterations=1, image=None, current=False, region=None):
+    def _process(self, image=None, scale=1, threshold=None, region=None, use_current=True, invert=False):
         """
         Process the grabbers current image before OCR extraction attempt.
         """
-        if current:
-            self.grabber.snapshot(region=region)
-        if image:
-            image = image
-        else:
-            image = self.grabber.current
+        _image = image or self.grabber.snapshot(region=region) if use_current else self.grabber.current
+        _image = np.array(_image)
 
-        image = np.array(image)
+        # Scale and desaturate the image.
+        _image = cv2.resize(_image, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+        _image = cv2.cvtColor(_image, cv2.COLOR_BGR2GRAY)
 
-        # Resize and desaturate.
-        image = cv2.resize(image, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        # Apply dilation and erosion.
-        kernel = np.ones((1, 1), np.uint8)
-        image = cv2.dilate(image, kernel, iterations=iterations)
-        image = cv2.erode(image, kernel, iterations=iterations)
-        
-        return Image.fromarray(image)
+        # Performing thresholds on the image if it's enabled.
+        # Threshold will ensure that certain colored pieces are removed.
+        if threshold:
+            retr, _image = cv2.threshold(_image, 230, 255, cv2.THRESH_BINARY)
+            contours, hier = cv2.findContours(_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    def _process_stage(self, scale=5, threshold=100, image=None):
-        if image:
-            image = image
-        else:
-            image = self.grabber.current
 
-        image = np.array(image)
+            # Drawing black over any contours smaller than our specified threshold.
+            # Removing the un-wanted blobs from the image grabbed.
+            for contour in contours:
+                if cv2.contourArea(contour) < threshold:
+                    cv2.drawContours(_image, [contour], 0, (0,), -1)
 
-        # Resize image.
-        image = cv2.resize(image, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
-        # Create gray scale.
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        # Perform threshold on image.
-        retr, mask = cv2.threshold(image, 230, 255, cv2.THRESH_BINARY_INV)
+        if invert:
+            _image = cv2.bitwise_not(_image)
 
-        # Find contours.
-        contours, hier = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        # Draw black over counters smaller than 200, removing un wanted blobs from stage image.
-        for contour in contours:
-            if cv2.contourArea(contour) < threshold:
-                cv2.drawContours(mask, [contour], 0, (0,), -1)
-
-        return Image.fromarray(mask)
+        # Re-create the image from our numpy array through the Pillow Image module.
+        # Threshold or not, an Image object is always returned.
+        return Image.fromarray(_image)
 
     @staticmethod
     def images_duplicate(image_one, image_two, cutoff=2):
@@ -253,9 +236,8 @@ class Stats:
         """
         Parse out a skills current level when given the region of the levels text on screen.
         """
-        self.grabber.snapshot(region=region)
-
-        text = pytesseract.image_to_string(image=self._process(), config="--psm 7")
+        image = self._process(scale=5, region=region, use_current=True, invert=True)
+        text = pytesseract.image_to_string(image=image, config="--psm 7")
 
         if "," in text:
             text = text.split(",")[1]
@@ -280,8 +262,7 @@ class Stats:
             if test_set:
                 image = Image.open(test_set[key])
             else:
-                self.grabber.snapshot(region=region)
-                image = self._process(scale=3)
+                image = self._process(region=region, use_current=True)
 
             text = pytesseract.image_to_string(image, config='--psm 7')
             self.logger.debug("ocr result: {key} -> {text}".format(key=key, text=text))
@@ -367,12 +348,11 @@ class Stats:
         region = STAGE_COORDS["region"]
 
         if test_image:
-            image = self._process_stage(scale=3, image=test_image)
+            image = self._process(image=test_image, scale=5, threshold=150, invert=True)
         else:
-            self.grabber.snapshot(region=region)
-            image = self._process_stage(scale=3)
-        
-        text = pytesseract.image_to_string(image, config="--psm 7 nobatch digits --oem 0")
+            image = self._process(scale=5, threshold=150, region=region, use_current=True, invert=True)
+
+        text = pytesseract.image_to_string(image, config='--psm 7 --oem 0 nobatch digits')
         self.logger.debug("parsed value: {text}".format(text=text))
         
         value =''.join(filter(lambda x: x.isdigit(), text))
@@ -417,12 +397,12 @@ class Stats:
         region = PRESTIGE_COORDS["event" if globals.events() else "base"]["advance_start"]
 
         if test_image:
-            image = self._process_stage(test_image)
+            image = self._process(image=test_image, scale=5, theshold=150, invert=True)
         else:
-            self.grabber.snapshot(region=region)
-            image = self._preprocess_stage(scale=5)
+            image = self._process(scale=5, threshold=150, region=region, use_current=True, invert=True)
 
-        text = pytesseract.image_to_string(image, config="--psm 7 nobatch digits --oem 0")
+        text = pytesseract.image_to_string(image, config="--psm 7 --oem 0 nobatch digits")
+
         self.logger.info("parsed value: {text}".format(text=text))
         
         # Doing some light parse work, similar to the stage ocr function to remove letters if present.
@@ -443,10 +423,9 @@ class Stats:
         region = PRESTIGE_COORDS["event" if globals.events() else "base"]["time_since"]
 
         if test_image:
-            image = self._process(scale=3, image=test_image)
+            image = self._process(image=test_image, use_current=True)
         else:
-            self.grabber.snapshot(region=region)
-            image = self._process(scale=3)
+            image = self._process(region=region, use_current=True)
 
         text = pytesseract.image_to_string(image, config='--psm 7')
         self.logger.info("parsed value: {text}".format(text=text))
@@ -505,11 +484,11 @@ class Stats:
         region_code = CLAN_COORDS["info_code"]
 
         if test_images:
-            image_name = self._process(test_images[0])
-            image_code = self._process(test_images[1])
+            image_name = self._process(image=test_images[0])
+            image_code = self._process(image=test_images[1])
         else:
-            image_name = self._process(current=True, region=region_name)
-            image_code = self._process(current=True, region=region_code)
+            image_name = self._process(use_current=True, region=region_name)
+            image_code = self._process(use_current=True, region=region_code)
 
         name = pytesseract.image_to_string(image=image_name, config="--psm 7")
         code = pytesseract.image_to_string(image=image_code, config="--psm 7")
@@ -526,9 +505,9 @@ class Stats:
         region = CLAN_RAID_COORDS["raid_attack_reset"]
 
         if test_image:
-            image = self._process(test_image)
+            image = self._process(image=test_image)
         else:
-            image = self._process(current=True, region=region)
+            image = self._process(scale=3, region=region, use_current=True, invert=True)
 
         text = pytesseract.image_to_string(image=image, config="--psm 7")
         self.logger.info("text parsed: {text}".format(text=text))

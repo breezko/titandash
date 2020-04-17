@@ -212,11 +212,11 @@ class Bot(object):
                 self.logger.info(log)
             if not padding:
                 self.click_image(
-                        image=found_image,
-                        pos=position,
-                        button=button,
-                        pause=pause
-                    )
+                    image=found_image,
+                    pos=position,
+                    button=button,
+                    pause=pause
+                )
             else:
                 self.click(
                     point=(
@@ -1727,6 +1727,7 @@ class Bot(object):
                         # Ensuring that any panels are collapsed, then attempting to join
                         # the tournament through the interface.
                         self.ensure_collapsed_closed()
+
                         self.click(
                             point=self.locs.tournament,
                             pause=2
@@ -1977,16 +1978,14 @@ class Bot(object):
                 while self.grabber.search(self.images.daily_collect, bool_only=True):
                     self.find_and_click(
                         image=self.images.daily_collect,
-                        log="completed daily achievement found, collecting now.",
-                        pause=0.5
+                        log="completed daily achievement found, collecting now."
                     )
 
                 # Additionally, check for the vip collection option
                 # for daily achievements.
                 self.find_and_click(
                     image=self.images.vip_daily_collect,
-                    log="vip daily achievement found, collecting now.",
-                    pause=0.5
+                    log="vip daily achievement found, collecting now."
                 )
 
                 # Exiting achievements screen now.
@@ -2222,30 +2221,23 @@ class Bot(object):
 
     def welcome_screen_check(self):
         """
-        Check to see if the welcome panel is currently on the screen, and close it.
+        Check to see if the welcome panel is currently on the screen, and close it if the global
+        configuration currently has welcome screen checks toggled.
         """
-        if self.grabber.search(image=self.images.welcome_header, bool_only=True):
-            # A welcome header is present, try to collect through
-            # non vip means first.
-            found = self.find_and_click(
-                image=self.images.welcome_collect_no_vip,
-                pause=1
+        if globals.welcome_screen_checks():
+            # Try to find and click the non-vip or vip enabled welcome
+            # screen progress report to close the panel.
+            self.find_and_click(
+                image=[self.images.welcome_collect_no_vip, self.images.welcome_collect_vip]
             )
-            # Try using vip means if the first method does not work.
-            if not found:
-                self.find_and_click(
-                    image=self.images.welcome_collect_vip,
-                    pause=1
-                )
 
     def rate_screen_check(self):
         """
         Check to see if the game rate panel is currently on the screen, and close it.
         """
-        if self.grabber.search(image=self.images.rate_icon, bool_only=True):
+        if globals.rate_screen_checks():
             self.find_and_click(
-                image=self.images.rate_icon,
-                pause=1
+                image=self.images.rate_icon
             )
 
     def ad(self):
@@ -2381,17 +2373,15 @@ class Bot(object):
             self.logger.info("executing tapping process {repeats} time(s)".format(repeats=self.configuration.tapping_repeat))
             for i in range(self.configuration.tapping_repeat):
                 for index, point in enumerate(self.locs.fairies_map, start=1):
+                    sleep(0.05)
                     self.click(
                         point=point
                     )
 
-                    # Every fifth click, we should check to see if an ad is present on the
-                    # screen now, since our clicks could potentially trigger a fairy ad.
-                    if index % 5 == 0:
-                        self.collect_ad_no_transition()
-                    sleep(0.05)
-
-
+                # Check for ads after each routine iteration, check is expensive
+                # so no need to run multiple checks.
+                self.collect_ad_no_transition()
+                
     @not_in_transition
     @bot_property(queueable=True, tooltip="Begin minigame tapping process in game.")
     def minigames(self):
@@ -2416,34 +2406,39 @@ class Bot(object):
                     if isinstance(point[0], str):
                         self.logger.info("executing/tapping {minigame}".format(minigame=point))
                     else:
-                        self.click(
-                            point=point
-                        )
-                        # Wait 50 milliseconds... Presses won't go off parallel otherwise
-                        # (PyAutoGUI defaults to 100 clicks per second.)
                         sleep(0.05)
+                        self.click(
+                            point=point,
+                        )
 
                 self.collect_ad_no_transition()
-                        
-                # Sleep to let coordinated offensive fly
-                sleep(0.5)
+
+                # Sleep for an additional amount of time if astral awakening
+                # is currently enabled (allow orb to fly).
+                if "astral_awakening" in self.minigame_order:
+                    sleep(0.5)
 
     @not_in_transition
     def ensure_collapsed_closed(self):
         """
         Ensure that regardless of the current panel that is active, our game screen is present.
 
-        We can do this by simply making sure that our settings icon is available on the screen,
-        since this button is ALWAYS visible as long as no panel is expanded currently.
+        We do this by attempting to collapse (or close) any panel that's open in game.
         """
-        if self.grabber.search(image=[self.images.settings, self.images.clan_raid_ready, self.images.clan_no_raid], bool_only=True):
+        self.logger.info("attempting to collapse any panels in game now.")
+
+        if self.grabber.search(image=[self.images.settings, self.images.fight_boss, self.images.leave_boss,
+                                      self.images.icon_boss, self.images.clan_raid_ready, self.images.clan_no_raid], bool_only=True):
+            # Return early if any images are present that could only be seen when the
+            # game is in a collapsed state, regardless of panel.
             return True
 
-        # Even if we don't find the images we can verify that the panel is collapsed
-        self.find_and_click(
-                image=[self.images.collapse_panel,self.images.exit_panel, self.images.large_exit_panel],
-                )
-        return True
+        # If we reach this point, it means that none of our expected images are present,
+        # (probably un-collapsed panel currently on screen).
+        return self.find_and_click(
+            image=[self.images.collapse_panel, self.images.exit_panel, self.images.large_exit_panel],
+        )
+
 
     @not_in_transition
     def goto_panel(self, panel, icon, top_find, bottom_find, collapsed=True, top=True, equipment_tab=None):
@@ -2686,17 +2681,26 @@ class Bot(object):
         """
         Instruct the bot to make sure no panels are currently open.
         """
+        self.logger.info("attempting to close any panels in game.")
+
         loops = 0
-        while self.grabber.search(image=[self.images.exit_panel,self.images.large_exit_panel], bool_only=True) and (loops != FUNCTION_LOOP_TIMEOUT):
-                found = self.find_and_click(
-                    image=[self.images.exit_panel,self.images.large_exit_panel],
-                )
-                if found:
-                    break
-                loops += 1
-                sleep(0.5)
-        
-        self.logger.info("All panels should be closed.")
+        while self.grabber.search(image=[self.images.exit_panel, self.images.large_exit_panel], bool_only=True):
+            if loops == FUNCTION_LOOP_TIMEOUT:
+                self.logger.info("unable to close panels, giving up.")
+                return False
+
+            found = self.find_and_click(
+                image=[self.images.exit_panel, self.images.large_exit_panel]
+            )
+            # Return true if we've found the exit image and clicked on it.
+            if found:
+                break
+
+            loops += 1
+            sleep(0.5)
+
+        # If no panels are already open, return true now since
+        # we can safely assume we're in a proper state if exit panels aren't found.
         return True
 
     @bot_property(queueable=True, shortcut="p", tooltip="Pause all bot functionality.")
@@ -2798,6 +2802,10 @@ class Bot(object):
         # type functions.
         if self.scheduler.state == STATE_STOPPED:
             self.scheduler.start()
+
+        # Make sure the boss fight is entered if possible before beginning
+        # normal bot runtime loop.
+        self.fight_boss()
 
         # Parse current skill levels, done once on initialization
         # and taken care of by our prestige function for every prestige.

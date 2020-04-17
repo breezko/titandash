@@ -10,6 +10,7 @@ from titanbootstrap.utils import VersionChecker, purge_dir
 from itertools import chain
 
 import fnmatch
+import shutil
 import redis
 import subprocess
 import traceback
@@ -325,6 +326,42 @@ def _check_tesseract():
     If the directory has changed, we check the default locations and fallback to a dynamic search
     of the system to make sure it's available. Application settings will remember the last used location.
     """
+    def _ensure_trained_data(directory):
+        """
+        Ensure that the specified tesseract path does in fact contain our valid trained data file.
+
+        As long as the file's raw contents are already the same, we don't need to worry
+        about changing anything else in the directory.
+        """
+        proper_file = settings.TESSERACT_TRAINED_DATA_FILE
+
+        current_file_directory = os.path.join(directory, "tessdata")
+        current_file = os.path.join(current_file_directory, settings.TESSERACT_TRAINED_DATA_NAME)
+
+        # First, retrieve the contents of our proper eng.traineddata file
+        # that will be used as a replacement if needed.
+        with open(proper_file, "rb") as ptd:
+            proper_contents = ptd.read()
+
+            # With our current proper directory, grab the contents from
+            # the current trained data for comparison.
+            try:
+                with open(current_file, "rb") as ctd:
+                    current_contents = ctd.read()
+
+            # Unlikely, but maybe a user is missing the traineddata file.
+            # Make sure we move the proper one over if it's missing.
+            except FileNotFoundError:
+                current_contents = None
+
+            # If our content differs at all, we need to copy and replace the current
+            # trained data with our proper data file.
+            if proper_contents != current_contents:
+                shutil.copy(
+                    src=proper_file,
+                    dst=current_file_directory
+                )
+
     def _find_tesseract(paths, exclude):
         """
         Attempt to find the tesseract executable file on the system.
@@ -382,6 +419,10 @@ def _check_tesseract():
             app_settings.save()
 
         settings.TESSERACT_COMMAND = "{path}/tesseract".format(path=tesseract_path)
+
+        # We also need to make sure that the proper english trained data
+        # file is available within our tesseract directory.
+        _ensure_trained_data(directory=tesseract_path)
 
     # Broadly catch exceptions so our TesseractCheckError is caught as well as any other error.
     except Exception as exc:

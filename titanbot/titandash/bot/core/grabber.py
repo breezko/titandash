@@ -37,7 +37,7 @@ class Grabber:
 
         return self.current
 
-    def search(self, image, region=None, precision=0.8, bool_only=False, return_image=False, testing=False, im=None):
+    def search(self, image, region=None, precision=0.8, bool_only=False, testing=False, im=None, return_image=False):
         """
         Search the specified image for another image with a specified amount of precision.
 
@@ -87,9 +87,11 @@ class Grabber:
         if position[0] != -1:
             position = (position[0], position[1])
 
+        # Include the image that was found if specified to do so.
+        # May prove useful when searching for a list of images.
         if return_image:
             return found, position, image
-        
+
         return found, position
 
     def point_is_color(self, point, color=None, color_range=None):
