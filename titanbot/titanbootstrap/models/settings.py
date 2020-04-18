@@ -27,7 +27,8 @@ class ApplicationSettings(models.Model):
         verbose_name_plural = "Application Settings"
 
     objects = ApplicationSettingsManager()
-    tesseract_directory = models.CharField(verbose_name="Tesseract Directory", null=True, blank=True, max_length=255)
+    # Place any global application type settings that should be controlled
+    # by the application and/or used to remember certain information for later use.
 
     def __str__(self):
         return "Application Settings {pk}".format(pk=self.pk)
