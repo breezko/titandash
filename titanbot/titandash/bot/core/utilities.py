@@ -75,6 +75,18 @@ class GlobalsChecker:
         """
         return self._get_cache().pihole_ads_enabled
 
+    def _welcome_screen_checks_enabled(self):
+        """
+        Determine if our cached globals currently have welcome screen checks enabled.
+        """
+        return self._get_cache().welcome_screen_checks_enabled
+
+    def _rate_screen_checks_enabled(self):
+        """
+        Determine if our cached globals currently have rate screen checks enabled.
+        """
+        return self._get_cache().rate_screen_checks_enabled
+
     def _logging_level(self):
         return self._get_cache().logging_level
 
@@ -96,6 +108,18 @@ class GlobalsChecker:
         Return a boolean to represent if pihole ads are enabled.
         """
         return self._pihole_ads_enabled()
+
+    def welcome_screen_checks(self):
+        """
+        Return a boolean to represent if welcome screen checks are enabled.
+        """
+        return self._welcome_screen_checks_enabled()
+
+    def rate_screen_checks(self):
+        """
+        Return a boolean to represent if rate screen checks are enabled.
+        """
+        return self._rate_screen_checks_enabled()
 
     def logging_level(self):
         return self._logging_level()
@@ -294,6 +318,7 @@ def in_transition_func(*args, max_loops, **kwargs):
     """
     _self = args[0]
     loops = 0
+
     while True:
         # Check for the early game/non vip game prompts that may pop up
         # while playing the game.
@@ -304,7 +329,6 @@ def in_transition_func(*args, max_loops, **kwargs):
         # panels that may of been opened on accident.
         _self.find_and_click(
             image=_self.images.large_exit_panel,
-            pause=0.5
         )
 
         # Is an ad panel open that should be accepted/declined?
@@ -314,7 +338,7 @@ def in_transition_func(*args, max_loops, **kwargs):
         # If any of these are found, it's safe to say that we are NOT in a transition.
         if _self.grabber.search(
                 image=[
-                    _self.images.exit_panel, _self.images.clan_raid_ready, _self.images.clan_no_raid, _self.images.daily_reward,
+                    _self.images.exit_panel, _self.images.clan_raid_ready, _self.images.clan_no_raid, _self.images.daily_reward, _self.images.icon_boss,
                     _self.images.fight_boss, _self.images.hatch_egg, _self.images.leave_boss, _self.images.settings, _self.images.tournament,
                     _self.images.pet_damage, _self.images.master_damage
                 ],
@@ -329,8 +353,8 @@ def in_transition_func(*args, max_loops, **kwargs):
             clicks=3,
             pause=0.5
         )
-        _self.logger.info("in a transition? waiting one second before continuing")
-        sleep(1)
+        _self.logger.info("in a transition? waiting briefly and trying again...")
+        sleep(0.25)
 
         loops += 1
         if loops == max_loops:

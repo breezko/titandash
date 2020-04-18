@@ -73,7 +73,7 @@ GAME_LOCS = {
             (110, 390), (55, 390), (23, 390), (360, 390), (400, 390), (440, 390),
             # Middle Layer.
             (35, 290), (75, 290), (400, 290), (440, 290),
-            (30, 208), (70, 208), (410, 208), (450, 208), (106, 170),
+            (30, 215), (70, 215), (410, 215), (450, 215),
             (370, 170), (440, 170), (410, 110), (440, 110),
             (470, 110), (460, 90)
         ),
@@ -337,6 +337,7 @@ IMAGES = {
         "fight_boss": IMAGE_DIR + "/no_panels/fight_boss.png",
         "hatch_egg": IMAGE_DIR + "/no_panels/hatch_egg.png",
         "leave_boss": IMAGE_DIR + "/no_panels/leave_boss.png",
+        "icon_boss": IMAGE_DIR + "/no_panels/icon_boss.png",
         "settings": IMAGE_DIR + "/no_panels/settings.png",
         "tournament": IMAGE_DIR + "/no_panels/tournament.png",
         "pet_damage": IMAGE_DIR + "/no_panels/pet_damage.png",

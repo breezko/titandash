@@ -336,9 +336,12 @@ def save_globals(request):
     failsafe_settings = request.POST.get("failsafe_settings")
     event_settings = request.POST.get("event_settings")
     pihole_ads_settings = request.POST.get("pihole_ads_settings")
+    welcome_screen_checks_settings = request.POST.get("welcome_screen_checks_settings")
+    rate_screen_checks_settings = request.POST.get("rate_screen_checks_settings")
     logging_level = request.POST.get("logging_level")
 
-    if not failsafe_settings or not event_settings or not pihole_ads_settings:
+    if not failsafe_settings or not event_settings or not pihole_ads_settings or not \
+            welcome_screen_checks_settings or not rate_screen_checks_settings or not logging_level:
         return JsonResponse(data={
             "status": "error",
             "message": "Missing required values."
@@ -347,12 +350,16 @@ def save_globals(request):
     failsafe_settings = failsafe_settings.lower()
     event_settings = event_settings.lower()
     pihole_ads_settings = pihole_ads_settings.lower()
+    welcome_screen_checks_settings = welcome_screen_checks_settings.lower()
+    rate_screen_checks_settings = rate_screen_checks_settings.lower()
     logging_level = logging_level.upper()
 
     GlobalSettings.objects.grab(qs=True).update(**{
         "failsafe_settings": failsafe_settings,
         "event_settings": event_settings,
         "pihole_ads_settings": pihole_ads_settings,
+        "welcome_screen_checks_settings": welcome_screen_checks_settings,
+        "rate_screen_checks_settings": rate_screen_checks_settings,
         "logging_level": logging_level
     })
     return JsonResponse(data={

@@ -28,10 +28,12 @@
                         </thead>
                         <tbody>
                             {% for key, value in BOT.items %}
-                                <tr>
-                                    <td><strong>{{ key }}</strong></td>
-                                    <td><small>{{ value }}</small></td>
-                                </tr>
+                                {% if key != "SETTINGS_JSON" %}
+                                    <tr>
+                                        <td><strong>{{ key }}</strong></td>
+                                        <td><small>{{ value }}</small></td>
+                                    </tr>
+                                {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>

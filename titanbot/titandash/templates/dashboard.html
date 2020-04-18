@@ -417,7 +417,7 @@
                     <button class="btn btn-link" data-toggle="collapse" data-target="#collapseLog">Logs</button>
                     <select style="width: 200px; display: initial;" id="dashboardLogLevelSelect" class="form-control form-control-sm form-inline">
                         {% for level in BOT.LOG_LEVELS %}
-                            <option {% if BOT.GLOBALS.logging_level == level %}selected{% endif %} value="{{ level }}">{{ level }}</option>
+                            <option {% if GLOBALS.logging_level == level %}selected{% endif %} value="{{ level }}">{{ level }}</option>
                         {% endfor %}
                     </select>
                     <span style="margin-top: 7px;" title="Click here to prune your current logs." class="float-right fa fa-trash" id="dashboardLogTrash"></span>
