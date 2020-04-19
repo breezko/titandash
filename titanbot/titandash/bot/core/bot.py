@@ -2392,33 +2392,25 @@ class Bot(object):
 
             # Ensure the game screen is currently displaying the titan correctly.
             self.ensure_collapsed_closed()
-
-            tapping_map = []
-            # Based on the enabled minigames, tapping locations are appended
-            # and looped through after to ensure minigames are always up.
-            for minigame in self.minigame_order:
-                # Add (str) to the map, we check for this and output a informational
-                # log when the point in our loop is a string. Can only ever be a minigame name.
-                tapping_map += (minigame,)
-                tapping_map += getattr(self.locs, minigame)
-
             self.logger.info("executing minigames process {repeats} time(s)".format(repeats=self.configuration.minigames_repeat))
+            self.logger.info("executing minigames: {minigames}".format(minigames=", ".join(self.minigame_order)))
+
             for i in range(self.configuration.minigames_repeat):
-                for index, point in enumerate(tapping_map, start=1):
-                    if isinstance(point[0], str):
-                        self.logger.info("executing/tapping {minigame}".format(minigame=point))
-                    else:
+                for minigame in self.minigame_order:
+                    self.logger.info("tapping minigame: {minigame}".format(minigame=minigame))
+                    for point in getattr(self.locs, minigame):
                         sleep(0.05)
                         self.click(
-                            point=point,
+                            point=point
                         )
 
-                self.collect_ad_no_transition()
+                    # Sleep for an additional amount of time if astral awakening
+                    # is currently enabled (allow orb to fly).
+                    if minigame == "astral_awakening":
+                        self.logger.info("sleeping slightly to allow astral awakening orb to fly...")
+                        sleep(0.5)
 
-                # Sleep for an additional amount of time if astral awakening
-                # is currently enabled (allow orb to fly).
-                if "astral_awakening" in self.minigame_order:
-                    sleep(0.5)
+                self.collect_ad_no_transition()
 
     @not_in_transition
     def ensure_collapsed_closed(self):
