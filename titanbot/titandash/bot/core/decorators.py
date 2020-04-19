@@ -139,7 +139,7 @@ class BotProperty(object):
         return cls._all(function=function, reload=True)
 
 
-def not_in_transition(function, max_loops=30):
+def not_in_transition(function, max_loops=10):
     """
     Stop functionality until some sort of game object is on the screen that represents the game not being
     in a transition state. If a transition state is detected, click the top of the screen a couple of

@@ -147,8 +147,3 @@ STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
-
-# Dependency settings
-# Defaulting to the program being available on the users path.
-# Bootstrapping handles the case where it isn't on the path (which may be a common case).
-TESSERACT_COMMAND = "tesseract"

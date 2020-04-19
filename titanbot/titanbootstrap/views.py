@@ -6,6 +6,7 @@ from django.http.response import JsonResponse
 
 from titanbootstrap.utils import VersionChecker, purge_dir
 
+import zipfile
 import redis
 import subprocess
 import traceback
@@ -291,63 +292,33 @@ def perform_static(request):
 
 def _check_tesseract():
     """
-    Test that the tesseract is installed and that the executable (if one is available) is set
-    to be used by our titandash settings.
+    Perform our tesseract checking functionality here, making sure our compressed dependency is present
+    and extracted within the users application directory.
 
-    We'll check first to determine if the program is available in either of the available program files
-    directories.
-
-    If it is, we can use this path to ensure settings TESSERACT_COMMAND is set to a valid value and test it.
-    If not, we can display an exception to let the user know they they should install tesseract.
+    - If tesseract is not currently extracted and present, we do that here once.
+    - If tesseract is already extracted and present, we do nothing and move forward with our checks.
     """
-    # We are explicitly adding the "ProgramW6432" environment variable to the end in case
-    # issues come up with the os module when grabbing the paths.
-    environ_vars = ["ProgramW6432", "ProgramFiles(x86)"]
-    potential_paths = [os.path.join(os.environ[var], "Tesseract-OCR") for var in environ_vars]
+    # Begin by performing some checks to see if the extracted directory
+    # that we expect to contain all tesseract software data is present or not.
+    extracted = os.path.exists(path=settings.LOCAL_DATA_TESSERACT_DEPENDENCY_DIR)
 
-    # Base exception raised if issues come up with the tesseract pathing.
-    exception = TesseractCheckError("It seems like tesseract is not currently installed on your system, or titandash "
-                                    "was unable to find the program in any of these directories: {dirs}. Some of the "
-                                    "functionality used by the bot relies on this program. The bot may break or "
-                                    "crash unexpectedly until you've installed tesseract.".format(dirs=", ".join(potential_paths)))
-
-    installed_path = None
-    try:
-        for path in potential_paths:
-            if os.path.exists(path):
-                installed_path = path
-                break
-
-        # Unable to find the installed path means one of two things, something in the users environment has
-        # gone awry and we can't find the path, or they do not have it installed. We'll do a final check to
-        # see if tesseract has been put on their path and works in a command prompt. Otherwise we error out.
-        if not installed_path:
-            if subprocess.run("tesseract --version", shell=True, universal_newlines=True).returncode == 0:
-                # Tesseract is on users path, we can just return true, default
-                # command is just "tesseract" which will always work.
-                return True
-            else:
-                raise exception
-
-        # Tesseract is available, set the proper path for use by any piece of functionality
-        # that makes use of text recognition.
-        settings.TESSERACT_COMMAND = "{path}/tesseract".format(path=installed_path)
-        return True
-
-    # Check for a file not found error which may occur when tesseract is not installed at all.
-    except subprocess.CalledProcessError:
-        return _exception_response(
-            title="Dependencies - Tesseract",
-            exception=exception,
-            as_json=True
-        )
-    # Broadly catch exceptions so our TesseractCheckError is caught as well as any other error.
-    except Exception as exc:
-        return _exception_response(
-            title="Dependencies - Tesseract",
-            exception=exc,
-            as_json=True
-        )
+    # Determine whether or not we should perform the extraction of our compressed
+    # directory, this only need to happen once unless the directory is removed.
+    if not extracted:
+        try:
+            with zipfile.ZipFile(file=settings.TESSERACT_COMPRESSED_ZIP, mode="r") as zip_file:
+                # extractall will take all of our content and extract it right into the
+                # proper local data directory.
+                zip_file.extractall(path=settings.LOCAL_DATA_TESSERACT_DEPENDENCY_DIR)
+        except Exception as exc:
+            # An error occurred while extracting, exit our process with
+            # a useful error message with some information about the exception.
+            return _exception_response(
+                title="Dependencies - Tesseract",
+                exception=exc,
+                as_json=True,
+                extra="An error occurred while attempting to extract tesseract into your local application data directory."
+            )
 
 
 def _check_redis():

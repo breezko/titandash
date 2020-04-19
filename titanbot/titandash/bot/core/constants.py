@@ -46,10 +46,6 @@ FUNCTION_LOOP_TIMEOUT = 40
 # In which case, we can continue and attempt to up this damage and try again later.
 BOSS_LOOP_TIMEOUT = int(FUNCTION_LOOP_TIMEOUT / 4)
 
-# Specify the filter strings used to find emulator windows.
-NOX_WINDOW_FILTER = [
-    "nox", "noxplayer",
-]
 MEMU_WINDOW_FILTER = [
     "memu"
 ]
