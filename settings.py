@@ -55,9 +55,10 @@ DATA_DIR = os.path.join(BOT_DIR, "data")
 IMAGE_DIR = os.path.join(DATA_DIR, "images")
 DEPENDENCIES_DIR = os.path.join(DATA_DIR, "dependencies")
 
-# Additional data files.
-TESSERACT_TRAINED_DATA_NAME = "eng.traineddata"
-TESSERACT_TRAINED_DATA_FILE = os.path.join(DEPENDENCIES_DIR, TESSERACT_TRAINED_DATA_NAME)
+# Tesseract Dependency Directories And Files.
+# --------------------------------------------
+TESSERACT_DEPENDENCY_DIR = os.path.join(DEPENDENCIES_DIR, "tesseract")
+TESSERACT_COMPRESSED_ZIP = os.path.join(TESSERACT_DEPENDENCY_DIR, "tesseract.zip")
 
 # Scripts.
 PROGRAM_BAT = os.path.join(ROOT_DIR, "titandash.bat")
@@ -82,6 +83,12 @@ LOCAL_DATA_LOG_FILE = os.path.join(LOCAL_DATA_LOG_DIR, "titandash.log")
 LOCAL_DATA_DEBUG_DIR = os.path.join(LOCAL_DATA_DIR, "debug")
 # File to store titandash debug json data in.
 LOCAL_DATA_DEBUG_FILE = os.path.join(LOCAL_DATA_DEBUG_DIR, "debug.json")
+# Directory to place our extracted tesseract data in.
+LOCAL_DATA_DEPENDENCIES_DIR = os.path.join(LOCAL_DATA_DIR, "dependencies")
+# Directory that should be created dynamically when tesseract is extracted.
+LOCAL_DATA_TESSERACT_DEPENDENCY_DIR = os.path.join(LOCAL_DATA_DEPENDENCIES_DIR, "tesseract")
+# Command that is used by bot's to perform character recognition.
+TESSERACT_COMMAND = os.path.join(LOCAL_DATA_TESSERACT_DEPENDENCY_DIR, "tesseract")
 
 # Testing directory.
 TEST_DIR = os.path.join(TITANDASH_DIR, "tests")
@@ -127,7 +134,7 @@ def user_directory():
     """
     for path in [
         LOCAL_DATA_DIR, LOCAL_DATA_DB_DIR, LOCAL_DATA_DB_BACKUP_DIR, LOCAL_DATA_UPDATE_DIR,
-        LOCAL_DATA_BACKUP_DIR, LOCAL_DATA_LOG_DIR, LOCAL_DATA_DEBUG_DIR
+        LOCAL_DATA_BACKUP_DIR, LOCAL_DATA_LOG_DIR, LOCAL_DATA_DEBUG_DIR, LOCAL_DATA_DEPENDENCIES_DIR
     ]:
         # Create the specified local data directory if it does not currently exist.
         if not os.path.exists(path):
